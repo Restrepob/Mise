@@ -66,18 +66,16 @@ const viewState = {
 };
 
 const colorPalette = [
-    '#FF3939',
-    '#FF7C39',
-    '#8F0875',
-    '#946E49',
-    '#00FF66',
-    '#00E5A3',
-    '#3BB5FF',
-    '#62DBFF',
-    '#FFE600',
-    '#FFA834',
-    '#E54C96',
-    '#FF2B85'
+    '#FF3939', 
+    '#FF7C39', 
+    '#00FF66', 
+    '#62DBFF', 
+    '#FFA834', 
+    '#E54C96', 
+
+    //'#FFF000', 
+    '#00FFD1', 
+    '#C7B2FF'  
 ];
 
 let colorIndex = 0;
@@ -145,9 +143,7 @@ function configureSizeUnitButtons(buttonIds, input, metricState) {
         document.getElementById(buttonId).addEventListener('click', () => {
             const item = getSelectedObject();
             const currentPixels = item
-                ? isOpening(item) && input === smAncho
-                    ? getOpeningWidth(item)
-                    : parseFloat(input === smAlto ? item.style.height : item.style.width)
+                ? getItemLayout(item)[input === smAlto ? 'height' : 'width']
                 : null;
             const nextUnit = document.getElementById(buttonId).dataset.unit;
 
@@ -390,6 +386,25 @@ function normalizeDeg(deg) {
     return ((Number(deg) % 360) + 360) % 360;
 }
 
+const ROT_SWAP_TOL = 3;
+
+function isAxesSwapped(item) {
+    if (!item || isOpening(item)) return false;
+    const quarter = normalizeDeg(getRotation(item)) % 180;
+    return Math.abs(quarter - 90) <= ROT_SWAP_TOL;
+}
+
+function getItemLayout(item) {
+    if (isOpening(item)) {
+        return { width: getOpeningWidth(item), height: OPENING_DEPTH };
+    }
+    const rawWidth = parseFloat(item.style.width) || item.offsetWidth;
+    const rawHeight = parseFloat(item.style.height) || item.offsetHeight;
+    return isAxesSwapped(item)
+        ? { width: rawHeight, height: rawWidth }
+        : { width: rawWidth, height: rawHeight };
+}
+
 function snapNameRotation(rotation) {
     const R = normalizeDeg(rotation);
     return R >= 90 && R < 270 ? 180 : 0;
@@ -407,6 +422,7 @@ function applyRotation(item, deg) {
     if (getSelectedObject() === item) {
         syncEdgeTogglerRotation(rotation);
         syncToleranceTogglerRotation(rotation);
+        syncSizeManagerReadout();
     }
 }
 
@@ -482,7 +498,11 @@ function syncSizeManager() {
     syncDoorPanel(item);
     syncEdgePanel(item);
     syncTolerancePanel(item);
+    syncSizeManagerReadout();
+}
 
+function syncSizeManagerReadout() {
+    const item = getSelectedObject();
     if (!item) {
         smNombre.value = '';
         smAlto.value = '';
@@ -492,8 +512,7 @@ function syncSizeManager() {
         return;
     }
 
-    const width = isOpening(item) ? getOpeningWidth(item) : parseFloat(item.style.width) || item.offsetWidth;
-    const height = isOpening(item) ? OPENING_DEPTH : parseFloat(item.style.height) || item.offsetHeight;
+    const { width, height } = getItemLayout(item);
     const layer = document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
     smNombre.value = item.dataset.name || layer?.querySelector('.layer-content')?.textContent.trim() || '';
     smAlto.value = smFromPx(height, smAlMetric).toFixed(2);
@@ -526,7 +545,11 @@ function applySizeDimension(input, unit, dimension) {
         return;
     }
 
-    item.style[dimension] = `${smToPx(value, unit)}px`;
+    const swapped = isAxesSwapped(item);
+    const localDimension = swapped
+        ? (dimension === 'width' ? 'height' : 'width')
+        : dimension;
+    item.style[localDimension] = `${smToPx(value, unit)}px`;
     updateSceneSize(item);
     guardarCambios(item);
 }
@@ -549,8 +572,7 @@ smAncho.addEventListener('input', () => applySizeDimension(smAncho, smAnMetric, 
 smAncho.addEventListener('change', () => {
     const item = getSelectedObject();
     if (!item) return;
-    const width = isOpening(item) ? getOpeningWidth(item) : parseFloat(item.style.width) || item.offsetWidth;
-    smAncho.value = smFromPx(width, smAnMetric).toFixed(2);
+    smAncho.value = smFromPx(getItemLayout(item).width, smAnMetric).toFixed(2);
 });
 smRadius.addEventListener('input', () => {
     const item = getSelectedObject();
@@ -1505,7 +1527,6 @@ canvas.addEventListener('pointermove', (event) => {
         const angle = Math.atan2(event.clientY - center.y, event.clientX - center.x);
         const degrees = (angle - startAngle) * 180 / Math.PI;
         applyRotation(item, snapRotation(base + degrees));
-        smRotation.value = Math.round(getRotation(item));
         return;
     }
 
