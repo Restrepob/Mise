@@ -1728,6 +1728,7 @@ function applyItemStateDetails(rebuilt, elemento) {
 }
 
 function buildSceneFromStates(states) {
+    colorIndex = 0;
     document.querySelectorAll('.room').forEach((room) => room.remove());
     document.querySelectorAll('.layer-div').forEach((layer) => layer.remove());
 
@@ -2548,19 +2549,21 @@ function applyPlanNow() {
     } catch (error) {
         showPlanError(error.message || String(error));
     }
+    planTextDirty = false;
 }
 
 let planApplyTimer = null;
+let planTextDirty = false;
 
 planPopupText.addEventListener('input', () => {
+    planTextDirty = true;
     clearTimeout(planApplyTimer);
     planApplyTimer = setTimeout(applyPlanNow, 500);
 });
 
-planPopupText.addEventListener('blur', applyPlanNow);
-
 function openPlanPopup() {
     planPopupText.value = exportPlanText();
+    planTextDirty = false;
     const btnRect = planExportBtn.getBoundingClientRect();
     planPopup.style.left = `${btnRect.left}px`;
     planPopup.style.top = `${btnRect.bottom + 10}px`;
@@ -2569,6 +2572,7 @@ function openPlanPopup() {
 }
 
 function closePlanPopup() {
+    if (planTextDirty) applyPlanNow();
     planPopup.classList.add('hidden');
 }
 
