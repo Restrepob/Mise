@@ -2333,6 +2333,19 @@ function selectLayer(layerElement) {
     if (isOpening(targetItem)) syncOpeningOverlay(targetItem);
     else clearOpeningOverlay();
     syncSizeManager();
+    scrollLayerIntoView(layerElement);
+}
+
+function scrollLayerIntoView(layerElement) {
+    const container = layerElement.closest('.layer-box');
+    if (!container) return;
+    const cRect = container.getBoundingClientRect();
+    const rRect = layerElement.getBoundingClientRect();
+    if (rRect.top < cRect.top) {
+        container.scrollTop += rRect.top - cRect.top;
+    } else if (rRect.bottom > cRect.bottom) {
+        container.scrollTop += rRect.bottom - cRect.bottom;
+    }
 }
 
 function handleMenuAction(action, targetElement) {
