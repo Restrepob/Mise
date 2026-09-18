@@ -745,6 +745,12 @@ document.addEventListener('keydown', (evento) => {
         }
     }
 
+    if (!alertapopup.classList.contains('hidden') && (evento.key === 'Enter' || evento.key === 'Escape')) {
+        evento.preventDefault();
+        alertapopup.classList.add('hidden');
+        return;
+    }
+
     if (evento.key === 'Escape' && !popup.classList.contains('hidden')) {
         evento.preventDefault();
         popup.classList.add('hidden');
