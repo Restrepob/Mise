@@ -2290,6 +2290,19 @@ function parsePlanNumber(token, lineNumber) {
     return (m[2] || 'm').toLowerCase() === 'cm' ? value / 100 : value;
 }
 
+function parsePlanCoord(token, lineNumber) {
+    const raw = String(token ?? '').trim();
+    const m = raw.match(/^-?(\d+(?:\.\d+)?)\s*(m|cm)?$/i);
+    if (!m) {
+        throw new Error(`Línea ${lineNumber}: coordenada inválida "${raw}" (usa p.ej. 0.5m o 0m)`);
+    }
+    const value = Number(m[1]);
+    if (!Number.isFinite(value)) {
+        throw new Error(`Línea ${lineNumber}: coordenada inválida "${raw}"`);
+    }
+    return (m[2] || 'm').toLowerCase() === 'cm' ? value / 100 : value;
+}
+
 function parsePlanAngle(token, lineNumber) {
     const deg = Number(token);
     if (!Number.isFinite(deg)) {
@@ -2308,8 +2321,8 @@ function parseAtRot(tokens, lineNumber, startIndex, kind) {
             if (i + 2 >= tokens.length) {
                 throw new Error(`Línea ${lineNumber}: "at" requiere dos coordenadas (at X Y)`);
             }
-            left = parsePlanNumber(tokens[i + 1], lineNumber);
-            top = parsePlanNumber(tokens[i + 2], lineNumber);
+            left = parsePlanCoord(tokens[i + 1], lineNumber);
+            top = parsePlanCoord(tokens[i + 2], lineNumber);
             i += 3;
         } else if (tokens[i] === 'rot') {
             if (i + 1 >= tokens.length) {
@@ -2417,7 +2430,7 @@ function parsePlanChild(tokens, lineNumber, current) {
                 edge = String(tokens[i + 1] || '').toLowerCase();
                 i += 2;
             } else if (tokens[i] === 'offset') {
-                offset = parsePlanNumber(tokens[i + 1], lineNumber);
+                offset = parsePlanCoord(tokens[i + 1], lineNumber);
                 i += 2;
             } else if (tokens[i] === 'dir') {
                 direction = String(tokens[i + 1] || '').toLowerCase();
@@ -2510,7 +2523,104 @@ function parsePlanToStates(text) {
 
 function applyPlanText(text) {
     const states = parsePlanToStates(text);
-    buildSceneFromStates(states);
+    const roomStates = states.filter((s) => s.type === 'room');
+    const existingRooms = getRooms();
+    const matchedNames = new Set();
+
+    roomStates.forEach((roomSt) => {
+        const match = existingRooms.find((r) => r.dataset.name === roomSt.nombre && !matchedNames.has(roomSt.nombre));
+        const childStates = states.filter((s) => s.type !== 'room' && s.roomId === roomSt.id);
+
+        let roomEl;
+        if (match) {
+            matchedNames.add(roomSt.nombre);
+            roomEl = match;
+            updatePlanRoom(roomEl, roomSt);
+        } else {
+            roomEl = createRoom(roomSt.ancho, roomSt.alto, 'm', 'm', roomSt.nombre, 'create-room-btn', undefined, false);
+            applyItemStateDetails(roomEl, roomSt);
+        }
+        syncPlanChildren(roomEl, childStates);
+    });
+
+    existingRooms.forEach((room) => {
+        if (!matchedNames.has(room.dataset.name)) removePlanElement(room);
+    });
+
+    localStorage.removeItem('mise');
+    getRooms().forEach((room) => guardarCambios(room));
+    document.querySelectorAll('.object').forEach((item) => {
+        if (item.dataset.type !== 'room') guardarCambios(item);
+    });
+
+    if (!getActiveRoom()) {
+        const rooms = getRooms();
+        setActiveRoom(rooms[rooms.length - 1] || null);
+    }
+    syncRoomSwitcher();
+    syncSizeManager();
+}
+
+function updatePlanRoom(room, st) {
+    room.style.width = `${Math.round(st.ancho * metro)}px`;
+    room.style.height = `${Math.round(st.alto * metro)}px`;
+    room.style.left = `${Math.round(st.left)}px`;
+    room.style.top = `${Math.round(st.top)}px`;
+    applyRotation(room, Number(st.rotacion) || 0);
+}
+
+function updatePlanObject(item, st) {
+    item.style.width = `${Math.round(st.ancho * metro)}px`;
+    item.style.height = `${Math.round(st.alto * metro)}px`;
+    item.style.left = `${Math.round(st.left)}px`;
+    item.style.top = `${Math.round(st.top)}px`;
+    applyRotation(item, Number(st.rotacion) || 0);
+}
+
+function updatePlanOpening(item, st) {
+    item.dataset.edge = st.edge || 'top';
+    item.dataset.direction = st.direction || 'in';
+    item.dataset.axis = st.axis || 'sup';
+    item.dataset.openingWidth = String(Math.max(OPENING_MIN, st.ancho * metro));
+    item.dataset.offset = String(st.offset || 0);
+    placeOpening(item);
+}
+
+function syncPlanChildren(parentRoom, childStates) {
+    const existing = [...parentRoom.children].filter((c) => c.classList.contains('object'));
+    const remaining = [...existing];
+
+    childStates.forEach((child) => {
+        const isOpen = child.type === 'window' || child.type === 'door';
+        if (isOpen) {
+            const idx = remaining.findIndex(
+                (c) => (c.dataset.type === 'window' || c.dataset.type === 'door') && c.dataset.type === child.type && c.dataset.name === child.nombre,
+            );
+            if (idx >= 0) {
+                const el = remaining.splice(idx, 1)[0];
+                updatePlanOpening(el, child);
+            } else {
+                rebuildOpening(child, parentRoom);
+            }
+            return;
+        }
+        const idx = remaining.findIndex((c) => (c.dataset.type !== 'window' && c.dataset.type !== 'door') && c.dataset.name === child.nombre);
+        if (idx >= 0) {
+            const el = remaining.splice(idx, 1)[0];
+            updatePlanObject(el, child);
+        } else {
+            const el = createRoom(child.ancho, child.alto, 'm', 'm', child.nombre, 'add-object-btn', parentRoom);
+            applyItemStateDetails(el, child);
+        }
+    });
+
+    remaining.forEach((el) => removePlanElement(el));
+}
+
+function removePlanElement(el) {
+    [...el.children].forEach((child) => removePlanElement(child));
+    document.querySelectorAll(`.layer-div[data-target-id="${el.id}"]`).forEach((layer) => layer.remove());
+    el.remove();
 }
 
 const planExportBtn = document.getElementById('plan-export-btn');
