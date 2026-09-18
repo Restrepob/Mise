@@ -418,8 +418,9 @@ function applyRotation(item, deg) {
     const rotation = normalizeDeg(deg);
     item.dataset.rotation = String(rotation);
     item.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-    const handle = item.querySelector(':scope > .rotate-handle');
-    if (handle) handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg)`;
+    item.querySelectorAll(':scope > .rotate-handle, :scope > .rotate-handle-90').forEach((handle) => {
+        handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg)`;
+    });
     const nameEl = item.querySelector(':scope > .balance-name');
     if (nameEl) nameEl.style.transform = `rotate(${snapNameRotation(rotation)}deg)`;
     if (getSelectedObject() === item) {
@@ -435,8 +436,19 @@ function snapRotation(deg) {
     return Math.abs(normalized - nearest) <= 6 ? normalizeDeg(nearest) : normalized;
 }
 
+const ROTATE_HANDLE_SVG_FREE = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
+        <path d="M204-318q-22-38-33-78t-11-82q0-134 93-228t227-94h7l-64-64 56-56 160 160-160 160-56-56 64-64h-7q-100 0-170 70.5T240-478q0 26 6 51t18 49l-60 60ZM481-40 321-200l160-160 56 56-64 64h7q100 0 170-70.5T720-482q0-26-6-51t-18-49l60-60q22 38 33 78t11 82q0 134-93 228t-227 94h-7l64 64-56 56Z"/>
+    </svg>
+`;
+const ROTATE_HANDLE_SVG_QUARTER = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
+        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+    </svg>
+`;
+
 function syncRotationHandle(item) {
-    document.querySelectorAll('.rotate-handle').forEach((handle) => {
+    document.querySelectorAll('.rotate-handle, .rotate-handle-90').forEach((handle) => {
         if (!item || handle.parentElement !== item) handle.remove();
     });
 
@@ -448,15 +460,34 @@ function syncRotationHandle(item) {
         handle.type = 'button';
         handle.className = 'rotate-handle';
         handle.setAttribute('aria-label', 'Girar objeto');
-        handle.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
-                <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
-            </svg>
-        `;
+        handle.innerHTML = ROTATE_HANDLE_SVG_FREE;
         handle.addEventListener('pointerdown', startRotationDrag);
         item.appendChild(handle);
     }
-    handle.style.transform = `translate(-50%, -50%) rotate(${-getRotation(item)}deg)`;
+
+    let quarterHandle = item.querySelector(':scope > .rotate-handle-90');
+    if (!quarterHandle) {
+        quarterHandle = document.createElement('button');
+        quarterHandle.type = 'button';
+        quarterHandle.className = 'rotate-handle-90';
+        quarterHandle.setAttribute('aria-label', 'Girar 90 grados');
+        quarterHandle.innerHTML = ROTATE_HANDLE_SVG_QUARTER;
+        quarterHandle.addEventListener('pointerdown', (event) => {
+            event.stopPropagation();
+            event.preventDefault();
+        });
+        quarterHandle.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const item = event.currentTarget.parentElement;
+            applyRotation(item, getRotation(item) + 90);
+            guardarCambios(item);
+        });
+        item.appendChild(quarterHandle);
+    }
+
+    const counterRotation = `translate(-50%, -50%) rotate(${-getRotation(item)}deg)`;
+    handle.style.transform = counterRotation;
+    quarterHandle.style.transform = counterRotation;
 }
 
 function startRotationDrag(event) {
