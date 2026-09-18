@@ -4,6 +4,7 @@ const objectLayers = document.getElementById('object-layer-box');
 const roomLayers = document.getElementById('room-layer-box');
 
 const metro=150;
+const SCENE_PADDING = 1000;
 const GRID_STEP = metro / 10;
 const SNAP_SENS = 8;
 const AUTO_SCROLL_EDGE = 48;
@@ -60,6 +61,7 @@ const toolState = {
 const viewState = {
     scale: 1,
     minScale: 0.5,
+    baseMinScale: 0.5,
     maxScale: 2.5,
     activePointers: new Map(),
     pinchDistance: null,
@@ -268,6 +270,7 @@ function setActiveRoom(room, options = {}) {
     });
 
     updateSceneSize(room);
+    updateMinScaleForRoom(room);
 
     const view = roomViews[room.id] || {
         scale: 1,
@@ -526,8 +529,20 @@ function updateSceneSize(item) {
 
     const height = parseFloat(item.style.height) || item.offsetHeight;
     const width = parseFloat(item.style.width) || item.offsetWidth;
-    scene.style.width = `${width + 1000}px`;
-    scene.style.height = `${height + 1000}px`;
+    scene.style.width = `${width + SCENE_PADDING}px`;
+    scene.style.height = `${height + SCENE_PADDING}px`;
+}
+
+function updateMinScaleForRoom(room) {
+    if (!room || !room.classList.contains('room')) return;
+
+    const width = parseFloat(room.style.width) || room.offsetWidth;
+    const height = parseFloat(room.style.height) || room.offsetHeight;
+    const fit = Math.min(
+        canvas.clientWidth / (width + SCENE_PADDING),
+        canvas.clientHeight / (height + SCENE_PADDING),
+    );
+    viewState.minScale = Math.min(viewState.baseMinScale, Math.max(0.05, fit));
 }
 
 function applySizeDimension(input, unit, dimension) {
@@ -551,6 +566,11 @@ function applySizeDimension(input, unit, dimension) {
         : dimension;
     item.style[localDimension] = `${smToPx(value, unit)}px`;
     updateSceneSize(item);
+    if (item === getActiveRoom()) {
+        updateMinScaleForRoom(item);
+        viewState.scale = clampScale(viewState.scale);
+        applySceneScale();
+    }
     guardarCambios(item);
 }
 
@@ -1598,6 +1618,14 @@ canvas.addEventListener('pointercancel', (event) => {
     if (item) guardarCambios(item);
     if (rotatedItem) guardarCambios(rotatedItem);
     clearSnapGuides();
+});
+
+window.addEventListener('resize', () => {
+    const room = getActiveRoom();
+    if (!room) return;
+    updateMinScaleForRoom(room);
+    viewState.scale = clampScale(viewState.scale);
+    applySceneScale();
 });
 
 applySceneScale();
