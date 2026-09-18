@@ -77,8 +77,7 @@ const colorPalette = [
     '#FFE600',
     '#FFA834',
     '#E54C96',
-    '#FF2B85',
-    '#424242'
+    '#FF2B85'
 ];
 
 let colorIndex = 0;
