@@ -2260,7 +2260,7 @@ planPopup.id = 'plan-popup';
 planPopup.className = 'plan-popup hidden';
 planPopup.innerHTML = `
     <div class="plan-popup-title">Plano — copiar o exportar como respaldo</div>
-    <textarea id="plan-popup-text" spellcheck="false" aria-label="Texto del plano" readonly></textarea>
+    <textarea id="plan-popup-text" spellcheck="false" aria-label="Texto del plano"></textarea>
     <div class="plan-popup-actions">
         <button type="button" class="plan-popup-btn" id="plan-popup-download">Exportar .txt</button>
         <button type="button" class="plan-popup-btn" id="plan-popup-copy">Copiar</button>
