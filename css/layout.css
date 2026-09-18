@@ -373,3 +373,105 @@ button:hover {
     background:(--color-surface);
     z-index:9999999;
 }
+
+.plan-export-btn {
+    position:absolute;
+    top:14px;
+    left:14px;
+    width:40px;
+    height:40px;
+    display:grid;
+    place-items:center;
+    padding:0;
+    border:1px solid rgba(255, 255, 255, 0.12);
+    border-radius:50%;
+    background:var(--color-elevated);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    color:var(--color-text);
+    cursor:pointer;
+    z-index:30;
+}
+
+.plan-export-btn:hover {
+    filter:brightness(1.15);
+}
+
+.plan-export-btn svg {
+    width:22px;
+    height:22px;
+}
+
+.plan-popup {
+    position:fixed;
+    width:430px;
+    max-width:calc(100vw - 28px);
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    padding:14px;
+    box-sizing:border-box;
+    background:rgba(255, 255, 255, 0.55);
+    backdrop-filter:blur(16px) saturate(1.2);
+    -webkit-backdrop-filter:blur(16px) saturate(1.2);
+    border:1px solid rgba(255, 255, 255, 0.4);
+    border-radius:12px;
+    box-shadow:0 8px 24px rgba(0, 0, 0, 0.25);
+    color:#1c1c1c;
+    z-index:9999998;
+}
+
+.plan-popup.hidden {
+    display:none;
+}
+
+.plan-popup-title {
+    font-size:13px;
+    font-weight:600;
+}
+
+.plan-popup textarea {
+    width:100%;
+    min-height:220px;
+    box-sizing:border-box;
+    resize:vertical;
+    padding:10px;
+    border:1px solid rgba(0, 0, 0, 0.15);
+    border-radius:8px;
+    background:rgba(255, 255, 255, 0.7);
+    color:#1c1c1c;
+    font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size:12px;
+    line-height:1.5;
+    outline:none;
+}
+
+.plan-popup-actions {
+    display:flex;
+    gap:8px;
+    justify-content:flex-end;
+}
+
+.plan-popup-btn {
+    padding:6px 14px;
+    border:none;
+    border-radius:8px;
+    background:#3d3d3f;
+    color:#fff;
+    cursor:pointer;
+    font-size:13px;
+}
+
+.plan-popup-btn:hover {
+    background:#525255;
+}
+
+.plan-popup-close {
+    background:transparent;
+    color:#1c1c1c;
+    border:1px solid rgba(0, 0, 0, 0.2);
+}
+
+.plan-popup-close:hover {
+    background:rgba(0, 0, 0, 0.06);
+}
