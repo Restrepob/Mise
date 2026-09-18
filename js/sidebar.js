@@ -2342,9 +2342,9 @@ function scrollLayerIntoView(layerElement) {
     const cRect = container.getBoundingClientRect();
     const rRect = layerElement.getBoundingClientRect();
     if (rRect.top < cRect.top) {
-        container.scrollTop += rRect.top - cRect.top;
+        container.scrollTo({ top: container.scrollTop + (rRect.top - cRect.top), behavior: 'smooth' });
     } else if (rRect.bottom > cRect.bottom) {
-        container.scrollTop += rRect.bottom - cRect.bottom;
+        container.scrollTo({ top: container.scrollTop + (rRect.bottom - cRect.bottom), behavior: 'smooth' });
     }
 }
 
