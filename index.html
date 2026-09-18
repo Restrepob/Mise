@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="css/layout.css">
+        <link rel="stylesheet" href="css/sidebar.css">
+        <link rel="stylesheet" href="css/popup.css">
+        <link rel="stylesheet" href="css/objects.css">
+
+
+
+    </head>
+
+    <body>
+        <div class="main">
+            <div class="content-box" id="content">
+                <div class="canvas" id="canvas">
+                    <div class="scene" id="scene">
+                    </div>
+                </div>
+                <div class="snap-guides" id="snap-guides"></div>
+                <div class="opening-measure" id="opening-measure"></div>
+                <div class="options-box">
+                    <button class="tool-btn active" data-tool="select" data-shortcut="V" aria-label="Seleccionar">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--color-text)">
+                            <path d="m320-410 79-110h170L320-716v306ZM551-80 406-392 240-160v-720l560 440H516l144 309-109 51ZM399-520Z"/>
+                        </svg>
+                        <span class="tool-label">V</span>
+                    </button>
+                    <button class="tool-btn" data-tool="move" data-shortcut="H" aria-label="Mover">
+                        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--color-text)">
+                            <path d="M402-40q-30 0-56-13.5T303-92L48-465l24-23q19-19 45-22t47 12l116 81v-383q0-17 11.5-28.5T320-840q17 0 28.5 11.5T360-800v537L212-367l157 229q5 8 14 13t19 5h278q33 0 56.5-23.5T760-200v-560q0-17 11.5-28.5T800-800q17 0 28.5 11.5T840-760v560q0 66-47 113T680-40H402Zm38-440v-400q0-17 11.5-28.5T480-920q17 0 28.5 11.5T520-880v400h-80Zm160 0v-360q0-17 11.5-28.5T640-880q17 0 28.5 11.5T680-840v360h-80ZM486-300Z"/>
+                        </svg>
+                        <span class="tool-label">H</span>
+                    </button>
+                    <div class="room-switcher">
+                        <button id="room-prev" type="button" aria-label="Room anterior">‹</button>
+                        <div class="room-switcher-name">
+                            <span id="room-switcher-name">—</span>
+                            <span class="room-switcher-hint">Shift + ←/→</span>
+                        </div>
+                        <button id="room-next" type="button" aria-label="Room siguiente">›</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-box">
+                <div class="room-manager">
+                    <button class="add-object-btn" id="create-room-btn">Create a Room</button>
+                    <div class="layer-box" id="room-layer-box"></div>
+                </div>
+                    
+                <div class="size-manager">
+                    <div class="text-popup caption">Nombre</div>
+                    <input type="text" id="sm-nombre">
+
+                    <div class="text-popup caption" id="sm-alto-caption">Altura</div>
+                    <div class="question-box row" id="sm-alto-box">
+                        <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                        <input type="number" id="sm-alto" min="0.1" step="0.1">
+                        <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-alto-m">m</button>
+                        <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-alto-cm">cm</button>
+                    </div>
+
+                    <div class="text-popup caption">Ancho</div>
+                    <div class="question-box row">
+                        <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                        <input type="number" id="sm-ancho" min="0.1" step="0.1">
+                        <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-ancho-m">m</button>
+                        <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-ancho-cm">cm</button>
+                    </div>
+
+                    <div class="text-popup caption" id="sm-radius-caption">Radio de esquinas (px)</div>
+                    <input type="number" id="sm-radius" min="0" step="1">
+
+                    <div class="text-popup caption" id="sm-rotation-caption">Rotación (grados)</div>
+                    <div class="question-box row" id="sm-rotation-box">
+                        <input type="number" id="sm-rotation" min="0" max="359" step="1">
+                        <button class="sm-unit-btn" type="button" id="sm-rotate-90" aria-label="Girar 90 grados">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
+                                <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="edge-manager" id="edge-manager">
+                        <div class="text-popup caption">Edges</div>
+                        <div class="edge-toggler" id="edge-toggler">
+                            <span class="edge-toggler-frame" aria-hidden="true"></span>
+                            <button class="edge-switch edge-switch--top" data-edge="top" type="button" aria-label="Borde superior"></button>
+                            <button class="edge-switch edge-switch--right" data-edge="right" type="button" aria-label="Borde derecho"></button>
+                            <button class="edge-switch edge-switch--bottom" data-edge="bottom" type="button" aria-label="Borde inferior"></button>
+                            <button class="edge-switch edge-switch--left" data-edge="left" type="button" aria-label="Borde izquierdo"></button>
+                        </div>
+                    </div>
+
+                    <div class="tolerance-manager" id="tolerance-manager">
+                        <div class="text-popup caption">Tolerancia (m)</div>
+                        <div class="tolerance-toggler" id="tolerance-toggler">
+                            <span class="tolerance-toggler-frame" aria-hidden="true"></span>
+                            <span class="tol-label tol-label--top" data-tol-side="top">0</span>
+                            <span class="tol-label tol-label--right" data-tol-side="right">0</span>
+                            <span class="tol-label tol-label--bottom" data-tol-side="bottom">0</span>
+                            <span class="tol-label tol-label--left" data-tol-side="left">0</span>
+                        </div>
+                    </div>
+
+                    <div id="door-props">
+                        <div class="text-popup caption">Dirección de apertura</div>
+                        <div class="question-box row">
+                            <button class="sm-unit-btn selected" type="button" id="door-dir-in">Adentro</button>
+                            <button class="sm-unit-btn" type="button" id="door-dir-out">Afuera</button>
+                        </div>
+                        <div class="text-popup caption">Eje de apertura</div>
+                        <div class="question-box row">
+                            <button class="sm-unit-btn selected" type="button" id="door-axis-sup">Superior</button>
+                            <button class="sm-unit-btn" type="button" id="door-axis-inf">Inferior</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="object-manager">
+                    <button class="add-object-btn" id="add-object-btn">
+                        Add an Object <span class="shortcut-hint">Ctrl + K</span>
+                    </button>
+                    <div class="layer-box" id="object-layer-box"></div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- popup getSize-->
+        <div class="hidden popup-ask-size-on" id="popupGetSize">
+            <div class="popup-content" id="popup-getSize-window">
+                <div class="popup-question column">
+                    <div class="text-popup caption">Nombre</div>
+                    <input type="text" id="nombre" required>
+
+                    <div class="text-popup caption">Altura</div>
+                    <div class="question-box row">
+                        <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                        <input type="number" id="altura" min="0" max="1000" required>
+                        <button class="al-popup-btn selected" type="button" data-unit="m" id="btn-altura-m">m</button>
+                        <button class="al-popup-btn" type="button" data-unit="cm" id="btn-altura-cm">cm</button>
+                    </div>
+                    <div class="text-popup caption">Ancho</div>
+                    <div class="question-box row">
+                        <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                        <input type="number" id="ancho" min="0" max="1000" required>
+                        <button class="an-popup-btn selected" type="button" data-unit="m" id="btn-anchura-m">m</button>
+                        <button class="an-popup-btn" type="button" data-unit="cm" id="btn-anchura-cm">cm</button>
+                    </div>
+
+                </div>
+                <div class="popup-controls">
+                    <button class="popup-btn-aceptar">Aceptar</button>
+                    <button class="popup-btn-cancelar">Cancelar</button>
+                </div> 
+            </div>
+        </div>
+
+        <!-- popup alerta -->
+         <div class="hidden popup-alerta-on" id="popupAlerta">
+            <div class="popup-content">
+                <h3>Error</h3>
+                <h4 id="message"></h4>
+                <button id="cerrarAlerta">Cerrar</button>
+            </div>
+         </div>
+
+         <!-- popup menu-->
+        <script src="js/sidebar.js" defer></script>
+
+    </body>
+</html>
