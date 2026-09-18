@@ -1727,15 +1727,13 @@ function applyItemStateDetails(rebuilt, elemento) {
     }
 }
 
-function hidratar() {
-    const datosGuardados = JSON.parse(localStorage.getItem('mise')) || [];
+function buildSceneFromStates(states) {
+    document.querySelectorAll('.room').forEach((room) => room.remove());
+    document.querySelectorAll('.layer-div').forEach((layer) => layer.remove());
 
-    const validos = datosGuardados.filter((elemento) => elemento && elemento.id);
-    if (!Array.isArray(datosGuardados) || datosGuardados.length !== validos.length) {
-        localStorage.setItem('mise', JSON.stringify(validos));
-    }
-
-    if (validos.length === 0) {
+    const data = (Array.isArray(states) ? states : []).filter((elemento) => elemento && elemento.id);
+    if (data.length === 0) {
+        localStorage.removeItem('mise');
         localStorage.removeItem('mise-active');
         syncSizeManager();
         return;
@@ -1744,7 +1742,7 @@ function hidratar() {
     const roomIdMap = {};
     const rebuiltRooms = [];
 
-    validos
+    data
         .filter((elemento) => elemento.type === 'room')
         .forEach((elemento) => {
             const rebuilt = createRoom(
@@ -1756,6 +1754,7 @@ function hidratar() {
                 elemento.currentBtnId,
                 undefined,
                 false,
+                elemento.id,
             );
             if (!rebuilt) return;
             roomIdMap[elemento.id] = rebuilt.id;
@@ -1763,7 +1762,7 @@ function hidratar() {
             applyItemStateDetails(rebuilt, elemento);
         });
 
-    validos
+    data
         .filter((elemento) => elemento.type !== 'room')
         .forEach((elemento) => {
             const roomId = roomIdMap[elemento.roomId] || rebuiltRooms[0]?.id;
@@ -1785,7 +1784,7 @@ function hidratar() {
         });
 
     rebuiltRooms.forEach((room) => {
-        const st = validos.find((elemento) => roomIdMap[elemento.id] === room.id);
+        const st = data.find((elemento) => roomIdMap[elemento.id] === room.id);
         if (st && Number.isFinite(st.viewScale)) {
             roomViews[room.id] = {
                 scale: st.viewScale,
@@ -1805,6 +1804,17 @@ function hidratar() {
     const active = rebuiltRooms.find((room) => room.id === activeId) || rebuiltRooms[rebuiltRooms.length - 1] || null;
     setActiveRoom(active);
     syncSizeManager();
+}
+
+function hidratar() {
+    const datosGuardados = JSON.parse(localStorage.getItem('mise')) || [];
+
+    const validos = datosGuardados.filter((elemento) => elemento && elemento.id);
+    if (!Array.isArray(datosGuardados) || datosGuardados.length !== validos.length) {
+        localStorage.setItem('mise', JSON.stringify(validos));
+    }
+
+    buildSceneFromStates(validos);
 }
 
 
@@ -1870,7 +1880,7 @@ function togglePopup() {
     popup.classList.toggle('hidden');
 }
 
-function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, parentRoom, inheritContents = true) {
+function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, parentRoom, inheritContents = true, forcedId = null) {
     if (almedida === 'cm') {
         alto=alto/100;
     }
@@ -1896,7 +1906,11 @@ function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, parentR
     if (currentBtnId ==='create-room-btn') {
         const lastRoom = getRooms()[getRooms().length - 1];
         roomSeq += 1;
-        room.id=`room${roomSeq}`;
+        if (forcedId) {
+            const forcedNum = Number.parseInt(String(forcedId).replace(/\D/g, ''), 10);
+            if (Number.isFinite(forcedNum)) roomSeq = Math.max(roomSeq, forcedNum);
+        }
+        room.id = forcedId || `room${roomSeq}`;
         targetId = room.id;
         roomOwnerId = room.id;
         room.dataset.roomId = room.id;
@@ -2254,13 +2268,258 @@ function exportPlanText() {
     return lines.join('\n');
 }
 
+function tokenizePlanLine(line) {
+    const tokens = [];
+    const re = /"([^"]*)"|(\S+)/g;
+    let m;
+    while ((m = re.exec(line))) tokens.push(m[1] !== undefined ? m[1] : m[2]);
+    return tokens;
+}
+
+function parsePlanNumber(token, lineNumber) {
+    const raw = String(token ?? '').trim();
+    const m = raw.match(/^(\d+(?:\.\d+)?)\s*(m|cm)?$/i);
+    if (!m) {
+        throw new Error(`Línea ${lineNumber}: número inválido "${raw}" (usa p.ej. 2.5m o 90cm)`);
+    }
+    const value = Number(m[1]);
+    if (!Number.isFinite(value) || value <= 0) {
+        throw new Error(`Línea ${lineNumber}: la dimensión debe ser mayor a 0 (${raw})`);
+    }
+    return (m[2] || 'm').toLowerCase() === 'cm' ? value / 100 : value;
+}
+
+function parsePlanAngle(token, lineNumber) {
+    const deg = Number(token);
+    if (!Number.isFinite(deg)) {
+        throw new Error(`Línea ${lineNumber}: rotación inválida "${token}" (usa grados)`);
+    }
+    return ((deg % 360) + 360) % 360;
+}
+
+function parseAtRot(tokens, lineNumber, startIndex, kind) {
+    let left = null;
+    let top = null;
+    let rot = 0;
+    let i = startIndex;
+    while (i < tokens.length) {
+        if (tokens[i] === 'at') {
+            if (i + 2 >= tokens.length) {
+                throw new Error(`Línea ${lineNumber}: "at" requiere dos coordenadas (at X Y)`);
+            }
+            left = parsePlanNumber(tokens[i + 1], lineNumber);
+            top = parsePlanNumber(tokens[i + 2], lineNumber);
+            i += 3;
+        } else if (tokens[i] === 'rot') {
+            if (i + 1 >= tokens.length) {
+                throw new Error(`Línea ${lineNumber}: "rot" requiere grados`);
+            }
+            rot = parsePlanAngle(tokens[i + 1], lineNumber);
+            i += 2;
+        } else {
+            throw new Error(`Línea ${lineNumber}: token inesperado "${tokens[i]}"`);
+        }
+    }
+    return { left, top, rot };
+}
+
+function parsePlanRoom(tokens, lineNumber, existingRooms, matchedRoomNames, nextId) {
+    if (tokens.length < 5) {
+        throw new Error(`Línea ${lineNumber}: se espera "room NOMBRE ALTOm x ANCHOm"`);
+    }
+    const name = tokens[1];
+    const alto = parsePlanNumber(tokens[2], lineNumber);
+    if (tokens[3] !== 'x') {
+        throw new Error(`Línea ${lineNumber}: se espera "x" separando alto y ancho`);
+    }
+    const ancho = parsePlanNumber(tokens[4], lineNumber);
+    const { left, top, rot } = parseAtRot(tokens, lineNumber, 5);
+
+    const match = existingRooms.find((r) => r.dataset.name === name && !matchedRoomNames.has(name));
+    const id = match ? match.id : `room${nextId()}`;
+    if (match) matchedRoomNames.add(name);
+
+    const px = (m) => Math.round(m * metro);
+    const leftPx = left === null ? Math.max(8, (canvas.clientWidth - px(ancho)) / 2) : px(left);
+    const topPx = top === null ? Math.max(8, (canvas.clientHeight - px(alto)) / 2) : px(top);
+
+    return {
+        state: {
+            id,
+            nombre: name,
+            ancho,
+            alto,
+            unidadAncho: 'm',
+            unidadAlto: 'm',
+            borderRadius: 0,
+            rotacion: rot,
+            edges: '',
+            tolerance: '',
+            left: leftPx,
+            top: topPx,
+            type: 'room',
+            roomId: id,
+            currentBtnId: 'create-room-btn',
+        },
+        widthPx: px(ancho),
+        heightPx: px(alto),
+    };
+}
+
+function parsePlanChild(tokens, lineNumber, current) {
+    const kind = tokens[0];
+    if (kind === 'object' || kind === 'mueble') {
+        if (tokens.length < 5) {
+            throw new Error(`Línea ${lineNumber}: se espera "object NOMBRE ALTOm x ANCHOm"`);
+        }
+        const name = tokens[1];
+        const alto = parsePlanNumber(tokens[2], lineNumber);
+        if (tokens[3] !== 'x') {
+            throw new Error(`Línea ${lineNumber}: se espera "x" separando alto y ancho`);
+        }
+        const ancho = parsePlanNumber(tokens[4], lineNumber);
+        const { left, top, rot } = parseAtRot(tokens, lineNumber, 5);
+
+        const px = (m) => Math.round(m * metro);
+        return {
+            id: `furniture${++Fcounter}`,
+            nombre: name,
+            ancho,
+            alto,
+            unidadAncho: 'm',
+            unidadAlto: 'm',
+            borderRadius: 0,
+            rotacion: rot,
+            edges: '',
+            tolerance: '',
+            left: left === null ? Math.max(0, (current.widthPx - px(ancho)) / 2) : px(left),
+            top: top === null ? Math.max(0, (current.heightPx - px(alto)) / 2) : px(top),
+            type: 'furniture',
+            roomId: current.state.id,
+            currentBtnId: 'add-object-btn',
+        };
+    }
+
+    if (kind === 'window' || kind === 'door') {
+        if (tokens.length < 3) {
+            throw new Error(`Línea ${lineNumber}: se espera "${kind} NOMBRE ANCHOm"`);
+        }
+        const name = tokens[1];
+        const ancho = parsePlanNumber(tokens[2], lineNumber);
+        let edge = 'top';
+        let direction = 'in';
+        let axis = 'sup';
+        let offset = null;
+        let i = 3;
+        while (i < tokens.length) {
+            if (tokens[i] === 'on') {
+                edge = String(tokens[i + 1] || '').toLowerCase();
+                i += 2;
+            } else if (tokens[i] === 'offset') {
+                offset = parsePlanNumber(tokens[i + 1], lineNumber);
+                i += 2;
+            } else if (tokens[i] === 'dir') {
+                direction = String(tokens[i + 1] || '').toLowerCase();
+                i += 2;
+            } else if (tokens[i] === 'axis') {
+                axis = String(tokens[i + 1] || '').toLowerCase();
+                i += 2;
+            } else {
+                throw new Error(`Línea ${lineNumber}: token inesperado "${tokens[i]}"`);
+            }
+        }
+        if (!['top', 'bottom', 'left', 'right'].includes(edge)) {
+            throw new Error(`Línea ${lineNumber}: borde inválido "${edge}" (usa top/bottom/left/right)`);
+        }
+        if (!['in', 'out'].includes(direction)) {
+            throw new Error(`Línea ${lineNumber}: dirección inválida "${direction}" (usa in/out)`);
+        }
+        if (!['sup', 'inf'].includes(axis)) {
+            throw new Error(`Línea ${lineNumber}: eje inválido "${axis}" (usa sup/inf)`);
+        }
+
+        const px = (m) => Math.round(m * metro);
+        const widthPx = px(ancho);
+        if (offset === null) {
+            const wallPx = edge === 'left' || edge === 'right' ? current.heightPx : current.widthPx;
+            offset = Math.round((wallPx - widthPx) / 2);
+        } else {
+            offset = px(offset);
+        }
+
+        return {
+            id: `${kind}${++openingCounter}`,
+            nombre: name,
+            ancho,
+            alto: OPENING_DEPTH / metro,
+            unidadAncho: 'm',
+            unidadAlto: 'm',
+            borderRadius: 0,
+            rotacion: 0,
+            edges: '',
+            tolerance: '',
+            type: kind,
+            roomId: current.state.id,
+            edge,
+            direction,
+            axis,
+            offset,
+            currentBtnId: 'add-object-btn',
+        };
+    }
+
+    throw new Error(`Línea ${lineNumber}: tipo desconocido "${kind}" (usa room, object, window o door)`);
+}
+
+function parsePlanToStates(text) {
+    const lines = String(text || '').split(/\r?\n/);
+    const states = [];
+    const existingRooms = getRooms();
+    const matchedRoomNames = new Set();
+    let roomCounter = existingRooms.reduce((max, r) => {
+        const n = Number.parseInt(String(r.id).replace(/\D/g, ''), 10);
+        return Number.isFinite(n) ? Math.max(max, n) : max;
+    }, 0);
+
+    let current = null;
+
+    lines.forEach((rawLine, index) => {
+        const lineNumber = index + 1;
+        const trimmed = rawLine.trim();
+        if (!trimmed || trimmed.startsWith('#')) return;
+
+        const tokens = tokenizePlanLine(trimmed);
+        if (tokens.length === 0) return;
+
+        if (tokens[0] === 'room') {
+            const parsed = parsePlanRoom(tokens, lineNumber, existingRooms, matchedRoomNames, () => ++roomCounter);
+            states.push(parsed.state);
+            current = parsed;
+            return;
+        }
+
+        if (!current) {
+            throw new Error(`Línea ${lineNumber}: "${tokens[0]}" debe ir dentro de una habitación. Escribe primero la línea "room"`);
+        }
+        states.push(parsePlanChild(tokens, lineNumber, current));
+    });
+
+    return states;
+}
+
+function applyPlanText(text) {
+    const states = parsePlanToStates(text);
+    buildSceneFromStates(states);
+}
+
 const planExportBtn = document.getElementById('plan-export-btn');
 const planPopup = document.createElement('div');
 planPopup.id = 'plan-popup';
 planPopup.className = 'plan-popup hidden';
 planPopup.innerHTML = `
-    <div class="plan-popup-title">Plano — copiar o exportar como respaldo</div>
+    <div class="plan-popup-title">Plano — edítalo y se aplica al canvas</div>
     <textarea id="plan-popup-text" spellcheck="false" aria-label="Texto del plano"></textarea>
+    <div class="plan-popup-error hidden" id="plan-popup-error"></div>
     <div class="plan-popup-actions">
         <button type="button" class="plan-popup-btn" id="plan-popup-download">Exportar .txt</button>
         <button type="button" class="plan-popup-btn" id="plan-popup-copy">Copiar</button>
@@ -2270,6 +2529,35 @@ planPopup.innerHTML = `
 document.body.appendChild(planPopup);
 
 const planPopupText = planPopup.querySelector('#plan-popup-text');
+const planPopupError = planPopup.querySelector('#plan-popup-error');
+
+function showPlanError(message) {
+    planPopupError.textContent = message;
+    planPopupError.classList.remove('hidden');
+}
+
+function hidePlanError() {
+    planPopupError.classList.add('hidden');
+}
+
+function applyPlanNow() {
+    clearTimeout(planApplyTimer);
+    try {
+        applyPlanText(planPopupText.value);
+        hidePlanError();
+    } catch (error) {
+        showPlanError(error.message || String(error));
+    }
+}
+
+let planApplyTimer = null;
+
+planPopupText.addEventListener('input', () => {
+    clearTimeout(planApplyTimer);
+    planApplyTimer = setTimeout(applyPlanNow, 500);
+});
+
+planPopupText.addEventListener('blur', applyPlanNow);
 
 function openPlanPopup() {
     planPopupText.value = exportPlanText();
