@@ -272,7 +272,17 @@
 
 .add-object-btn {
     width:100%;
+    height:32px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:var(--space-row);
+    padding:0 var(--space-group);
     background:#3e3e3f;
+}
+
+.add-object-btn .shortcut-hint {
+    margin-left:0;
 }
 
 .layers-box {
