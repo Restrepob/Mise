@@ -257,17 +257,10 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
 }
 
 .tool-btn.active {
-    background:rgba(113, 113, 113, 0.08);
-    border:1px solid rgba(255,255,255,0.3);
-    color:var(--color-bg);
-}
-
-.tool-btn.active svg {
-    fill:var(--color-bg);
-}
-
-.tool-btn.active .tool-label {
-    color:var(--color-bg);
+    background:rgba(113, 113, 113, 0.25);
+    border:1px solid rgba(255,255,255,0.35);
+    backdrop-filter:blur(6px);
+    -webkit-backdrop-filter:blur(6px);
 }
 
 .tool-btn svg {
