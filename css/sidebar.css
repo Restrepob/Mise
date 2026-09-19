@@ -22,13 +22,8 @@
     overflow-y:auto;
     overflow-x:hidden;
 }
-.size-manager.empty {
+.size-manager.empty > * {
     display:none;
-}
-
-.sidebar-box:has(.size-manager.empty) .object-manager {
-    flex:1 1 auto;
-    height:auto;
 }
 
 .sm-title {
