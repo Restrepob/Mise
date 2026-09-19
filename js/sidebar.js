@@ -527,6 +527,7 @@ function setOpeningPanelFields(item) {
 
 function syncSizeManager() {
     const item = getSelectedObject();
+    document.querySelector('.size-manager').classList.toggle('empty', !item);
     setSizeManagerDisabled(!item, item);
     setOpeningPanelFields(item);
     syncDoorPanel(item);
