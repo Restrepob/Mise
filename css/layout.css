@@ -327,7 +327,6 @@ button {
     color:var(--color-text);
     padding:var(--sp-1) var(--sp-2);
     border-radius:var(--br-reg);
-    line-height:1.2;
 }
 
 button:hover {
@@ -347,8 +346,31 @@ button:hover {
 }
 
 
+.t1 {
+    background:red;
+    width:500px;
+    height:500px;
+    display:grid;
+    place-items:center;
+    transform:scale(2);
+}
+
+.t2 {
+    background:green;
+    width:100px;
+    height:100px;
+}
+
+.t3 {
+    background:yellow;
+    width:100px;
+    height:100px;
+}
+
+
 .popup-menu-box {
     position:absolute;
+    background:(--color-surface);
     z-index:9999999;
 }
 
