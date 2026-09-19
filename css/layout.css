@@ -30,11 +30,6 @@
     --sp-7:44px;
     --sp-8:56px;
 
-    /*JERARQUIA DE SPACING (sidebar)*/
-    --space-zone:var(--sp-5);   /* separa zonas mayores: room / size / object */
-    --space-group:var(--sp-3); /* separa un grupo de propiedades del siguiente */
-    --space-row:var(--sp-2);   /* filas relacionadas dentro de un grupo */
-    --space-tight:var(--sp-1); /* etiqueta->control, botones de unidad */
 
     /*BORDER-RADIUS*/
     --br-sm:2px;
@@ -145,7 +140,8 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
 .content-box, .sidebar-box  {
     width:100%;
     min-height:0;
-    border-radius:var(--br-reg);
+    border-radius:var(--br-xl);
+    corner-shape:squircle;
 }
 
 .content-box {
@@ -258,14 +254,16 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
 }
 
 .tool-btn:hover {
-    background:var(--color-elevated);
+    background:#1c1b1b9c;
+    corner-shape:squricle;
+    border-radius:50px;
 }
 
 .tool-btn.active {
-    background:rgba(113, 113, 113, 0.25);
-    border:1px solid rgba(255,255,255,0.35);
-    backdrop-filter:blur(6px);
-    -webkit-backdrop-filter:blur(6px);
+    background:#7979796a;
+    border:1px solid rgba(255,255,255,0.08);
+    corner-shape:squricle;
+    border-radius:50px;
 }
 
 .tool-btn svg {
@@ -400,6 +398,7 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
     min-height:0;
     overflow-y:auto;
     overflow-x:hidden;
+    border:1px solid rgba(88, 88, 88, 0.389);
 }
 
 button {
