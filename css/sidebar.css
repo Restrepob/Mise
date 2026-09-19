@@ -314,22 +314,6 @@
 
 .layer-div.layer-opening {
     opacity:0.75;
-    min-height:24px;
-}
-
-.layer-div.layer-opening .layer-content {
-    font-size:var(--fs-caption);
-    padding:2px var(--sp-3);
-}
-
-.layer-div.layer-opening .eye-div,
-.layer-div.layer-opening .options-layer {
-    padding:0 var(--sp-1);
-}
-
-.layer-div.layer-opening svg {
-    height:16px;
-    width:16px;
 }
 
 .layer-div.is-hidden {
