@@ -257,7 +257,7 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
 }
 
 .tool-btn.active {
-    background:rgba(255, 255, 255, 0.14);
+    background:rgba(113, 113, 113, 0.08);
     border:1px solid rgba(255,255,255,0.3);
     color:var(--color-bg);
 }
