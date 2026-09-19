@@ -30,6 +30,11 @@
     --sp-7:44px;
     --sp-8:56px;
 
+    /*JERARQUIA DE SPACING (sidebar)*/
+    --space-zone:var(--sp-5);   /* separa zonas mayores: room / size / object */
+    --space-group:var(--sp-3); /* separa un grupo de propiedades del siguiente */
+    --space-row:var(--sp-2);   /* filas relacionadas dentro de un grupo */
+    --space-tight:var(--sp-1); /* etiqueta->control, botones de unidad */
 
     /*BORDER-RADIUS*/
     --br-sm:2px;

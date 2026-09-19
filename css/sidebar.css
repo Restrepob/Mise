@@ -11,14 +11,14 @@
     min-height:132px;
     display:flex;
     flex-direction:column;
-    gap:var(--sp-3)
+    gap:var(--space-group)
 }
 .size-manager {
     height:57%;
     min-height:220px;
     display:flex;
     flex-direction:column;
-    gap:var(--sp-1);
+    gap:var(--space-tight);
     overflow-y:auto;
     overflow-x:hidden;
 }
@@ -29,6 +29,10 @@
 .sm-title {
     margin-bottom:0;
 }
+
+.size-manager > .caption:not(:first-child) {
+    margin-top:var(--space-group);
+}
 .size-manager input {
     flex:0 1 auto;
     min-height:24px;
@@ -37,7 +41,7 @@
     font-size:var(--fs-caption);
 }
 .size-manager .question-box {
-    gap:var(--sp-1);
+    gap:var(--space-tight);
 }
 .size-manager .question-box input {
     flex:1 1 auto;
@@ -56,8 +60,8 @@
 .edge-manager {
     display:none;
     flex-direction:column;
-    gap:var(--sp-1);
-    padding-top:var(--sp-6);
+    gap:var(--space-tight);
+    padding-top:var(--space-zone);
 }
 
 .edge-toggler {
@@ -138,10 +142,13 @@
 .tolerance-manager {
     display:none;
     flex-direction:column;
-    gap:var(--sp-1);
-    padding-top:var(--sp-6);
-    padding-bottom:var(--sp-6);
+    gap:var(--space-tight);
+    padding-top:var(--space-zone);
+    padding-bottom:var(--space-group);
+}
 
+#door-props {
+    padding-top:var(--space-group);
 }
 
 .tolerance-toggler {
@@ -260,7 +267,7 @@
     min-height:110px;
     display:flex;
     flex-direction:column;
-    gap:var(--sp-3)
+    gap:var(--space-group)
 }
 
 .add-object-btn {
