@@ -238,7 +238,8 @@
     text-align:center;
     background:var(--color-surface);
     border:1px solid transparent;
-    border-radius:3px;
+    border-radius:var(--br-lg);
+    corner-shape:squircle;
     pointer-events:auto;
     color-scheme:dark;
 }
