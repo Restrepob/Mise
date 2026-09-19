@@ -2302,13 +2302,15 @@ function copyPlanText() {
     }
 }
 
-planExportBtn.addEventListener('click', () => {
-    if (planPopup.classList.contains('hidden')) {
-        openPlanPopup();
-    } else {
-        closePlanPopup();
-    }
-});
+if (planExportBtn) {
+    planExportBtn.addEventListener('click', () => {
+        if (planPopup.classList.contains('hidden')) {
+            openPlanPopup();
+        } else {
+            closePlanPopup();
+        }
+    });
+}
 
 planPopup.querySelector('#plan-popup-copy').addEventListener('click', copyPlanText);
 
