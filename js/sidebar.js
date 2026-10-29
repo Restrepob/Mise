@@ -819,35 +819,68 @@ function pointerToScene(event) {
     };
 }
 
-function collectTargets(parent, item) {
-    const parentWidth = parseFloat(parent.style.width) || parent.offsetWidth;
-    const parentHeight = parseFloat(parent.style.height) || parent.offsetHeight;
-    const xs = [0, parentWidth];
-    const ys = [0, parentHeight];
+function getItemBoxSize(item) {
+    const width = parseFloat(item.style.width) || item.offsetWidth || 0;
+    const height = parseFloat(item.style.height) || item.offsetHeight || 0;
+    const rotation = isOpening(item) ? 0 : normalizeDeg(getRotation(item));
+
+    if (!rotation) return { width, height };
+
+    const radians = rotation * Math.PI / 180;
+    const cos = Math.abs(Math.cos(radians));
+    const sin = Math.abs(Math.sin(radians));
+    return {
+        width: width * cos + height * sin,
+        height: width * sin + height * cos,
+    };
+}
+
+function getParentInnerSize(parent) {
+    return {
+        width: parent.clientWidth || parseFloat(parent.style.width) || parent.offsetWidth || 0,
+        height: parent.clientHeight || parseFloat(parent.style.height) || parent.offsetHeight || 0,
+    };
+}
+
+function uniqueSnapTargets(values) {
+    return [...new Set(values.map((value) => Math.round(value * 1000) / 1000))]
+        .sort((a, b) => a - b);
+}
+
+function buildGridTargets(length) {
+    const targets = [];
+    for (let position = 0; position <= length + 0.001; position += GRID_STEP) {
+        targets.push(position);
+    }
+    return targets;
+}
+
+function collectSnapTargets(parent, item) {
+    const parentSize = getParentInnerSize(parent);
+    const alignXs = [0, parentSize.width];
+    const alignYs = [0, parentSize.height];
 
     parent.querySelectorAll(':scope > .object').forEach((sibling) => {
         if (sibling === item || sibling.getClientRects().length === 0) return;
 
-        const width = parseFloat(sibling.style.width) || sibling.offsetWidth;
-        const height = parseFloat(sibling.style.height) || sibling.offsetHeight;
-        xs.push(sibling.offsetLeft - width / 2, sibling.offsetLeft + width / 2);
-        ys.push(sibling.offsetTop - height / 2, sibling.offsetTop + height / 2);
+        const { width, height } = getItemBoxSize(sibling);
+        alignXs.push(sibling.offsetLeft - width / 2, sibling.offsetLeft + width / 2);
+        alignYs.push(sibling.offsetTop - height / 2, sibling.offsetTop + height / 2);
     });
 
-    for (let position = 0; position <= parentWidth; position += GRID_STEP) {
-        xs.push(position);
-    }
-    for (let position = 0; position <= parentHeight; position += GRID_STEP) {
-        ys.push(position);
-    }
-
     return {
-        xs: [...new Set(xs)],
-        ys: [...new Set(ys)],
+        x: {
+            align: uniqueSnapTargets(alignXs),
+            grid: uniqueSnapTargets(buildGridTargets(parentSize.width)),
+        },
+        y: {
+            align: uniqueSnapTargets(alignYs),
+            grid: uniqueSnapTargets(buildGridTargets(parentSize.height)),
+        },
     };
 }
 
-function pickSnap(center, size, candidates, threshold) {
+function findNearestSnap(center, size, candidates, threshold) {
     const edges = [center - size / 2, center + size / 2];
     let winner = null;
 
@@ -864,6 +897,13 @@ function pickSnap(center, size, candidates, threshold) {
     return winner;
 }
 
+function pickSnap(center, size, targets, threshold) {
+    // Los bordes de otros objetos y las paredes mandan sobre la grid:
+    // así el snap nunca mete un objeto unos pocos píxeles dentro de otro.
+    return findNearestSnap(center, size, targets.align, threshold)
+        || findNearestSnap(center, size, targets.grid, threshold);
+}
+
 function ensureGuidesLayer() {
     return guidesLayer;
 }
@@ -872,8 +912,10 @@ function drawSnapGuide(axis, pos, parent) {
     const guide = document.createElement('div');
     const parentRect = parent.getBoundingClientRect();
     const canvasRect = canvas.getBoundingClientRect();
-    const screenPos = (axis === 'x' ? parentRect.left - canvasRect.left : parentRect.top - canvasRect.top)
-        + pos * viewState.scale;
+    const scale = viewState.scale;
+    const originX = parentRect.left - canvasRect.left + parent.clientLeft * scale;
+    const originY = parentRect.top - canvasRect.top + parent.clientTop * scale;
+    const screenPos = (axis === 'x' ? originX : originY) + pos * scale;
 
     guide.className = `snap-guide ${axis}`;
     if (axis === 'x') {
@@ -890,11 +932,10 @@ function clearSnapGuides() {
 
 function snapObject(item, left, top, parent) {
     const threshold = SNAP_SENS / viewState.scale;
-    const targets = collectTargets(parent, item);
-    const width = parseFloat(item.style.width) || item.offsetWidth;
-    const height = parseFloat(item.style.height) || item.offsetHeight;
-    const xSnap = pickSnap(left, width, targets.xs, threshold);
-    const ySnap = pickSnap(top, height, targets.ys, threshold);
+    const targets = collectSnapTargets(parent, item);
+    const { width, height } = getItemBoxSize(item);
+    const xSnap = pickSnap(left, width, targets.x, threshold);
+    const ySnap = pickSnap(top, height, targets.y, threshold);
 
     clearSnapGuides();
     if (xSnap) drawSnapGuide('x', xSnap.pos, parent);
