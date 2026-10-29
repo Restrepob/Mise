@@ -90,6 +90,7 @@ function getNextColor() {
 
 const objectMenuOptions=[
     {label:'Renombrar', action:'rename'},
+    {label:'Duplicar', action:'duplicate'},
     {label:'Ocultar', action:'hide'},
     {label:'Eliminar', action:'delete'}
 ];
@@ -331,64 +332,218 @@ function focusLayerRow(div) {
     selectLayer(div);
 }
 
+function getDuplicateName(name) {
+    const base = String(name || '').trim() || 'Objeto';
+    return `${base} copia`;
+}
+
+function cloneFurnitureItem(sourceItem, targetRoom, options = {}) {
+    if (!sourceItem || !targetRoom) return null;
+
+    const name = options.name ?? sourceItem.dataset.name ?? '';
+    const item = document.createElement('div');
+    item.classList.add('object', 'furniture');
+    item.id = `furniture${++Fcounter}`;
+    item.dataset.type = 'furniture';
+    item.dataset.name = name;
+    item.dataset.roomId = targetRoom.id;
+    item.dataset.rotation = sourceItem.dataset.rotation || '0';
+    if (sourceItem.dataset.edges) item.dataset.edges = sourceItem.dataset.edges;
+    if (sourceItem.dataset.tolerance) item.dataset.tolerance = sourceItem.dataset.tolerance;
+    item.style.width = sourceItem.style.width;
+    item.style.height = sourceItem.style.height;
+    item.style.left = options.left ?? sourceItem.style.left;
+    item.style.top = options.top ?? sourceItem.style.top;
+    item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
+    item.style.borderColor = sourceItem.style.borderColor || 'transparent';
+    item.style.borderRadius = sourceItem.style.borderRadius || '';
+    setItemName(item, name);
+    targetRoom.appendChild(item);
+    if (item.dataset.edges) renderEdges(item);
+    if (item.dataset.tolerance) renderTolerance(item);
+    applyRotation(item, Number(item.dataset.rotation) || 0);
+    createLayer(
+        (parseFloat(item.style.width) || 0) / metro,
+        (parseFloat(item.style.height) || 0) / metro,
+        'm', 'm', name, 'add-object-btn', item.id, targetRoom.id, objectMenuOptions, 'furniture',
+    );
+    guardarCambios(item);
+    return item;
+}
+
+function cloneOpeningItem(sourceItem, targetRoom, options = {}) {
+    if (!sourceItem || !targetRoom) return null;
+
+    const type = sourceItem.dataset.type;
+    const name = options.name ?? sourceItem.dataset.name ?? '';
+    const item = document.createElement('div');
+    item.classList.add('object', 'opening', type);
+    item.id = `${type}${++openingCounter}`;
+    item.dataset.type = type;
+    item.dataset.name = name;
+    item.dataset.roomId = targetRoom.id;
+    item.dataset.edge = sourceItem.dataset.edge || 'top';
+    item.dataset.direction = sourceItem.dataset.direction || 'in';
+    item.dataset.axis = sourceItem.dataset.axis || 'sup';
+    item.dataset.offset = options.offset != null ? String(options.offset) : (sourceItem.dataset.offset || '0');
+    item.dataset.openingWidth = String(getOpeningWidth(sourceItem));
+    targetRoom.appendChild(item);
+    placeOpening(item);
+    createLayer(
+        getOpeningWidth(item), OPENING_DEPTH,
+        'm', 'm', name, 'add-object-btn', item.id, targetRoom.id, objectMenuOptions, type,
+    );
+    guardarCambios(item);
+    return item;
+}
+
 function cloneRoomContents(sourceRoom, targetRoom) {
     if (!sourceRoom || !targetRoom) return;
     [...sourceRoom.children].forEach((sourceItem) => {
-        const type = sourceItem.dataset.type;
-        const name = sourceItem.dataset.name || '';
-
-        if (type === 'furniture') {
-            const item = document.createElement('div');
-            item.classList.add('object', 'furniture');
-            item.id = `furniture${++Fcounter}`;
-            item.dataset.type = 'furniture';
-            item.dataset.name = name;
-            item.dataset.roomId = targetRoom.id;
-            item.dataset.rotation = sourceItem.dataset.rotation || '0';
-            if (sourceItem.dataset.edges) item.dataset.edges = sourceItem.dataset.edges;
-            if (sourceItem.dataset.tolerance) item.dataset.tolerance = sourceItem.dataset.tolerance;
-            item.style.width = sourceItem.style.width;
-            item.style.height = sourceItem.style.height;
-            item.style.left = sourceItem.style.left;
-            item.style.top = sourceItem.style.top;
-            item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
-            item.style.borderColor = sourceItem.style.borderColor || 'transparent';
-            item.style.borderRadius = sourceItem.style.borderRadius || '';
-            setItemName(item, name);
-            targetRoom.appendChild(item);
-            if (item.dataset.edges) renderEdges(item);
-            if (item.dataset.tolerance) renderTolerance(item);
-            applyRotation(item, Number(item.dataset.rotation) || 0);
-            createLayer(
-                (parseFloat(item.style.width) || 0) / metro,
-                (parseFloat(item.style.height) || 0) / metro,
-                'm', 'm', name, 'add-object-btn', item.id, targetRoom.id, objectMenuOptions, 'furniture',
-            );
-            guardarCambios(item);
-            return;
-        }
-
-        if (type === 'window' || type === 'door') {
-            const item = document.createElement('div');
-            item.classList.add('object', 'opening', type);
-            item.id = `${type}${++openingCounter}`;
-            item.dataset.type = type;
-            item.dataset.name = name;
-            item.dataset.roomId = targetRoom.id;
-            item.dataset.edge = sourceItem.dataset.edge || 'top';
-            item.dataset.direction = sourceItem.dataset.direction || 'in';
-            item.dataset.axis = sourceItem.dataset.axis || 'sup';
-            item.dataset.offset = sourceItem.dataset.offset || '0';
-            item.dataset.openingWidth = sourceItem.dataset.openingWidth;
-            targetRoom.appendChild(item);
-            placeOpening(item);
-            createLayer(
-                getOpeningWidth(item), OPENING_DEPTH,
-                'm', 'm', name, 'add-object-btn', item.id, targetRoom.id, objectMenuOptions, type,
-            );
-            guardarCambios(item);
+        if (sourceItem.dataset.type === 'furniture') {
+            cloneFurnitureItem(sourceItem, targetRoom);
+        } else if (isOpening(sourceItem)) {
+            cloneOpeningItem(sourceItem, targetRoom);
         }
     });
+}
+
+function getDuplicatedFurniturePosition(item) {
+    const room = item.parentElement;
+    const original = { left: item.offsetLeft, top: item.offsetTop };
+    if (!room) return original;
+
+    const roomSize = getParentInnerSize(room);
+    const { width, height } = getItemBoxSize(item);
+    const clamp = (value, size, max) => Math.min(
+        Math.max(value, size / 2),
+        Math.max(size / 2, max - size / 2),
+    );
+    const candidates = [
+        [original.left + GRID_STEP, original.top + GRID_STEP],
+        [original.left - GRID_STEP, original.top - GRID_STEP],
+        [original.left + GRID_STEP, original.top - GRID_STEP],
+        [original.left - GRID_STEP, original.top + GRID_STEP],
+    ];
+
+    for (const [candidateLeft, candidateTop] of candidates) {
+        const left = clamp(candidateLeft, width, roomSize.width);
+        const top = clamp(candidateTop, height, roomSize.height);
+        if (Math.abs(left - original.left) > 0.01 || Math.abs(top - original.top) > 0.01) {
+            return { left, top };
+        }
+    }
+
+    return original;
+}
+
+function getDuplicatedOpeningOffset(item) {
+    const width = getOpeningWidth(item);
+    const original = Number(item.dataset.offset) || 0;
+    const fitsWithoutOverlap = (offset) => offset >= original + width - 0.01
+        || offset + width <= original + 0.01;
+    const candidates = [
+        original + width,
+        original - width,
+        original + GRID_STEP,
+        original - GRID_STEP,
+    ];
+
+    for (const candidate of candidates) {
+        const offset = clampOpeningOffset(item, candidate, width);
+        if (fitsWithoutOverlap(offset)) return offset;
+    }
+
+    // Si no cabe una apertura completa a ningún lado, elegimos la posición
+    // que más se aleje de la original para que la copia siga siendo visible.
+    return [original + width, original - width]
+        .map((candidate) => clampOpeningOffset(item, candidate, width))
+        .reduce((best, offset) => (
+            Math.abs(offset - original) > Math.abs(best - original) ? offset : best
+        ));
+}
+
+function selectDuplicate(item) {
+    const room = item.closest('.room');
+    if (room && room.id !== activeRoomId) setActiveRoom(room);
+
+    const layer = document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+    if (layer) selectLayer(layer);
+}
+
+function duplicateRoom(sourceRoom) {
+    if (!sourceRoom) return null;
+
+    const width = (parseFloat(sourceRoom.style.width) || sourceRoom.offsetWidth) / metro;
+    const height = (parseFloat(sourceRoom.style.height) || sourceRoom.offsetHeight) / metro;
+    const copy = createRoom(
+        width,
+        height,
+        'm',
+        'm',
+        getDuplicateName(sourceRoom.dataset.name),
+        'create-room-btn',
+        undefined,
+        false,
+    );
+    if (!copy) return null;
+
+    copy.style.borderRadius = sourceRoom.style.borderRadius || '';
+    copy.style.left = sourceRoom.style.left;
+    copy.style.top = sourceRoom.style.top;
+    applyRotation(copy, getRotation(sourceRoom));
+    cloneRoomContents(sourceRoom, copy);
+
+    const sourceView = roomViews[sourceRoom.id];
+    if (sourceView) roomViews[copy.id] = { ...sourceView };
+
+    guardarCambios(copy);
+    setActiveRoom(copy, { select: true });
+    return copy;
+}
+
+function duplicateFurniture(sourceItem) {
+    const room = sourceItem.parentElement;
+    if (!room) return null;
+
+    const position = getDuplicatedFurniturePosition(sourceItem);
+    const copy = cloneFurnitureItem(sourceItem, room, {
+        name: getDuplicateName(sourceItem.dataset.name),
+        left: `${position.left}px`,
+        top: `${position.top}px`,
+    });
+    if (!copy) return null;
+
+    selectDuplicate(copy);
+    return copy;
+}
+
+function duplicateOpening(sourceItem) {
+    const room = sourceItem.parentElement;
+    if (!room) return null;
+
+    const copy = cloneOpeningItem(sourceItem, room, {
+        name: getDuplicateName(sourceItem.dataset.name),
+        offset: getDuplicatedOpeningOffset(sourceItem),
+    });
+    if (!copy) return null;
+
+    selectDuplicate(copy);
+    return copy;
+}
+
+function duplicateLayer(targetElement) {
+    const context = getLayerContext(targetElement);
+    if (!context || !context.sceneTarget) return;
+
+    const source = context.sceneTarget;
+    if (source.dataset.type === 'room') {
+        duplicateRoom(source);
+    } else if (isOpening(source)) {
+        duplicateOpening(source);
+    } else {
+        duplicateFurniture(source);
+    }
 }
 
 function getRotation(item) {
@@ -1871,7 +2026,9 @@ function hidratar() {
     });
 
     const activeId = localStorage.getItem('mise-active');
-    const active = rebuiltRooms.find((room) => room.id === activeId) || rebuiltRooms[rebuiltRooms.length - 1] || null;
+    const active = rebuiltRooms.find((room) => room.id === (roomIdMap[activeId] || activeId))
+        || rebuiltRooms[rebuiltRooms.length - 1]
+        || null;
     setActiveRoom(active);
     syncSizeManager();
 }
@@ -2586,6 +2743,10 @@ function scrollLayerIntoView(layerElement) {
 function handleMenuAction(action, targetElement) {
     if (action === 'rename') {
         renameLayer(targetElement);
+    }
+
+    if (action === 'duplicate') {
+        duplicateLayer(targetElement);
     }
 
     if (action === 'hide') {
