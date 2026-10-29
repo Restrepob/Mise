@@ -346,6 +346,10 @@
     opacity:0.55;
 }
 
+.layer-div.is-out-of-room {
+    display:none;
+}
+
 .layer-div.is-hidden .layer-content {
     text-decoration:line-through;
 }

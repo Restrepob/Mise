@@ -232,6 +232,14 @@ function syncRoomLayerActive() {
     });
 }
 
+function syncObjectLayers() {
+    objectLayers.querySelectorAll('.layer-div').forEach((row) => {
+        const belongsToActiveRoom = !!activeRoomId && row.dataset.roomId === activeRoomId;
+        row.classList.toggle('is-out-of-room', !belongsToActiveRoom);
+        row.setAttribute('aria-hidden', String(!belongsToActiveRoom));
+    });
+}
+
 function syncRoomSwitcher() {
     const nameEl = document.getElementById('room-switcher-name');
     const prev = document.getElementById('room-prev');
@@ -258,6 +266,7 @@ function setActiveRoom(room, options = {}) {
         getRooms().forEach((r) => { r.style.display = 'none'; });
         localStorage.removeItem('mise-active');
         syncRoomLayerActive();
+        syncObjectLayers();
         syncRoomSwitcher();
         syncSizeManager();
         return;
@@ -292,6 +301,7 @@ function setActiveRoom(room, options = {}) {
     });
 
     syncRoomLayerActive();
+    syncObjectLayers();
     syncRoomSwitcher();
     syncSizeManager();
 
@@ -2104,6 +2114,8 @@ function createLayer(
             }
         }
     }
+
+    syncObjectLayers();
 
     return div;
 }
