@@ -93,7 +93,9 @@
                     <button class="add-object-btn" id="create-room-btn">Create a Room</button>
                     <div class="layer-box" id="room-layer-box"></div>
                 </div>
-                    
+
+                <div class="sidebar-resizer" data-before="room-manager" data-after="size-manager" data-before-size="rooms" data-after-size="size" role="separator" aria-orientation="horizontal" aria-label="Redimensionar capas de rooms" tabindex="0"></div>
+
                 <div class="size-manager">
                     <div class="text-popup caption">Nombre</div>
                     <input type="text" id="sm-nombre">
@@ -162,6 +164,8 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="sidebar-resizer" data-before="size-manager" data-after="object-manager" data-before-size="size" data-after-size="objects" role="separator" aria-orientation="horizontal" aria-label="Redimensionar configuración de objetos" tabindex="0"></div>
 
                 <div class="object-manager">
                     <button class="add-object-btn" id="add-object-btn">
