@@ -7,8 +7,7 @@
     border:1px solid transparent;
 }
 
-.rotate-handle,
-.rotate-handle-90 {
+.rotate-handle {
     position:absolute;
     left:50%;
     top:-18px;
@@ -25,29 +24,14 @@
     pointer-events:auto;
     transform:translate(-50%, -50%);
     z-index:20;
-}
-
-.rotate-handle {
     cursor:grab;
-}
-
-.rotate-handle-90 {
-    left:calc(50% + 32px);
-    cursor:pointer;
-    border-color:#ffb74d;
-    color:#ffb74d;
 }
 
 .rotate-handle:active {
     cursor:grabbing;
 }
 
-.rotate-handle-90:active {
-    cursor:pointer;
-}
-
-.rotate-handle svg,
-.rotate-handle-90 svg {
+.rotate-handle svg {
     width:16px;
     height:16px;
 }

@@ -583,7 +583,7 @@ function applyRotation(item, deg) {
     const rotation = normalizeDeg(deg);
     item.dataset.rotation = String(rotation);
     item.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-    item.querySelectorAll(':scope > .rotate-handle, :scope > .rotate-handle-90').forEach((handle) => {
+    item.querySelectorAll(':scope > .rotate-handle').forEach((handle) => {
         handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg)`;
     });
     const nameEl = item.querySelector(':scope > .balance-name');
@@ -606,14 +606,10 @@ const ROTATE_HANDLE_SVG_FREE = `
         <path d="M204-318q-22-38-33-78t-11-82q0-134 93-228t227-94h7l-64-64 56-56 160 160-160 160-56-56 64-64h-7q-100 0-170 70.5T240-478q0 26 6 51t18 49l-60 60ZM481-40 321-200l160-160 56 56-64 64h7q100 0 170-70.5T720-482q0-26-6-51t-18-49l60-60q22 38 33 78t11 82q0 134-93 228t-227 94h-7l64 64-56 56Z"/>
     </svg>
 `;
-const ROTATE_HANDLE_SVG_QUARTER = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true">
-        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
-    </svg>
-`;
+const ROTATE_DRAG_THRESHOLD = 5;
 
 function syncRotationHandle(item) {
-    document.querySelectorAll('.rotate-handle, .rotate-handle-90').forEach((handle) => {
+    document.querySelectorAll('.rotate-handle').forEach((handle) => {
         if (!item || handle.parentElement !== item) handle.remove();
     });
 
@@ -624,38 +620,20 @@ function syncRotationHandle(item) {
         handle = document.createElement('button');
         handle.type = 'button';
         handle.className = 'rotate-handle';
-        handle.setAttribute('aria-label', 'Girar objeto');
+        handle.setAttribute('aria-label', 'Girar objeto: arrastra para rotar libre, clic izquierdo/derecho para girar 90 grados');
         handle.innerHTML = ROTATE_HANDLE_SVG_FREE;
         handle.addEventListener('pointerdown', startRotationDrag);
+        handle.addEventListener('pointerup', finishRotationClick);
+        handle.addEventListener('contextmenu', (event) => event.preventDefault());
         item.appendChild(handle);
     }
 
-    let quarterHandle = item.querySelector(':scope > .rotate-handle-90');
-    if (!quarterHandle) {
-        quarterHandle = document.createElement('button');
-        quarterHandle.type = 'button';
-        quarterHandle.className = 'rotate-handle-90';
-        quarterHandle.setAttribute('aria-label', 'Girar 90 grados');
-        quarterHandle.innerHTML = ROTATE_HANDLE_SVG_QUARTER;
-        quarterHandle.addEventListener('pointerdown', (event) => {
-            event.stopPropagation();
-            event.preventDefault();
-        });
-        quarterHandle.addEventListener('click', (event) => {
-            event.stopPropagation();
-            const item = event.currentTarget.parentElement;
-            applyRotation(item, getRotation(item) + 90);
-            guardarCambios(item);
-        });
-        item.appendChild(quarterHandle);
-    }
-
-    const counterRotation = `translate(-50%, -50%) rotate(${-getRotation(item)}deg)`;
-    handle.style.transform = counterRotation;
-    quarterHandle.style.transform = counterRotation;
+    handle.style.transform = `translate(-50%, -50%) rotate(${-getRotation(item)}deg)`;
 }
 
 function startRotationDrag(event) {
+    if (event.button !== 0 && event.button !== 2) return;
+
     event.stopPropagation();
     event.preventDefault();
     const item = event.currentTarget.parentElement;
@@ -663,11 +641,24 @@ function startRotationDrag(event) {
     const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     toolState.rotateDrag = {
         item,
+        pointerId: event.pointerId,
         center,
+        startX: event.clientX,
+        startY: event.clientY,
         startAngle: Math.atan2(event.clientY - center.y, event.clientX - center.x),
         base: getRotation(item),
+        button: event.button,
+        dragging: false,
     };
     event.currentTarget.setPointerCapture(event.pointerId);
+}
+
+function finishRotationClick(event) {
+    const drag = toolState.rotateDrag;
+    if (!drag || drag.pointerId !== event.pointerId || drag.dragging) return;
+
+    const turn = drag.button === 2 ? 90 : -90;
+    applyRotation(drag.item, getRotation(drag.item) + turn);
 }
 
 function setSizeManagerDisabled(disabled, item = null) {
@@ -956,6 +947,22 @@ document.addEventListener('keydown', (event) => {
         event.preventDefault();
         switchActiveRoom(event.key === 'ArrowRight' ? 1 : -1);
     }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.target.matches('input, textarea, select, [contenteditable]')) return;
+    if (event.key.toLowerCase() !== 'r') return;
+
+    const withCtrl = event.ctrlKey || event.metaKey;
+    const withShift = event.shiftKey;
+    if (event.altKey || withCtrl === withShift) return;
+
+    const item = getSelectedObject();
+    if (!item || isOpening(item)) return;
+
+    event.preventDefault();
+    applyRotation(item, getRotation(item) + (withShift ? 90 : -90));
+    guardarCambios(item);
 });
 
 function clampScale(scale) {
@@ -1797,10 +1804,21 @@ canvas.addEventListener('pointermove', (event) => {
     }
 
     if (toolState.rotateDrag) {
-        const { item, center, startAngle, base } = toolState.rotateDrag;
-        const angle = Math.atan2(event.clientY - center.y, event.clientX - center.x);
-        const degrees = (angle - startAngle) * 180 / Math.PI;
-        applyRotation(item, snapRotation(base + degrees));
+        const drag = toolState.rotateDrag;
+        const angle = Math.atan2(event.clientY - drag.center.y, event.clientX - drag.center.x);
+
+        // Solo empezamos a rotar cuando el puntero se aleja lo suficiente del
+        // punto de inicio, para que un clic con temblor no rote por accidente.
+        if (!drag.dragging) {
+            const distance = Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY);
+            if (distance < ROTATE_DRAG_THRESHOLD) return;
+            drag.dragging = true;
+            drag.startAngle = angle;
+            drag.base = getRotation(drag.item);
+        }
+
+        const degrees = (angle - drag.startAngle) * 180 / Math.PI;
+        applyRotation(drag.item, snapRotation(drag.base + degrees));
         return;
     }
 
