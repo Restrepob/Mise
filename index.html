@@ -48,6 +48,12 @@
                             </svg>
                             <span class="tool-label">H</span>
                         </button>
+                        <button class="tool-btn" data-tool="measure" data-shortcut="R" aria-label="Medir distancias">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="#e3e3e3" aria-hidden="true">
+                                <path d="M4,18q-0.82,0-1.41-0.59T2,16V8Q2,7.18 2.59,6.59T4,6H20q0.83,0 1.41,0.59Q22,7.18 22,8v8q0,0.82-0.59,1.41T20,18H4Zm0-2H20V8H17v4H15V8H13v4H11V8H9v4H7V8H4v8Zm3-4H9H7Zm4,0h2H11Zm4,0h2H15Zm-3,0Z"/>
+                            </svg>
+                            <span class="tool-label">R</span>
+                        </button>
                     </div>
                     <div class="room-switcher">
                         <svg class="room-switcher-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" aria-hidden="true">
@@ -66,6 +72,18 @@
                                 <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
                             </svg>
                         </button>
+                    </div>
+                </div>
+
+                <div class="measure-notch" id="measure-notch" role="status" aria-live="polite">
+                    <div class="measure-notch-group">
+                        <span class="measure-notch-label">Distancia</span>
+                        <span class="measure-notch-value" id="measure-distance-value">—</span>
+                    </div>
+                    <span class="measure-notch-divider" aria-hidden="true"></span>
+                    <div class="measure-notch-group">
+                        <span class="measure-notch-label">Área</span>
+                        <span class="measure-notch-value" id="measure-area-value">—</span>
                     </div>
                 </div>
             </div>
