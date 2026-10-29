@@ -861,7 +861,9 @@ function collectSnapTargets(parent, item) {
     const alignYs = [0, parentSize.height];
 
     parent.querySelectorAll(':scope > .object').forEach((sibling) => {
-        if (sibling === item || sibling.getClientRects().length === 0) return;
+        // Las puertas/ventanas viven sobre la pared: no deben competir como
+        // objetivo de snap. El objeto debe alinearse con la pared real.
+        if (sibling === item || isOpening(sibling) || sibling.getClientRects().length === 0) return;
 
         const { width, height } = getItemBoxSize(sibling);
         alignXs.push(sibling.offsetLeft - width / 2, sibling.offsetLeft + width / 2);
@@ -957,9 +959,10 @@ function getOpeningWidth(item) {
 
 function getOpeningWallLength(item) {
     const room = item.parentElement;
+    const roomSize = getParentInnerSize(room);
     return item.dataset.edge === 'right' || item.dataset.edge === 'left'
-        ? parseFloat(room.style.height) || room.offsetHeight
-        : parseFloat(room.style.width) || room.offsetWidth;
+        ? roomSize.height
+        : roomSize.width;
 }
 
 function clampOpeningOffset(item, offset, width = getOpeningWidth(item)) {
@@ -973,8 +976,10 @@ function snapOpeningOffset(offset) {
 
 function placeOpening(item) {
     const room = item.parentElement;
-    const roomWidth = parseFloat(room.style.width) || room.offsetWidth;
-    const roomHeight = parseFloat(room.style.height) || room.offsetHeight;
+    // Los hijos se posicionan respecto al padding-box de la room, no al borde externo.
+    const roomSize = getParentInnerSize(room);
+    const roomWidth = roomSize.width;
+    const roomHeight = roomSize.height;
     const maxWidth = Math.max(OPENING_MIN, getOpeningWallLength(item) - MARGEN_ESQUINA * 2);
     const width = Math.min(getOpeningWidth(item), maxWidth);
     const offset = clampOpeningOffset(item, Number(item.dataset.offset) || 0, width);
@@ -1011,8 +1016,9 @@ function drawDoorArc(item) {
     if (!item || item.dataset.type !== 'door' || !item.isConnected) return;
 
     const room = item.parentElement;
-    const roomWidth = parseFloat(room.style.width) || room.offsetWidth;
-    const roomHeight = parseFloat(room.style.height) || room.offsetHeight;
+    const roomSize = getParentInnerSize(room);
+    const roomWidth = roomSize.width;
+    const roomHeight = roomSize.height;
     const width = getOpeningWidth(item);
     const edge = item.dataset.edge || 'top';
     const dirIn = (item.dataset.direction || 'in') === 'in';
@@ -1053,8 +1059,10 @@ function drawDoorArc(item) {
     svg.setAttribute('class', 'door-arc');
     svg.setAttribute('viewBox', `0 0 ${Math.max(...xs) - minX} ${Math.max(...ys) - minY}`);
     svg.style.position = 'absolute';
-    svg.style.left = `${minX - anchorX}px`;
-    svg.style.top = `${minY - anchorY}px`;
+    // El SVG se posiciona respecto al padding-box del objeto; compensamos su borde
+    // para que el arco nazca exactamente en la pared interna de la room.
+    svg.style.left = `${minX - anchorX - item.clientLeft}px`;
+    svg.style.top = `${minY - anchorY - item.clientTop}px`;
     svg.style.width = `${Math.max(...xs) - minX}px`;
     svg.style.height = `${Math.max(...ys) - minY}px`;
     svg.style.overflow = 'visible';
@@ -1342,8 +1350,9 @@ EDGE_SIDES.forEach((side) => {
 
 function dragOpeningAlongWall(item, localX, localY) {
     const room = item.parentElement;
-    const roomWidth = parseFloat(room.style.width) || room.offsetWidth;
-    const roomHeight = parseFloat(room.style.height) || room.offsetHeight;
+    const roomSize = getParentInnerSize(room);
+    const roomWidth = roomSize.width;
+    const roomHeight = roomSize.height;
     const width = getOpeningWidth(item);
     const threshold = Math.max(SNAP_SENS * 2 / viewState.scale, OPENING_DEPTH);
 
@@ -1420,15 +1429,16 @@ function syncOpeningOverlay(item) {
     const room = item.parentElement;
     const roomRect = room.getBoundingClientRect();
     const canvasRect = canvas.getBoundingClientRect();
-    const roomWidth = parseFloat(room.style.width) || room.offsetWidth;
-    const roomHeight = parseFloat(room.style.height) || room.offsetHeight;
+    const roomSize = getParentInnerSize(room);
+    const roomWidth = roomSize.width;
+    const roomHeight = roomSize.height;
     const width = getOpeningWidth(item);
     const offset = parseFloat(item.dataset.offset) || 0;
     const edge = item.dataset.edge || 'top';
     const scale = viewState.scale;
     const horizontal = edge === 'top' || edge === 'bottom';
-    const wallBaseX = roomRect.left - canvasRect.left;
-    const wallBaseY = roomRect.top - canvasRect.top;
+    const wallBaseX = roomRect.left - canvasRect.left + room.clientLeft * scale;
+    const wallBaseY = roomRect.top - canvasRect.top + room.clientTop * scale;
     const wallPosition = horizontal
         ? (edge === 'bottom' ? wallBaseY + roomHeight * scale : wallBaseY)
         : (edge === 'right' ? wallBaseX + roomWidth * scale : wallBaseX);
@@ -2006,7 +2016,7 @@ function addOpeningFromRoom(type, targetElement) {
     if (room.id !== activeRoomId) setActiveRoom(room);
     const width = OPENING_DEFAULT[type];
     const item = document.createElement('div');
-    const roomWidth = parseFloat(room.style.width) || room.offsetWidth;
+    const roomWidth = getParentInnerSize(room).width;
     const name = type === 'window' ? 'Ventana' : 'Puerta';
 
     item.id = `${type}${++openingCounter}`;
