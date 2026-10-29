@@ -1730,12 +1730,13 @@ window.addEventListener('resize', () => {
 applySceneScale();
     
 document.getElementById('create-room-btn').addEventListener('click', () => {
-    const rooms = getRooms();
-    const lastRoom = rooms[rooms.length - 1];
+    // La nueva room hereda de la room activa (en la que se está trabajando),
+    // no de la última que se haya creado.
+    const baseRoom = getActiveRoom();
     togglePopup();
     nombre.value = '';
-    alto.value = lastRoom ? smFromPx(parseFloat(lastRoom.style.height) || 0, 'm').toFixed(2) : '';
-    ancho.value = lastRoom ? smFromPx(parseFloat(lastRoom.style.width) || 0, 'm').toFixed(2) : '';
+    alto.value = baseRoom ? smFromPx(parseFloat(baseRoom.style.height) || 0, 'm').toFixed(2) : '';
+    ancho.value = baseRoom ? smFromPx(parseFloat(baseRoom.style.width) || 0, 'm').toFixed(2) : '';
     alto.focus();
     nombre.focus();
     currentBtnId = 'create-room-btn';
@@ -1962,7 +1963,7 @@ function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, parentR
     let roomOwnerId = '';
 
     if (currentBtnId ==='create-room-btn') {
-        const lastRoom = getRooms()[getRooms().length - 1];
+        const baseRoom = getActiveRoom();
         roomSeq += 1;
         room.id=`room${roomSeq}`;
         targetId = room.id;
@@ -1973,10 +1974,10 @@ function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, parentR
         room.style.backgroundColor = 'var(--color-room)';
         scene.appendChild(room);
 
-        if (inheritContents && lastRoom) {
-            if (lastRoom.style.borderRadius) room.style.borderRadius = lastRoom.style.borderRadius;
-            applyRotation(room, getRotation(lastRoom));
-            cloneRoomContents(lastRoom, room);
+        if (inheritContents && baseRoom) {
+            if (baseRoom.style.borderRadius) room.style.borderRadius = baseRoom.style.borderRadius;
+            applyRotation(room, getRotation(baseRoom));
+            cloneRoomContents(baseRoom, room);
         }
     } else if (currentBtnId ==='add-object-btn') {
         Fcounter+=1;
