@@ -230,7 +230,115 @@ function flushActiveView() {
         scrollX: canvas.scrollLeft,
         scrollY: canvas.scrollTop,
     };
-    guardarCambios(room);
+    // Solo persiste la vista: no debe crear un paso de historial.
+    guardar(getItemState(room));
+}
+
+const HISTORY_LIMIT = 50;
+const HISTORY_COMMIT_DELAY = 350;
+let historyUndoStack = [];
+let historyRedoStack = [];
+let historyCurrent = null;
+let historyCurrentJson = '';
+let historySuspended = false;
+let historyTimer = null;
+
+function captureSnapshot() {
+    const rooms = getRooms();
+    const states = [];
+    rooms.forEach((room) => {
+        states.push(getItemState(room));
+        room.querySelectorAll(':scope > .object').forEach((item) => {
+            states.push(getItemState(item));
+        });
+    });
+    return {
+        states,
+        activeRoomIndex: rooms.indexOf(getActiveRoom()),
+    };
+}
+
+function snapshotKey(snapshot) {
+    return JSON.stringify(snapshot.states.map(({ viewScale, viewScrollX, viewScrollY, ...rest }) => rest));
+}
+
+function resetHistory() {
+    if (historyTimer) {
+        clearTimeout(historyTimer);
+        historyTimer = null;
+    }
+    historyUndoStack = [];
+    historyRedoStack = [];
+    historyCurrent = captureSnapshot();
+    historyCurrentJson = snapshotKey(historyCurrent);
+}
+
+function commitHistory() {
+    if (historyTimer) {
+        clearTimeout(historyTimer);
+        historyTimer = null;
+    }
+    if (historySuspended || !historyCurrent) return;
+
+    const next = captureSnapshot();
+    const nextJson = snapshotKey(next);
+    if (nextJson === historyCurrentJson) return;
+
+    historyUndoStack.push(historyCurrent);
+    if (historyUndoStack.length > HISTORY_LIMIT) historyUndoStack.shift();
+    historyRedoStack = [];
+    historyCurrent = next;
+    historyCurrentJson = nextJson;
+}
+
+function scheduleHistoryCommit() {
+    if (historySuspended || !historyCurrent) return;
+    if (historyTimer) clearTimeout(historyTimer);
+    historyTimer = setTimeout(commitHistory, HISTORY_COMMIT_DELAY);
+}
+
+function applySnapshot(snapshot) {
+    if (!snapshot) return;
+
+    const currentRooms = getRooms();
+    const currentActive = getActiveRoom();
+    const currentActiveIndex = currentActive ? currentRooms.indexOf(currentActive) : -1;
+    const activeRoomIndex = currentActiveIndex >= 0 ? currentActiveIndex : snapshot.activeRoomIndex;
+
+    historySuspended = true;
+    try {
+        endMeasurement();
+        document.querySelectorAll('.popup-menu-box, .tol-input-popup').forEach((el) => el.remove());
+        scene.querySelectorAll(':scope > .object').forEach((item) => item.remove());
+        roomLayers.replaceChildren();
+        objectLayers.replaceChildren();
+        clearOpeningOverlay();
+        clearSnapGuides();
+        syncRotationHandle(null);
+        selectedLayerId = null;
+        rebuildScene(snapshot.states, activeRoomIndex);
+    } finally {
+        historySuspended = false;
+    }
+
+    historyCurrent = captureSnapshot();
+    historyCurrentJson = snapshotKey(historyCurrent);
+}
+
+function undo() {
+    if (historySuspended) return;
+    commitHistory();
+    if (!historyUndoStack.length) return;
+    historyRedoStack.push(historyCurrent);
+    applySnapshot(historyUndoStack.pop());
+}
+
+function redo() {
+    if (historySuspended) return;
+    commitHistory();
+    if (!historyRedoStack.length) return;
+    historyUndoStack.push(historyCurrent);
+    applySnapshot(historyRedoStack.pop());
 }
 
 function syncRoomLayerActive() {
@@ -312,7 +420,8 @@ function setActiveRoom(room, options = {}) {
             scrollX: canvas.scrollLeft,
             scrollY: canvas.scrollTop,
         };
-        guardarCambios(room);
+        // Solo persiste la vista: no debe crear un paso de historial.
+        guardar(getItemState(room));
     });
 
     syncRoomLayerActive();
@@ -987,6 +1096,23 @@ document.addEventListener('keydown', (event) => {
     event.preventDefault();
     applyRotation(item, getRotation(item) + (withShift ? 90 : -90));
     guardarCambios(item);
+});
+
+document.addEventListener('keydown', (event) => {
+    if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+    if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+
+    const key = event.key.toLowerCase();
+    const isUndo = key === 'z' && !event.shiftKey;
+    const isRedo = key === 'y' || (key === 'z' && event.shiftKey);
+    if (!isUndo && !isRedo) return;
+
+    event.preventDefault();
+    if (isUndo) {
+        undo();
+    } else {
+        redo();
+    }
 });
 
 function clampScale(scale) {
@@ -2342,9 +2468,22 @@ function applyItemStateDetails(rebuilt, elemento) {
             renderTolerance(rebuilt);
         }
     }
+    if (elemento.visible === false && rebuilt.dataset.type !== 'room') {
+        setItemVisibility(rebuilt, false);
+    }
 }
 
 function hidratar() {
+    historySuspended = true;
+    try {
+        hidratarGuardado();
+    } finally {
+        historySuspended = false;
+        resetHistory();
+    }
+}
+
+function hidratarGuardado() {
     const datosGuardados = JSON.parse(localStorage.getItem('mise')) || [];
 
     const validos = datosGuardados.filter((elemento) => elemento && elemento.id);
@@ -2358,6 +2497,10 @@ function hidratar() {
         return;
     }
 
+    rebuildScene(validos);
+}
+
+function rebuildScene(validos, activeRoomIndex = -1) {
     const roomIdMap = {};
     const rebuiltRooms = [];
 
@@ -2419,7 +2562,8 @@ function hidratar() {
     });
 
     const activeId = localStorage.getItem('mise-active');
-    const active = rebuiltRooms.find((room) => room.id === (roomIdMap[activeId] || activeId))
+    const active = (activeRoomIndex >= 0 ? rebuiltRooms[activeRoomIndex] : null)
+        || rebuiltRooms.find((room) => room.id === (roomIdMap[activeId] || activeId))
         || rebuiltRooms[rebuiltRooms.length - 1]
         || null;
     setActiveRoom(active);
@@ -2447,6 +2591,27 @@ function getItemState(item) {
     const width = opening ? getOpeningWidth(item) : parseFloat(item.style.width) || item.offsetWidth;
     const height = opening ? OPENING_DEPTH : parseFloat(item.style.height) || item.offsetHeight;
     const isRoom = item.dataset.type === 'room';
+
+    // En rooms inactivas (display:none) offsetLeft/offsetTop valen 0. Guardamos
+    // la última posición medida y usamos el estilo inline como respaldo para no
+    // perder la posición real de los objetos ocultos.
+    const rendered = item.getClientRects().length > 0;
+    if (rendered) {
+        item.dataset.posLeft = String(item.offsetLeft);
+        item.dataset.posTop = String(item.offsetTop);
+    }
+    const inlineLeft = parseFloat(item.style.left);
+    const inlineTop = parseFloat(item.style.top);
+    const cachedLeft = Number(item.dataset.posLeft);
+    const cachedTop = Number(item.dataset.posTop);
+
+    const left = rendered
+        ? item.offsetLeft
+        : (Number.isFinite(inlineLeft) ? inlineLeft : (Number.isFinite(cachedLeft) ? cachedLeft : item.offsetLeft));
+    const top = rendered
+        ? item.offsetTop
+        : (Number.isFinite(inlineTop) ? inlineTop : (Number.isFinite(cachedTop) ? cachedTop : item.offsetTop));
+
     return {
         id: item.id,
         nombre: item.dataset.name || item.textContent.trim(),
@@ -2458,9 +2623,10 @@ function getItemState(item) {
         rotacion: getRotation(item),
         edges: item.classList.contains('furniture') ? item.dataset.edges || '' : '',
         tolerance: item.classList.contains('furniture') ? item.dataset.tolerance || '' : '',
-        left: item.offsetLeft,
-        top: item.offsetTop,
+        left,
+        top,
         type: item.dataset.type,
+        visible: isRoom ? true : item.style.display !== 'none',
         roomId: item.dataset.roomId || item.parentElement?.id,
         edge: item.dataset.edge,
         direction: item.dataset.direction,
@@ -2474,7 +2640,9 @@ function getItemState(item) {
 }
 
 function guardarCambios(item) {
+    if (!item) return;
     guardar(getItemState(item));
+    scheduleHistoryCommit();
 }
 
 function eliminarGuardado(ids) {
@@ -2483,6 +2651,7 @@ function eliminarGuardado(ids) {
         ? datosGuardados.filter((estado) => !ids.includes(estado.id))
         : [];
     localStorage.setItem('mise', JSON.stringify(estadosGuardados));
+    scheduleHistoryCommit();
 }
 
 function togglePopup() {
@@ -2981,6 +3150,25 @@ function getLayerContext(targetElement) {
     return { layerDiv, sceneTarget };
 }
 
+function setItemVisibility(item, visible) {
+    if (!item) return;
+
+    item.style.display = visible ? '' : 'none';
+
+    const layerDiv = document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+    if (!layerDiv) return;
+
+    layerDiv.classList.toggle('is-hidden', !visible);
+    layerDiv.dataset.visible = String(visible);
+
+    const eyeButton = layerDiv.querySelector('.eye-div');
+    if (eyeButton) {
+        eyeButton.innerHTML = visible
+            ? layerDiv.dataset.eyeVisibleSvg
+            : layerDiv.dataset.eyeHiddenSvg;
+    }
+}
+
 function toggleLayerVisibility(targetElement) {
     const context = getLayerContext(targetElement);
     if (!context || !context.sceneTarget) return;
@@ -2993,18 +3181,8 @@ function toggleLayerVisibility(targetElement) {
     }
 
     const isVisible = context.layerDiv.dataset.visible !== 'false';
-    const nextVisible = !isVisible;
-
-    context.sceneTarget.style.display = nextVisible ? '' : 'none';
-    context.layerDiv.classList.toggle('is-hidden', !nextVisible);
-    context.layerDiv.dataset.visible = String(nextVisible);
-
-    const eyeButton = context.layerDiv.querySelector('.eye-div');
-    if (eyeButton) {
-        eyeButton.innerHTML = nextVisible
-            ? context.layerDiv.dataset.eyeVisibleSvg
-            : context.layerDiv.dataset.eyeHiddenSvg;
-    }
+    setItemVisibility(context.sceneTarget, !isVisible);
+    guardarCambios(context.sceneTarget);
 }
 
 function renameLayer(targetElement) {
