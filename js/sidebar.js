@@ -1968,6 +1968,7 @@ canvas.addEventListener('pointerdown', (event) => {
     }
 
     const targetItem = event.target.closest('.object');
+    if (event.button !== 0) return;
     if (!targetItem) {
         document.querySelectorAll('.object').forEach((item) => item.classList.remove('selected'));
         document.querySelectorAll('.layer-div').forEach((item) => item.classList.remove('selected-layer'));
@@ -2109,6 +2110,25 @@ canvas.addEventListener('pointercancel', (event) => {
     if (item) guardarCambios(item);
     if (rotatedItem) guardarCambios(rotatedItem);
     clearSnapGuides();
+});
+
+canvas.addEventListener('contextmenu', (event) => {
+    if (toolState.active === 'measure') return;
+
+    if (event.target.closest('.rotate-handle')) {
+        document.querySelector('.popup-menu-box')?.remove();
+        return;
+    }
+
+    const item = event.target.closest('.object');
+    if (!item) {
+        document.querySelector('.popup-menu-box')?.remove();
+        return;
+    }
+
+    event.preventDefault();
+    selectVisibleObject(item);
+    openLayerMenuForItem(item, { x: event.clientX, y: event.clientY });
 });
 
 window.addEventListener('resize', () => {
@@ -2758,16 +2778,12 @@ function alerta(text) {
 }
 
 
-function popupMenu(array, targetElement) {
+function popupMenu(array, targetElement, point = null) {
     document.querySelector('.popup-menu-box')?.remove();
-    
-    const rect = targetElement.getBoundingClientRect();
 
     const box = document.createElement('div');
     box.classList.add('popup-menu-box');
     box.style.position='fixed';
-    box.style.left=`${rect.left - 120}px`;
-    box.style.top=`${rect.bottom + 4}px`;
 
         array.forEach((option, index) => {
         const op = document.createElement('button');
@@ -2786,22 +2802,42 @@ function popupMenu(array, targetElement) {
     document.body.appendChild(box);
 
     const menuRect = box.getBoundingClientRect();
-    const margen =8;
+    const margen = 8;
+    let left;
+    let top;
 
-    const left=Math.min(
-        rect.right + margen,
-        window.innerWidth - menuRect.width - margen
-    );
+    if (point) {
+        left = point.x + 2;
+        top = point.y + 2;
+        if (left + menuRect.width + margen > window.innerWidth) left = point.x - menuRect.width - 2;
+        if (top + menuRect.height + margen > window.innerHeight) top = point.y - menuRect.height - 2;
+    } else {
+        const rect = targetElement.getBoundingClientRect();
+        const espacioAbajo = window.innerHeight - rect.bottom;
+        const espacioArriba = rect.top;
 
-    const espacioAbajo = window.innerHeight - rect.bottom;
-    const espacioArriba =rect.top;
+        left = Math.min(
+            rect.right + margen,
+            window.innerWidth - menuRect.width - margen
+        );
+        top = espacioAbajo >= menuRect.height || espacioAbajo >= espacioArriba
+            ? rect.bottom + margen
+            : rect.top - menuRect.height - margen;
+    }
 
-    const top = espacioAbajo >= menuRect.height || espacioAbajo >= espacioArriba
-        ? rect.bottom + margen
-        : rect.top - menuRect.height - margen;
+    box.style.left = `${Math.max(margen, Math.min(left, window.innerWidth - menuRect.width - margen))}px`;
+    box.style.top = `${Math.max(margen, Math.min(top, window.innerHeight - menuRect.height - margen))}px`;
+}
 
-    box.style.left =`${Math.max(margen, left)}px`;
-    box.style.top=`${Math.max(margen, top)}px`;
+function getLayerElementForItem(item) {
+    return document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+}
+
+function openLayerMenuForItem(item, point) {
+    const layerDiv = getLayerElementForItem(item);
+    if (!layerDiv) return;
+    const menuOptions = layerDiv.dataset.type === 'room' ? roomMenuOptions : objectMenuOptions;
+    popupMenu(menuOptions, layerDiv, point);
 }
 
 function trimMeters(value) {
