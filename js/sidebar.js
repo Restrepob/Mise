@@ -5,10 +5,24 @@ const roomLayers = document.getElementById('room-layer-box');
 
 const metro=150;
 const SCENE_PADDING = 1000;
+// Paso de referencia de la grid: 10 cm. Cada habitación lo ajusta para que
+// las líneas coincidan exactamente con sus dos paredes (ver getGridStep).
 const GRID_STEP = metro / 10;
-const SNAP_SENS = 8;
+// Tolerancia del imán para paredes y bordes de otros objetos. Se mide en
+// píxeles de pantalla, pero nunca supera SNAP_WORLD_MAX píxeles de escena:
+// así al alejar el zoom el objeto no salta distancias enormes en el plano.
+const SNAP_SENS = 6;
+const SNAP_WORLD_MAX = 6;
+// La grid es más fina que las paredes/objetos: solo atrapa cuando el borde
+// está realmente cerca de una línea. Así una habitación grande no se siente
+// como si todo estuviera pegado a una cuadrícula invisible.
+const SNAP_GRID_SENS = 3;
+const SNAP_GRID_WORLD_MAX = 3;
 const AUTO_SCROLL_EDGE = 48;
 const AUTO_SCROLL_SPEED = 12;
+// Si el puntero deja de moverse, el autoscroll se detiene. Si no, un clic
+// cerca del borde hacía que el plano siguiera desplazándose solo.
+const AUTO_SCROLL_IDLE = 150;
 const OPENING_DEPTH = 10;
 const OPENING_MIN = metro / 10;
 const MARGEN_ESQUINA = metro / 10;
@@ -1382,12 +1396,27 @@ function uniqueSnapTargets(values) {
         .sort((a, b) => a - b);
 }
 
+// La grid se reparte en un número entero de divisiones entre las dos paredes.
+// Así el paso ronda los 10 cm pero las líneas siempre caen justo sobre las
+// paredes, sin dejar una franja de 1 cm que compita con el snap a la pared.
+function getGridStep(length) {
+    if (!Number.isFinite(length) || length <= 0) return GRID_STEP;
+    const divisions = Math.max(1, Math.round(length / GRID_STEP));
+    return length / divisions;
+}
+
 function buildGridTargets(length) {
+    const step = getGridStep(length);
+    const divisions = Math.max(1, Math.round(length / step));
     const targets = [];
-    for (let position = 0; position <= length + 0.001; position += GRID_STEP) {
-        targets.push(position);
+    for (let index = 0; index <= divisions; index += 1) {
+        targets.push(index * step);
     }
     return targets;
+}
+
+function getSnapThreshold(screenSens = SNAP_SENS, worldMax = SNAP_WORLD_MAX) {
+    return Math.min(screenSens / viewState.scale, worldMax);
 }
 
 function collectSnapTargets(parent, item) {
@@ -1434,11 +1463,19 @@ function findNearestSnap(center, size, candidates, threshold) {
     return winner;
 }
 
-function pickSnap(center, size, targets, threshold) {
+function pickSnap(center, size, targets, alignThreshold, gridThreshold) {
     // Los bordes de otros objetos y las paredes mandan sobre la grid:
     // así el snap nunca mete un objeto unos pocos píxeles dentro de otro.
-    return findNearestSnap(center, size, targets.align, threshold)
-        || findNearestSnap(center, size, targets.grid, threshold);
+    const alignSnap = findNearestSnap(center, size, targets.align, alignThreshold);
+    if (alignSnap) return alignSnap;
+
+    // Descartamos las líneas de grid que quedan pegadas a una pared o a un
+    // borde de objeto. Sin esto, al salir del rango del borde, la grid vuelve
+    // a atrapar el objeto y se produce un salto de ida y vuelta.
+    const gridTargets = targets.grid.filter((position) => (
+        targets.align.every((align) => Math.abs(position - align) > alignThreshold)
+    ));
+    return findNearestSnap(center, size, gridTargets, gridThreshold);
 }
 
 function ensureGuidesLayer() {
@@ -1468,11 +1505,12 @@ function clearSnapGuides() {
 }
 
 function snapObject(item, left, top, parent) {
-    const threshold = SNAP_SENS / viewState.scale;
+    const alignThreshold = getSnapThreshold();
+    const gridThreshold = getSnapThreshold(SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX);
     const targets = collectSnapTargets(parent, item);
     const { width, height } = getItemBoxSize(item);
-    const xSnap = pickSnap(left, width, targets.x, threshold);
-    const ySnap = pickSnap(top, height, targets.y, threshold);
+    const xSnap = pickSnap(left, width, targets.x, alignThreshold, gridThreshold);
+    const ySnap = pickSnap(top, height, targets.y, alignThreshold, gridThreshold);
 
     clearSnapGuides();
     if (xSnap) drawSnapGuide('x', xSnap.pos, parent);
@@ -1505,8 +1543,9 @@ function clampOpeningOffset(item, offset, width = getOpeningWidth(item)) {
     return Math.min(Math.max(offset, MARGEN_ESQUINA), maxOffset);
 }
 
-function snapOpeningOffset(offset) {
-    return Math.round(offset / GRID_STEP) * GRID_STEP;
+function snapOpeningOffset(offset, wallLength) {
+    const step = getGridStep(wallLength);
+    return Math.round(offset / step) * step;
 }
 
 function placeOpening(item) {
@@ -1883,13 +1922,13 @@ EDGE_SIDES.forEach((side) => {
     });
 });
 
-function dragOpeningAlongWall(item, localX, localY) {
+function dragOpeningAlongWall(item, localX, localY, disableSnap = false) {
     const room = item.parentElement;
     const roomSize = getParentInnerSize(room);
     const roomWidth = roomSize.width;
     const roomHeight = roomSize.height;
     const width = getOpeningWidth(item);
-    const threshold = Math.max(SNAP_SENS * 2 / viewState.scale, OPENING_DEPTH);
+    const threshold = Math.max(SNAP_SENS * 2, OPENING_DEPTH);
 
     const walls = [
         { edge: 'top', distance: Math.abs(localY) },
@@ -1906,7 +1945,10 @@ function dragOpeningAlongWall(item, localX, localY) {
     const rawOffset = item.dataset.edge === 'right' || item.dataset.edge === 'left'
         ? localY - width / 2
         : localX - width / 2;
-    item.dataset.offset = String(clampOpeningOffset(item, snapOpeningOffset(rawOffset), width));
+    const nextOffset = disableSnap
+        ? rawOffset
+        : snapOpeningOffset(rawOffset, getOpeningWallLength(item));
+    item.dataset.offset = String(clampOpeningOffset(item, nextOffset, width));
     placeOpening(item);
 }
 
@@ -1945,10 +1987,10 @@ function commitOpeningMargin(item, side, rawValue) {
     const wallLength = getOpeningWallLength(item);
 
     if (side === 'left') {
-        item.dataset.offset = String(clampOpeningOffset(item, snapOpeningOffset(marginPx)));
+        item.dataset.offset = String(clampOpeningOffset(item, snapOpeningOffset(marginPx, wallLength)));
     } else {
         const width = getOpeningWidth(item);
-        item.dataset.offset = String(clampOpeningOffset(item, snapOpeningOffset(wallLength - width - marginPx)));
+        item.dataset.offset = String(clampOpeningOffset(item, snapOpeningOffset(wallLength - width - marginPx, wallLength)));
     }
 
     placeOpening(item);
@@ -2007,7 +2049,7 @@ function syncOpeningOverlay(item) {
 }
 
 function positionDraggedObject(clientX, clientY) {
-    const { item, startPointer, startCenter } = toolState.dragObject;
+    const { item, startPointer, startCenter, shiftKey } = toolState.dragObject;
     const pointer = pointerToScene({ clientX, clientY });
     const deltaX = pointer.x - startPointer.x;
     const deltaY = pointer.y - startPointer.y;
@@ -2020,19 +2062,28 @@ function positionDraggedObject(clientX, clientY) {
         y: startCenter.y + deltaY,
     };
 
-    const parentOriginX = (parentRect.left - sceneRect.left) / viewState.scale;
-    const parentOriginY = (parentRect.top - sceneRect.top) / viewState.scale;
+    // offsetLeft/Top se miden desde el padding-box del padre; getBoundingClientRect
+    // devuelve el borde externo, así que sumamos el borde para no acumular 1px.
+    const parentOriginX = (parentRect.left - sceneRect.left) / viewState.scale + parent.clientLeft;
+    const parentOriginY = (parentRect.top - sceneRect.top) / viewState.scale + parent.clientTop;
     const localX = center.x - parentOriginX;
     const localY = center.y - parentOriginY;
 
     if (isOpening(item)) {
-        dragOpeningAlongWall(item, localX, localY);
+        // Shift libera la apertura del paso de la grid, pero la mantiene
+        // apoyada sobre la pared.
+        dragOpeningAlongWall(item, localX, localY, shiftKey);
         syncOpeningOverlay(item);
     } else if (item.classList.contains('room')) {
         item.style.left = `${localX}px`;
         item.style.top = `${localY}px`;
         const selected = getSelectedObject();
         if (isOpening(selected)) syncOpeningOverlay(selected);
+    } else if (shiftKey) {
+        // Shift desactiva por completo el imán: grid, paredes y otros objetos.
+        clearSnapGuides();
+        item.style.left = `${localX}px`;
+        item.style.top = `${localY}px`;
     } else {
         const snapped = snapObject(item, localX, localY, parent);
         item.style.left = `${snapped.left}px`;
@@ -2076,9 +2127,10 @@ function tickAutoScroll() {
         return;
     }
 
-    const { lastX, lastY } = toolState.dragObject;
+    const { lastX, lastY, lastMoveAt } = toolState.dragObject;
+    const pointerMoving = performance.now() - (lastMoveAt || 0) < AUTO_SCROLL_IDLE;
     if (Number.isFinite(lastX) && Number.isFinite(lastY)) {
-        scrollForEdges(lastX, lastY);
+        if (pointerMoving) scrollForEdges(lastX, lastY);
         positionDraggedObject(lastX, lastY);
     }
     autoscrollRaf = requestAnimationFrame(tickAutoScroll);
@@ -2177,6 +2229,8 @@ canvas.addEventListener('pointerdown', (event) => {
         startCenter,
         lastX: event.clientX,
         lastY: event.clientY,
+        lastMoveAt: 0,
+        shiftKey: event.shiftKey,
     };
 
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -2232,6 +2286,8 @@ canvas.addEventListener('pointermove', (event) => {
     if (toolState.dragObject) {
         toolState.dragObject.lastX = event.clientX;
         toolState.dragObject.lastY = event.clientY;
+        toolState.dragObject.lastMoveAt = performance.now();
+        toolState.dragObject.shiftKey = event.shiftKey;
         positionDraggedObject(event.clientX, event.clientY);
         return;
     }
@@ -2290,6 +2346,44 @@ canvas.addEventListener('pointercancel', (event) => {
     if (item) guardarCambios(item);
     if (rotatedItem) guardarCambios(rotatedItem);
     clearSnapGuides();
+});
+
+// Shift se puede pulsar o soltar sin mover el puntero: refrescamos la
+// posición del objeto en el momento para que el cambio de imán sea inmediato.
+function setDragShift(shiftKey) {
+    const drag = toolState.dragObject;
+    if (!drag || drag.shiftKey === shiftKey) return;
+
+    if (shiftKey) {
+        // Al desactivar el imán no teletransportamos el objeto a su posición
+        // "cruda": conservamos la posición actual y desde ahí sigue al puntero.
+        const pointer = pointerToScene({ clientX: drag.lastX, clientY: drag.lastY });
+        const rect = drag.item.getBoundingClientRect();
+        const sceneRect = scene.getBoundingClientRect();
+        const centerX = ((rect.left - sceneRect.left) + rect.width / 2) / viewState.scale;
+        const centerY = ((rect.top - sceneRect.top) + rect.height / 2) / viewState.scale;
+        drag.startPointer = {
+            x: pointer.x - (centerX - drag.startCenter.x),
+            y: pointer.y - (centerY - drag.startCenter.y),
+        };
+    }
+
+    drag.shiftKey = shiftKey;
+    // Un cambio de Shift no debe dejar corriendo el autoscroll: congela la
+    // vista hasta que el puntero vuelva a moverse.
+    drag.lastMoveAt = 0;
+    const { lastX, lastY } = drag;
+    if (Number.isFinite(lastX) && Number.isFinite(lastY)) {
+        positionDraggedObject(lastX, lastY);
+    }
+}
+
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Shift') setDragShift(true);
+});
+
+document.addEventListener('keyup', (event) => {
+    if (event.key === 'Shift') setDragShift(false);
 });
 
 canvas.addEventListener('contextmenu', (event) => {
@@ -2801,7 +2895,7 @@ function addOpeningFromRoom(type, targetElement) {
     item.dataset.edge = 'top';
     item.dataset.direction = 'in';
     item.dataset.axis = 'sup';
-    item.dataset.offset = String(snapOpeningOffset((roomWidth - width) / 2));
+    item.dataset.offset = String(snapOpeningOffset((roomWidth - width) / 2, roomWidth));
     item.dataset.openingWidth = String(width);
     room.appendChild(item);
     item.dataset.offset = String(clampOpeningOffset(item, Number(item.dataset.offset), width));
