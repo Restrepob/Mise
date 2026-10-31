@@ -368,12 +368,6 @@ function syncRoomLayerActive() {
     document.querySelectorAll('#room-layer-box .layer-div').forEach((row) => {
         const isActive = row.dataset.targetId === activeRoomId;
         row.classList.toggle('active-room', isActive);
-        if (row.dataset.type === 'room') {
-            const eye = row.querySelector('.eye-div');
-            if (eye) {
-                eye.innerHTML = isActive ? row.dataset.eyeVisibleSvg : row.dataset.eyeHiddenSvg;
-            }
-        }
     });
 }
 
@@ -2886,6 +2880,8 @@ function createLayer(
     layerDiv.classList.add('layer-content');
     options.classList.add('options-layer');
 
+    const isRoomLayer = layerType === 'room';
+
     layerDiv.textContent=name;
     const eyeVisibleSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#8a8a8a">
@@ -2927,7 +2923,12 @@ function createLayer(
         popupMenu(menuOptions, options);
     });
 
-    div.append(eyeDiv, layerDiv, options);
+    if (isRoomLayer) {
+        // Las rooms no tienen ojo: solo los objetos se pueden ocultar.
+        div.append(layerDiv, options);
+    } else {
+        div.append(eyeDiv, layerDiv, options);
+    }
 
     if (currentBtnId ==='create-room-btn') {
         roomLayers.appendChild(div);
