@@ -73,6 +73,10 @@ const measureState = {
 
 const viewState = {
     scale: 1,
+    // Desplazamiento en píxeles de pantalla. No está limitado por el tamaño
+    // del navegador: define un espacio virtual infinito.
+    scrollX: 0,
+    scrollY: 0,
     minScale: 0.5,
     baseMinScale: 0.5,
     maxScale: 2.5,
@@ -227,8 +231,8 @@ function flushActiveView() {
     if (!room) return;
     roomViews[room.id] = {
         scale: viewState.scale,
-        scrollX: canvas.scrollLeft,
-        scrollY: canvas.scrollTop,
+        scrollX: viewState.scrollX,
+        scrollY: viewState.scrollY,
     };
     // Solo persiste la vista: no debe crear un paso de historial.
     guardar(getItemState(room));
@@ -304,6 +308,11 @@ function applySnapshot(snapshot) {
     const currentActive = getActiveRoom();
     const currentActiveIndex = currentActive ? currentRooms.indexOf(currentActive) : -1;
     const activeRoomIndex = currentActiveIndex >= 0 ? currentActiveIndex : snapshot.activeRoomIndex;
+    const viewBefore = {
+        scale: viewState.scale,
+        scrollX: viewState.scrollX,
+        scrollY: viewState.scrollY,
+    };
 
     historySuspended = true;
     try {
@@ -319,6 +328,20 @@ function applySnapshot(snapshot) {
         rebuildScene(snapshot.states, activeRoomIndex);
     } finally {
         historySuspended = false;
+    }
+
+    // La vista no forma parte del historial: conservamos el encuadre actual.
+    const active = getActiveRoom();
+    updateMinScaleForRoom(active);
+    viewState.scale = clampScale(viewBefore.scale);
+    setViewScroll(viewBefore.scrollX, viewBefore.scrollY);
+    if (active) {
+        roomViews[active.id] = {
+            scale: viewState.scale,
+            scrollX: viewState.scrollX,
+            scrollY: viewState.scrollY,
+        };
+        guardar(getItemState(active));
     }
 
     historyCurrent = captureSnapshot();
@@ -404,25 +427,25 @@ function setActiveRoom(room, options = {}) {
     updateSceneSize(room);
     updateMinScaleForRoom(room);
 
-    const view = roomViews[room.id] || {
-        scale: 1,
-        scrollX: Math.max(0, (scene.scrollWidth - canvas.clientWidth) / 2),
-        scrollY: Math.max(0, (scene.scrollHeight - canvas.clientHeight) / 2),
-    };
-    viewState.scale = clampScale(view.scale || 1);
+    const savedView = roomViews[room.id];
+    viewState.scale = clampScale(savedView?.scale || 1);
+    if (savedView) {
+        viewState.scrollX = Number(savedView.scrollX) || 0;
+        viewState.scrollY = Number(savedView.scrollY) || 0;
+    } else {
+        const centered = getCenteredViewScroll();
+        viewState.scrollX = centered.x;
+        viewState.scrollY = centered.y;
+    }
     applySceneScale();
 
-    requestAnimationFrame(() => {
-        canvas.scrollLeft = view.scrollX || 0;
-        canvas.scrollTop = view.scrollY || 0;
-        roomViews[room.id] = {
-            scale: viewState.scale,
-            scrollX: canvas.scrollLeft,
-            scrollY: canvas.scrollTop,
-        };
-        // Solo persiste la vista: no debe crear un paso de historial.
-        guardar(getItemState(room));
-    });
+    roomViews[room.id] = {
+        scale: viewState.scale,
+        scrollX: viewState.scrollX,
+        scrollY: viewState.scrollY,
+    };
+    // Solo persiste la vista: no debe crear un paso de historial.
+    guardar(getItemState(room));
 
     syncRoomLayerActive();
     syncObjectLayers();
@@ -1119,8 +1142,37 @@ function clampScale(scale) {
     return Math.min(Math.max(scale, viewState.minScale), viewState.maxScale);
 }
 
+function getCenteredViewScroll() {
+    const sceneWidth = scene.offsetWidth || 0;
+    const sceneHeight = scene.offsetHeight || 0;
+    return {
+        x: (sceneWidth * viewState.scale - canvas.clientWidth) / 2,
+        y: (sceneHeight * viewState.scale - canvas.clientHeight) / 2,
+    };
+}
+
 function applySceneScale() {
-    scene.style.transform = `scale(${viewState.scale})`;
+    // translate + scale: el origen del scene puede quedar en cualquier punto,
+    // incluso fuera de los límites del canvas. Ese es el espacio virtual.
+    scene.style.transform =
+        `translate(${-viewState.scrollX}px, ${-viewState.scrollY}px) scale(${viewState.scale})`;
+}
+
+let viewPersistTimer = null;
+
+function setViewScroll(x, y) {
+    viewState.scrollX = x;
+    viewState.scrollY = y;
+    applySceneScale();
+    scheduleViewPersist();
+}
+
+function scheduleViewPersist() {
+    if (viewPersistTimer) clearTimeout(viewPersistTimer);
+    viewPersistTimer = setTimeout(() => {
+        viewPersistTimer = null;
+        flushActiveView();
+    }, 400);
 }
 
 function pointerToScene(event) {
@@ -2018,8 +2070,10 @@ function scrollForEdges(clientX, clientY) {
     factorX = Math.max(-1, Math.min(1, factorX));
     factorY = Math.max(-1, Math.min(1, factorY));
 
-    canvas.scrollLeft += factorX * AUTO_SCROLL_SPEED;
-    canvas.scrollTop += factorY * AUTO_SCROLL_SPEED;
+    setViewScroll(
+        viewState.scrollX + factorX * AUTO_SCROLL_SPEED,
+        viewState.scrollY + factorY * AUTO_SCROLL_SPEED,
+    );
 }
 
 function tickAutoScroll() {
@@ -2036,35 +2090,40 @@ function tickAutoScroll() {
     autoscrollRaf = requestAnimationFrame(tickAutoScroll);
 }
 
-function zoomAtPoint(event, nextScale) {
-    const rect = canvas.getBoundingClientRect();
-    const mouseX = event.clientX - rect.left;
-    const mouseY = event.clientY - rect.top;
+function zoomAtScreenPoint(screenX, screenY, nextScale) {
+    const clamped = clampScale(nextScale);
+    const scaleRatio = clamped / viewState.scale;
 
-    const scaleRatio = nextScale / viewState.scale;
-    const currentScrollLeft = canvas.scrollLeft;
-    const currentScrollTop = canvas.scrollTop;
+    const nextScrollX = (viewState.scrollX + screenX) * scaleRatio - screenX;
+    const nextScrollY = (viewState.scrollY + screenY) * scaleRatio - screenY;
 
-    const anchorX = currentScrollLeft + mouseX;
-    const anchorY = currentScrollTop + mouseY;
-
-    const nextScrollLeft = anchorX * scaleRatio - mouseX;
-    const nextScrollTop = anchorY * scaleRatio - mouseY;
-
-    viewState.scale = clampScale(nextScale);
-    applySceneScale();
-    canvas.scrollLeft = nextScrollLeft;
-    canvas.scrollTop = nextScrollTop;
+    viewState.scale = clamped;
+    setViewScroll(nextScrollX, nextScrollY);
     syncOpeningOverlay(getSelectedObject());
 }
 
-canvas.addEventListener('wheel', (event) => {
-    if (!event.ctrlKey && !event.metaKey) return;
+function zoomAtPoint(event, nextScale) {
+    const rect = canvas.getBoundingClientRect();
+    zoomAtScreenPoint(event.clientX - rect.left, event.clientY - rect.top, nextScale);
+}
 
+canvas.addEventListener('wheel', (event) => {
     event.preventDefault();
-    const deltaFactor = event.deltaY > 0 ? 0.9 : 1.1;
-    const nextScale = clampScale(viewState.scale * deltaFactor);
-    zoomAtPoint(event, nextScale);
+
+    if (event.ctrlKey || event.metaKey) {
+        const deltaFactor = event.deltaY > 0 ? 0.9 : 1.1;
+        zoomAtPoint(event, viewState.scale * deltaFactor);
+        return;
+    }
+
+    // Rueda normal: desplazamiento libre por el espacio virtual.
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? canvas.clientHeight : 1;
+    const deltaX = event.shiftKey ? event.deltaY : event.deltaX;
+    const deltaY = event.shiftKey ? 0 : event.deltaY;
+    setViewScroll(
+        viewState.scrollX + deltaX * unit,
+        viewState.scrollY + deltaY * unit,
+    );
 }, { passive: false });
 
 canvas.addEventListener('pointerdown', (event) => {
@@ -2086,9 +2145,10 @@ canvas.addEventListener('pointerdown', (event) => {
         toolState.pan = {
             x: event.clientX,
             y: event.clientY,
-            scrollLeft: canvas.scrollLeft,
-            scrollTop: canvas.scrollTop,
+            scrollX: viewState.scrollX,
+            scrollY: viewState.scrollY,
         };
+        event.currentTarget.setPointerCapture(event.pointerId);
         event.preventDefault();
         return;
     }
@@ -2161,10 +2221,11 @@ canvas.addEventListener('pointermove', (event) => {
         const dy = second.y - first.y;
         const pinchDistance = Math.hypot(dx, dy);
         const scaleDelta = pinchDistance / viewState.pinchDistance;
-        viewState.scale = clampScale(viewState.scale * scaleDelta);
-        applySceneScale();
+        const rect = canvas.getBoundingClientRect();
+        const midX = (first.x + second.x) / 2 - rect.left;
+        const midY = (first.y + second.y) / 2 - rect.top;
+        zoomAtScreenPoint(midX, midY, viewState.scale * scaleDelta);
         viewState.pinchDistance = pinchDistance;
-        syncOpeningOverlay(getSelectedObject());
     }
 
     if (toolState.active === 'measure') {
@@ -2184,8 +2245,7 @@ canvas.addEventListener('pointermove', (event) => {
     if (toolState.pan) {
         const dx = event.clientX - toolState.pan.x;
         const dy = event.clientY - toolState.pan.y;
-        canvas.scrollLeft = toolState.pan.scrollLeft - dx;
-        canvas.scrollTop = toolState.pan.scrollTop - dy;
+        setViewScroll(toolState.pan.scrollX - dx, toolState.pan.scrollY - dy);
         return;
     }
 });
