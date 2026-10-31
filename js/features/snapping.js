@@ -1,4 +1,4 @@
-// Snap a grid, paredes y objetos
+// Snap a grid, paredes y objetos (X e Y independientes)
 import { canvas, guidesLayer } from '../core/dom.js';
 import { getItemBoxSize, getParentInnerSize, isOpening } from '../core/model.js';
 import { GRID_STEP, SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX, SNAP_SENS, SNAP_WORLD_MAX, viewState } from '../core/state.js';
@@ -33,6 +33,7 @@ export function getSnapThreshold(screenSens = SNAP_SENS, worldMax = SNAP_WORLD_M
 
 export function collectSnapTargets(parent, item) {
     const parentSize = getParentInnerSize(parent);
+    // Las paredes son los bordes del área interior de la room.
     const alignXs = [0, parentSize.width];
     const alignYs = [0, parentSize.height];
 
@@ -42,8 +43,18 @@ export function collectSnapTargets(parent, item) {
         if (sibling === item || isOpening(sibling) || sibling.getClientRects().length === 0) return;
 
         const { width, height } = getItemBoxSize(sibling);
-        alignXs.push(sibling.offsetLeft - width / 2, sibling.offsetLeft + width / 2);
-        alignYs.push(sibling.offsetTop - height / 2, sibling.offsetTop + height / 2);
+        // Bordes izquierdo/derecho y centro del hermano: el arrastrado puede
+        // alinear cualquiera de sus tres anclas contra cualquiera de estas.
+        alignXs.push(
+            sibling.offsetLeft - width / 2,
+            sibling.offsetLeft,
+            sibling.offsetLeft + width / 2,
+        );
+        alignYs.push(
+            sibling.offsetTop - height / 2,
+            sibling.offsetTop,
+            sibling.offsetTop + height / 2,
+        );
     });
 
     return {
@@ -59,12 +70,15 @@ export function collectSnapTargets(parent, item) {
 }
 
 export function findNearestSnap(center, size, candidates, threshold) {
-    const edges = [center - size / 2, center + size / 2];
+    // Las tres anclas del objeto arrastrado en este eje: sus dos bordes y su
+    // centro. Cada eje se resuelve por separado, así el objeto puede quedar
+    // enganchado en X y libre en Y (o al revés).
+    const anchors = [center - size / 2, center, center + size / 2];
     let winner = null;
 
     candidates.forEach((candidate) => {
-        edges.forEach((edge) => {
-            const delta = candidate - edge;
+        anchors.forEach((anchor) => {
+            const delta = candidate - anchor;
             if (Math.abs(delta) > threshold) return;
             if (!winner || Math.abs(delta) < Math.abs(winner.delta)) {
                 winner = { delta, pos: candidate };
@@ -76,7 +90,7 @@ export function findNearestSnap(center, size, candidates, threshold) {
 }
 
 export function pickSnap(center, size, targets, alignThreshold, gridThreshold) {
-    // Los bordes de otros objetos y las paredes mandan sobre la grid:
+    // Los bordes/centros de otros objetos y las paredes mandan sobre la grid:
     // así el snap nunca mete un objeto unos pocos píxeles dentro de otro.
     const alignSnap = findNearestSnap(center, size, targets.align, alignThreshold);
     if (alignSnap) return alignSnap;
@@ -121,6 +135,8 @@ export function snapObject(item, left, top, parent) {
     const gridThreshold = getSnapThreshold(SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX);
     const targets = collectSnapTargets(parent, item);
     const { width, height } = getItemBoxSize(item);
+    // Cada eje busca su propio enganche: puede quedar pegado en X (por ejemplo
+    // a una pared) y seguir libre en Y para deslizarse a lo largo de ella.
     const xSnap = pickSnap(left, width, targets.x, alignThreshold, gridThreshold);
     const ySnap = pickSnap(top, height, targets.y, alignThreshold, gridThreshold);
 

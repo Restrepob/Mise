@@ -7,8 +7,8 @@ export const SCENE_PADDING = 1000;
 // las líneas coincidan exactamente con sus dos paredes (ver getGridStep).
 export const GRID_STEP = metro / 10;
 
-// Tolerancia del imán para paredes y bordes de otros objetos. Se mide en
-// píxeles de pantalla, pero nunca supera SNAP_WORLD_MAX píxeles de escena:
+// Tolerancia del imán para paredes, bordes y centros de otros objetos. Se mide
+// en píxeles de pantalla, pero nunca supera SNAP_WORLD_MAX píxeles de escena:
 // así al alejar el zoom el objeto no salta distancias enormes en el plano.
 export const SNAP_SENS = 6;
 
