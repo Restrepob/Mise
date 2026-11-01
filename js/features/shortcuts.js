@@ -93,16 +93,15 @@ document.addEventListener('keydown', (event) => {
 document.addEventListener('keydown', (event) => {
     if (event.target.matches('input, textarea, select, [contenteditable]')) return;
     if (event.key.toLowerCase() !== 'r') return;
-
-    const withCtrl = event.ctrlKey || event.metaKey;
-    const withShift = event.shiftKey;
-    if (event.altKey || withCtrl === withShift) return;
+    // Alt + R gira antihorario; Alt + Shift + R gira horario. Ctrl/Cmd quedan
+    // libres: Ctrl + R recarga el navegador y se pulsaba por accidente.
+    if (!event.altKey || event.ctrlKey || event.metaKey) return;
 
     const item = getSelectedObject();
     if (!item || isOpening(item)) return;
 
     event.preventDefault();
-    applyRotation(item, getRotation(item) + (withShift ? 90 : -90));
+    applyRotation(item, getRotation(item) + (event.shiftKey ? 90 : -90));
     guardarCambios(item);
 });
 

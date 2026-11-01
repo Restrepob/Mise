@@ -6,7 +6,7 @@ import { handleMeasurePointerDown, stopMeasureDrag, updateMeasureCursor, updateM
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { dragOpeningAlongWall } from './openings.js';
 import { flushActiveView, guardarCambios } from './persistence.js';
-import { ROTATE_DRAG_THRESHOLD, applyRotation, syncRotationHandle } from './rotation.js';
+import { ROTATE_DRAG_THRESHOLD, applyRotation, rotateByClick, syncRotationHandle } from './rotation.js';
 import { syncSizeManager } from './size-manager.js';
 import { clearSnapGuides, snapObject } from './snapping.js';
 import { AUTO_SCROLL_EDGE, AUTO_SCROLL_IDLE, AUTO_SCROLL_SPEED, state, toolState, viewState } from '../core/state.js';
@@ -14,6 +14,7 @@ import { getRotation, snapRotation } from '../core/units.js';
 import { pointerToScene, setViewScroll, zoomAtPoint, zoomAtScreenPoint } from './view.js';
 
 export let autoscrollRaf = null;
+let lastAltRotateTime = 0;
 
 export function positionDraggedObject(clientX, clientY) {
     const { item, startPointer, startCenter, shiftKey } = toolState.dragObject;
@@ -137,6 +138,24 @@ canvas.addEventListener('pointerdown', (event) => {
         return;
     }
 
+    const targetItem = event.target.closest('.object');
+    // Alt + clic (derecho o izquierdo) sobre el objeto: gira 90 grados sin
+    // moverlo. Clic derecho = sentido horario (+90), Clic izquierdo = sentido antihorario (-90).
+    // Tiene prioridad sobre el modo mover, sobre el handle de rotacion y sobre
+    // el menu contextual: con Alt el objeto gira, no se desplaza ni se abre el popup.
+    if (event.altKey && targetItem && (event.button === 0 || event.button === 2)) {
+        event.preventDefault();
+        lastAltRotateTime = Date.now();
+        clearSnapGuides();
+        selectVisibleObject(targetItem);
+        if (!isOpening(targetItem)) {
+            rotateByClick(targetItem, event.button);
+            guardarCambios(targetItem);
+            syncOpeningOverlay(getSelectedObject());
+        }
+        return;
+    }
+
     if (toolState.active === 'move') {
         toolState.pan = {
             x: event.clientX,
@@ -149,7 +168,6 @@ canvas.addEventListener('pointerdown', (event) => {
         return;
     }
 
-    const targetItem = event.target.closest('.object');
     if (event.button !== 0) return;
     if (!targetItem) {
         document.querySelectorAll('.object').forEach((item) => item.classList.remove('selected'));
@@ -330,6 +348,15 @@ export function setDragShift(shiftKey) {
 
 canvas.addEventListener('contextmenu', (event) => {
     if (toolState.active === 'measure') return;
+
+    // Con Alt el clic derecho es un giro de 90 grados: no abrimos el menu,
+    // ni siquiera cuando el clic cae sobre el handle de rotacion o si se solto
+    // Alt una fraccion de segundo antes de contextmenu.
+    if ((event.altKey || Date.now() - lastAltRotateTime < 400) && event.target.closest('.object')) {
+        event.preventDefault();
+        document.querySelector('.popup-menu-box')?.remove();
+        return;
+    }
 
     if (event.target.closest('.rotate-handle')) {
         document.querySelector('.popup-menu-box')?.remove();
