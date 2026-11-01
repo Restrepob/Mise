@@ -50,6 +50,11 @@
 }
 
 .room {
+    /* La room se mide por su espacio útil: con border-box el borde de 1px se
+       comía 2px del interior y una room de 3m no dejaba entrar 1m + 2m de
+       muebles (se superponían por una pestaña). Con content-box el interior
+       mide exactamente ancho/alto x metro. */
+    box-sizing:content-box;
     color:rgba(255, 255, 255, 0.45);
     background-color:var(--color-room);
     background-image:repeating-linear-gradient(
