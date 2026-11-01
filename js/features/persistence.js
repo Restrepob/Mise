@@ -22,9 +22,29 @@ export function flushActiveView() {
     guardar(getItemState(room));
 }
 
+// Color de la paleta asignado al item. Se guarda en el estado para que
+// reconstruir la escena (undo/redo, recarga) no reparta colores nuevos: el
+// color es parte de la identidad del mueble, no del orden en que se dibuja.
+function getItemColor(item) {
+    if (isOpening(item)) return '';
+    if (item.dataset.type === 'room') return item.style.borderColor || '';
+    if (item.classList.contains('furniture')) return item.style.backgroundColor || '';
+    return '';
+}
+
+function applyItemColor(rebuilt, elemento) {
+    if (!elemento.color) return;
+    if (rebuilt.dataset.type === 'room') {
+        rebuilt.style.borderColor = elemento.color;
+    } else if (rebuilt.classList.contains('furniture')) {
+        rebuilt.style.backgroundColor = elemento.color;
+    }
+}
+
 export function applyItemStateDetails(rebuilt, elemento) {
     if (!rebuilt) return;
     if (elemento.borderRadius) rebuilt.style.borderRadius = `${elemento.borderRadius}px`;
+    applyItemColor(rebuilt, elemento);
     const opening = isOpening(rebuilt);
     if (!opening) {
         if (Number.isFinite(elemento.left) && Number.isFinite(elemento.top)) {
@@ -192,6 +212,7 @@ export function getItemState(item) {
         unidadAncho: 'm',
         unidadAlto: 'm',
         borderRadius: parseFloat(item.style.borderRadius) || 0,
+        color: getItemColor(item),
         rotacion: getRotation(item),
         edges: item.classList.contains('furniture') ? item.dataset.edges || '' : '',
         tolerance: item.classList.contains('furniture') ? item.dataset.tolerance || '' : '',
