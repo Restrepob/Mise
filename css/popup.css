@@ -124,3 +124,111 @@ input[type="number"]::-webkit-outer-spin-button {
     background:var(--color-text);
     color:var(--color-surface);
 }
+
+/* Popup Crear Objeto (Dock style) */
+.popup-add-object-on {
+    position: absolute;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--sp-4);
+    animation: fadeIn 0.15s ease-out;
+}
+
+.popup-add-object-on.hidden {
+    display: none;
+}
+
+.popup-add-object-window {
+    width: min(80%, 600px);
+    height: auto;
+    border:1px solid #8d8d8d20;
+    background:linear-gradient(135deg, #6263685f, transparent 48%, #6263683c) border-box, rgba(38, 38, 38, 0.24) padding-box;
+    backdrop-filter: blur(10px);
+    border-radius: 44px;
+    corner-shape: squircle;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    padding: 14px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    color: var(--color-text);
+    isolation: isolate;
+}
+
+.popup-add-object-window:focus {
+    outline: none;
+}
+
+.popup-add-object-header {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    width: 100%;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.popup-add-object-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.popup-add-object-list {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.popup-add-object-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: var(--sp-4) var(--sp-4);
+    border-radius: var(--br-xxl);
+    corner-shape:squircle;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+}
+
+.popup-add-object-item:hover {
+    background: rgba(255, 255, 255, 0.16);
+    color: var(--color-text);
+}
+
+.popup-add-object-item:focus {
+    outline: none;
+}
+
+.popup-add-object-item:focus-visible {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--color-text);
+    outline: 1px solid rgba(255, 255, 255, 0.24);
+    outline-offset: 2px;
+}
+
+.popup-square-preview {
+    width: 140px;
+    height: 140px;
+    background: #FF7C39;
+    border: 4px solid transparent;
+}
+
+.popup-square-preview:hover {
+    border-color: #48A1FF;
+}
+
+.popup-object-shortcut {
+    font-size: 9px;
+    line-height: 1;
+    letter-spacing: 0.5px;
+    color: #fff;
+}

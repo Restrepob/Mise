@@ -1,5 +1,6 @@
 // Herramientas activas y atajos de teclado
 import { canvas, popup } from '../core/dom.js';
+import { cancelDraft, isDrafting } from './draft.js';
 import { setDragShift } from './drag.js';
 import { redo, undo } from './history.js';
 import { deleteLayer } from './layers.js';
@@ -12,14 +13,50 @@ import { applyRotation } from './rotation.js';
 import { toolState } from '../core/state.js';
 import { getRotation } from '../core/units.js';
 
+// Atajos que interrumpen la creacion. Escape y los atajos globales descartan
+// el borrador; Ctrl+K lo descarta y deja que se abra el popup de formas.
+function handleDraftShortcut(evento) {
+    if (!isDrafting()) return false;
+
+    if (evento.key === 'Escape') {
+        evento.preventDefault();
+        cancelDraft();
+        return true;
+    }
+
+    const editingField = evento.target.closest?.('input, textarea, [contenteditable="true"]');
+    if (evento.key === 'Delete' && !editingField) {
+        evento.preventDefault();
+        cancelDraft();
+        return true;
+    }
+
+    if ((evento.ctrlKey || evento.metaKey) && !evento.altKey) {
+        const key = evento.key.toLowerCase();
+        if (key === 'z' || key === 'y') {
+            evento.preventDefault();
+            cancelDraft();
+            return true;
+        }
+        if (key === 'k') {
+            cancelDraft();
+            return false;
+        }
+    }
+
+    return false;
+}
+
 document.addEventListener('keydown', (evento) => {
+    if (handleDraftShortcut(evento)) return;
+
     if (evento.ctrlKey && evento.key.toLowerCase() === 'k') {
         evento.preventDefault();
         document.getElementById('add-object-btn').click();
         return;
     }
 
-    const editingField = evento.target.closest('input, textarea, [contenteditable="true"]');
+    const editingField = evento.target.closest?.('input, textarea, [contenteditable="true"]');
     if (evento.key === 'Delete' && !editingField) {
         const selectedObject = getSelectedObject();
         const selectedLayer = selectedObject
@@ -74,7 +111,7 @@ toolButtons.forEach((button) => {
 });
 
 document.addEventListener('keydown', (event) => {
-    if (event.target.matches('input, textarea, select, [contenteditable]')) return;
+    if (event.target.matches?.('input, textarea, select, [contenteditable]')) return;
     if (event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
     const shortcut = event.key.toLowerCase();
     const button = [...toolButtons].find((btn) => (btn.dataset.shortcut || '').toLowerCase() === shortcut);
@@ -83,7 +120,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-    if (event.target.matches('input, textarea, select, [contenteditable]')) return;
+    if (event.target.matches?.('input, textarea, select, [contenteditable]')) return;
     if (event.shiftKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
         event.preventDefault();
         switchActiveRoom(event.key === 'ArrowRight' ? 1 : -1);
@@ -91,7 +128,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-    if (event.target.matches('input, textarea, select, [contenteditable]')) return;
+    if (event.target.matches?.('input, textarea, select, [contenteditable]')) return;
     if (event.key.toLowerCase() !== 'r') return;
     // Alt + R gira antihorario; Alt + Shift + R gira horario. Ctrl/Cmd quedan
     // libres: Ctrl + R recarga el navegador y se pulsaba por accidente.
@@ -107,7 +144,7 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('keydown', (event) => {
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
-    if (event.target.closest('input, textarea, select, [contenteditable="true"]')) return;
+    if (event.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
 
     const key = event.key.toLowerCase();
     const isUndo = key === 'z' && !event.shiftKey;

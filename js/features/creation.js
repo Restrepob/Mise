@@ -7,6 +7,8 @@ import { guardarCambios } from './persistence.js';
 import { alerta, popupMenu } from './popups.js';
 import { cloneRoomContents, focusLayerRow, setActiveRoom, syncObjectLayers } from './rooms.js';
 import { applyRotation } from './rotation.js';
+import { beginDraft, cancelDraft, isDrafting } from './draft.js';
+import { focusSizeInputForEditing } from './size-manager.js';
 import { OPENING_DEFAULT, OPENING_DEPTH, OPENING_MIN, getNextColor, metro, objectMenuOptions, roomMenuOptions, state } from '../core/state.js';
 import { getRotation, smFromPx } from '../core/units.js';
 
@@ -72,23 +74,92 @@ popup.addEventListener('click', (event) => {
     }
 })
 
-document.getElementById('add-object-btn').addEventListener('click', () => {
+export function openAddObjectPopup() {
     if (!getRooms().length) {
         alerta('Debe haber una habitación primero');
         return;
     }
-    togglePopup();
-    nombre.value='';
-    alto.value='';
-    ancho.value='';
-    nombre.focus();
-    currentBtnId='add-object-btn';
-    
+    if (isDrafting()) cancelDraft();
+    const popupAdd = document.getElementById('popupAddObject');
+    if (!popupAdd) return;
+    popupAdd.classList.remove('hidden');
+    document.getElementById('popup-add-object-window')?.focus();
+}
+
+export function closeAddObjectPopup() {
+    const popupAdd = document.getElementById('popupAddObject');
+    if (!popupAdd) return;
+    popupAdd.classList.add('hidden');
+}
+
+export function createSquareObject() {
+    const activeRoom = getActiveRoom() || getRooms()[0];
+    if (!activeRoom) {
+        alerta('Debe haber una habitación primero');
+        return null;
+    }
+
+    const defaultSize = 1;
+    const name = 'Objeto';
+    currentBtnId = 'add-object-btn';
+    const createdItem = createRoom(
+        defaultSize,
+        defaultSize,
+        'm',
+        'm',
+        name,
+        'add-object-btn',
+        activeRoom,
+    );
+    if (!createdItem) return null;
+
+    beginDraft(createdItem);
+    const layer = document.querySelector(`.layer-div[data-target-id="${createdItem.id}"]`);
+    if (layer) selectLayer(layer);
+
+    focusSizeInputForEditing();
+
+    return createdItem;
+}
+
+document.getElementById('add-object-btn').addEventListener('click', () => {
+    openAddObjectPopup();
+});
+
+const popupAdd = document.getElementById('popupAddObject');
+const btnCreateSquare = document.getElementById('btn-create-square');
+
+btnCreateSquare?.addEventListener('click', () => {
+    closeAddObjectPopup();
+    createSquareObject();
+});
+
+popupAdd?.addEventListener('click', (event) => {
+    if (event.target === popupAdd) {
+        closeAddObjectPopup();
+    }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (!popupAdd || popupAdd.classList.contains('hidden')) return;
+
+    if (event.key === 'Escape') {
+        event.preventDefault();
+        closeAddObjectPopup();
+        return;
+    }
+
+    if (event.key === '1' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        closeAddObjectPopup();
+        createSquareObject();
+    }
 });
 
 document.getElementById('create-room-btn').addEventListener('click', () => {
     // La nueva room hereda de la room activa (en la que se está trabajando),
     // no de la última que se haya creado.
+    if (isDrafting()) cancelDraft();
     const baseRoom = getActiveRoom();
     togglePopup();
     nombre.value = '';

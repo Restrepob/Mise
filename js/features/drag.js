@@ -11,31 +11,26 @@ import { syncSizeManager } from './size-manager.js';
 import { clearSnapGuides, snapObject } from './snapping.js';
 import { AUTO_SCROLL_EDGE, AUTO_SCROLL_IDLE, AUTO_SCROLL_SPEED, state, toolState, viewState } from '../core/state.js';
 import { getRotation, snapRotation } from '../core/units.js';
-import { pointerToScene, setViewScroll, zoomAtPoint, zoomAtScreenPoint } from './view.js';
+import { pointerToScene, sceneDeltaToLocal, sceneToLocal, setViewScroll, zoomAtPoint, zoomAtScreenPoint } from './view.js';
 
 export let autoscrollRaf = null;
 let lastAltRotateTime = 0;
 
 export function positionDraggedObject(clientX, clientY) {
-    const { item, startPointer, startCenter, shiftKey } = toolState.dragObject;
+    const { item, parent, startPointer, startLocal, shiftKey } = toolState.dragObject;
     const pointer = pointerToScene({ clientX, clientY });
-    const deltaX = pointer.x - startPointer.x;
-    const deltaY = pointer.y - startPointer.y;
-    const parent = item.offsetParent || scene;
-    const parentRect = parent.getBoundingClientRect();
-    const sceneRect = scene.getBoundingClientRect();
 
-    const center = {
-        x: startCenter.x + deltaX,
-        y: startCenter.y + deltaY,
-    };
-
-    // offsetLeft/Top se miden desde el padding-box del padre; getBoundingClientRect
-    // devuelve el borde externo, así que sumamos el borde para no acumular 1px.
-    const parentOriginX = (parentRect.left - sceneRect.left) / viewState.scale + parent.clientLeft;
-    const parentOriginY = (parentRect.top - sceneRect.top) / viewState.scale + parent.clientTop;
-    const localX = center.x - parentOriginX;
-    const localY = center.y - parentOriginY;
+    // El arrastre se calcula en coordenadas locales del padre: el
+    // desplazamiento del puntero se gira en sentido inverso a la rotacion de
+    // la room. Asi un movimiento de pantalla mueve el objeto en su mismo eje
+    // aunque la room este a 90, 180 o 270 grados.
+    const localDelta = sceneDeltaToLocal(
+        parent,
+        pointer.x - startPointer.x,
+        pointer.y - startPointer.y,
+    );
+    const localX = startLocal.x + localDelta.x;
+    const localY = startLocal.y + localDelta.y;
 
     if (isOpening(item)) {
         // Shift libera la apertura del paso de la grid, pero la mantiene
@@ -183,6 +178,7 @@ canvas.addEventListener('pointerdown', (event) => {
     clearSnapGuides();
     selectVisibleObject(targetItem);
 
+    const parent = targetItem.offsetParent || scene;
     const rect = targetItem.getBoundingClientRect();
     const sceneRect = scene.getBoundingClientRect();
     const startPointer = pointerToScene(event);
@@ -191,10 +187,19 @@ canvas.addEventListener('pointerdown', (event) => {
         y: ((rect.top - sceneRect.top) + rect.height / 2) / viewState.scale,
     };
 
+    // El ancla vive en coordenadas locales del padre. Para los objetos es su
+    // centro; para las aperturas es el propio puntero, porque se deslizan
+    // sobre la pared. Convertirlo al sistema local permite seguir al puntero
+    // aunque la room este rotada.
+    const startLocal = isOpening(targetItem)
+        ? sceneToLocal(parent, startPointer)
+        : sceneToLocal(parent, startCenter);
+
     toolState.dragObject = {
         item: targetItem,
+        parent,
         startPointer,
-        startCenter,
+        startLocal,
         lastX: event.clientX,
         lastY: event.clientY,
         lastMoveAt: 0,
@@ -324,16 +329,20 @@ export function setDragShift(shiftKey) {
 
     if (shiftKey) {
         // Al desactivar el imán no teletransportamos el objeto a su posición
-        // "cruda": conservamos la posición actual y desde ahí sigue al puntero.
-        const pointer = pointerToScene({ clientX: drag.lastX, clientY: drag.lastY });
-        const rect = drag.item.getBoundingClientRect();
-        const sceneRect = scene.getBoundingClientRect();
-        const centerX = ((rect.left - sceneRect.left) + rect.width / 2) / viewState.scale;
-        const centerY = ((rect.top - sceneRect.top) + rect.height / 2) / viewState.scale;
-        drag.startPointer = {
-            x: pointer.x - (centerX - drag.startCenter.x),
-            y: pointer.y - (centerY - drag.startCenter.y),
-        };
+        // "cruda": reanclamos el arrastre en la posición actual (en
+        // coordenadas locales del padre) y desde ahí sigue al puntero.
+        const { item, parent } = drag;
+        drag.startPointer = pointerToScene({ clientX: drag.lastX, clientY: drag.lastY });
+        if (isOpening(item)) {
+            drag.startLocal = sceneToLocal(parent, drag.startPointer);
+        } else {
+            const rect = item.getBoundingClientRect();
+            const sceneRect = scene.getBoundingClientRect();
+            drag.startLocal = sceneToLocal(parent, {
+                x: ((rect.left - sceneRect.left) + rect.width / 2) / viewState.scale,
+                y: ((rect.top - sceneRect.top) + rect.height / 2) / viewState.scale,
+            });
+        }
     }
 
     drag.shiftKey = shiftKey;
@@ -348,6 +357,14 @@ export function setDragShift(shiftKey) {
 
 canvas.addEventListener('contextmenu', (event) => {
     if (toolState.active === 'measure') return;
+
+    // Un objeto en borrador todavia no tiene menu de capa: duplicarlo o
+    // eliminarlo antes de fijar sus medidas dejaria la creacion a medias.
+    if (event.target.closest('.object.draft')) {
+        event.preventDefault();
+        document.querySelector('.popup-menu-box')?.remove();
+        return;
+    }
 
     // Con Alt el clic derecho es un giro de 90 grados: no abrimos el menu,
     // ni siquiera cuando el clic cae sobre el handle de rotacion o si se solto

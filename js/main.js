@@ -6,6 +6,7 @@ import './core/model.js';
 import './features/snapping.js';
 import './features/popups.js';
 import './features/creation.js';
+import './features/draft.js';
 import './features/size-manager.js';
 import './features/shortcuts.js';
 import './features/rooms.js';

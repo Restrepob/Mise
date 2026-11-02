@@ -48,6 +48,18 @@
     height:24px;
     padding:2px var(--sp-2);
     font-size:var(--fs-caption);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+    border: 1px solid transparent;
+}
+.size-manager input:focus {
+    outline: none;
+    border-color: #48a1ff;
+    box-shadow: 0 0 0 2px rgba(72, 161, 255, 0.35), 0 0 10px rgba(72, 161, 255, 0.25);
+    background: var(--color-surface);
+}
+.size-manager .question-box:has(input:focus) .dim-mark svg {
+    fill: #48a1ff;
+    filter: drop-shadow(0 0 4px rgba(72, 161, 255, 0.6));
 }
 .size-manager .question-box {
     gap:4px;
@@ -64,6 +76,56 @@
 .sm-unit-btn.selected {
     background:var(--color-text);
     color:var(--color-surface);
+}
+
+.size-manager.is-draft .question-box.dim-pending:has(input:focus) input {
+    border-color:rgba(72, 161, 255, 0.65);
+    box-shadow:0 0 0 2px rgba(72, 161, 255, 0.14), 0 0 12px rgba(72, 161, 255, 0.18);
+}
+
+.size-manager.is-draft .question-box.dim-pending:has(input:focus) {
+    padding:3px 4px;
+    border:1px solid rgba(72, 161, 255, 0.4);
+    border-radius:var(--br-reg);
+    background:rgba(72, 161, 255, 0.08);
+}
+
+.size-manager.is-draft .question-box.dim-pending:has(input:focus) .dim-mark svg path {
+    fill:#79baff;
+}
+
+.size-manager.is-draft .question-box.dim-confirmed:has(input:focus) {
+    padding:3px 4px;
+    border:1px solid rgba(0, 255, 102, 0.3);
+    border-radius:var(--br-reg);
+    background:rgba(0, 255, 102, 0.05);
+}
+
+.size-manager.is-draft .question-box.dim-confirmed:has(input:focus) input {
+    border-color:rgba(0, 255, 102, 0.30);
+    box-shadow:0 0 0 1px rgba(0, 255, 102, 0.08);
+}
+
+.size-manager.is-draft .question-box.dim-confirmed:has(input:focus) .dim-mark svg path {
+    fill:#6dffa9;
+}
+
+.draft-shake {
+    animation:draft-shake 0.3s ease-in-out;
+}
+
+@keyframes draft-shake {
+    0%, 100% { translate:0 0; }
+    20% { translate:-4px 0; }
+    40% { translate:4px 0; }
+    60% { translate:-3px 0; }
+    80% { translate:3px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .draft-shake {
+        animation:none;
+    }
 }
 
 .edge-manager {
@@ -403,6 +465,21 @@ body.sidebar-resizing {
 
 .layer-div.is-hidden .layer-content {
     text-decoration:line-through;
+}
+
+/* Fila del objeto que todavia es un borrador */
+.layer-div.layer-draft {
+    box-shadow:inset 2px 0 0 #48a1ff, 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.layer-div.layer-draft .eye-div,
+.layer-div.layer-draft .options-layer {
+    display:none;
+}
+
+.layer-div.layer-draft .layer-content {
+    color:#9dc7ff;
+    font-style:italic;
 }
 
 .eye-div {

@@ -25,6 +25,9 @@ export function captureSnapshot() {
     rooms.forEach((room) => {
         states.push(getItemState(room));
         room.querySelectorAll(':scope > .object').forEach((item) => {
+            // Un borrador todavia no forma parte del documento: no entra en
+            // los snapshots parciales mientras se esta configurando.
+            if (item.dataset.draft === 'true') return;
             states.push(getItemState(item));
         });
     });

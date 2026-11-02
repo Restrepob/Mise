@@ -233,7 +233,7 @@ export function getItemState(item) {
 }
 
 export function guardarCambios(item) {
-    if (!item) return;
+    if (!item || item.dataset.draft === 'true') return;
     guardar(getItemState(item));
     scheduleHistoryCommit();
 }

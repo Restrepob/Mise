@@ -1,6 +1,7 @@
 // Rooms: capas, switcher y duplicado
 import { createLayer, createRoom } from './creation.js';
 import { objectLayers } from '../core/dom.js';
+import { cancelDraft, getDraftRoomId, isDrafting } from './draft.js';
 import { clearOpeningOverlay, renderEdges, renderTolerance } from './door.js';
 import { getLayerContext, selectLayer } from './layers.js';
 import { endMeasurement } from './measure.js';
@@ -42,6 +43,8 @@ export function syncRoomSwitcher() {
 }
 
 export function setActiveRoom(room, options = {}) {
+    // El borrador pertenece a la room donde nacio: cambiar de room lo descarta.
+    if (isDrafting() && room?.id !== getDraftRoomId()) cancelDraft();
     clearOpeningOverlay();
     clearSnapGuides();
     endMeasurement();

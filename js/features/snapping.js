@@ -2,6 +2,7 @@
 import { canvas, guidesLayer } from '../core/dom.js';
 import { getItemBoxSize, getParentInnerSize, isOpening } from '../core/model.js';
 import { GRID_STEP, SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX, SNAP_SENS, SNAP_WORLD_MAX, viewState } from '../core/state.js';
+import { getParentRotation, localToCanvas } from './view.js';
 
 export function uniqueSnapTargets(values) {
     return [...new Set(values.map((value) => Math.round(value * 1000) / 1000))]
@@ -110,19 +111,48 @@ export function ensureGuidesLayer() {
 
 export function drawSnapGuide(axis, pos, parent) {
     const guide = document.createElement('div');
-    const parentRect = parent.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
-    const scale = viewState.scale;
-    const originX = parentRect.left - canvasRect.left + parent.clientLeft * scale;
-    const originY = parentRect.top - canvasRect.top + parent.clientTop * scale;
-    const screenPos = (axis === 'x' ? originX : originY) + pos * scale;
-
     guide.className = `snap-guide ${axis}`;
-    if (axis === 'x') {
-        guide.style.left = `${screenPos}px`;
-    } else {
-        guide.style.top = `${screenPos}px`;
+    const rotation = getParentRotation(parent);
+
+    if (!rotation) {
+        const parentRect = parent.getBoundingClientRect();
+        const canvasRect = canvas.getBoundingClientRect();
+        const scale = viewState.scale;
+        const originX = parentRect.left - canvasRect.left + parent.clientLeft * scale;
+        const originY = parentRect.top - canvasRect.top + parent.clientTop * scale;
+        const screenPos = (axis === 'x' ? originX : originY) + pos * scale;
+
+        if (axis === 'x') {
+            guide.style.left = `${screenPos}px`;
+        } else {
+            guide.style.top = `${screenPos}px`;
+        }
+        ensureGuidesLayer().appendChild(guide);
+        return;
     }
+
+    // Con la room rotada, una linea local ya no es vertical ni horizontal en
+    // pantalla. Dibujamos un segmento largo que pasa por el punto de snap y
+    // sigue el eje local correspondiente.
+    const center = {
+        x: parent.offsetWidth / 2 - parent.clientLeft,
+        y: parent.offsetHeight / 2 - parent.clientTop,
+    };
+    const anchor = axis === 'x'
+        ? { x: pos, y: center.y }
+        : { x: center.x, y: pos };
+    const start = localToCanvas(parent, anchor.x, anchor.y);
+    const angle = axis === 'x' ? rotation + 90 : rotation;
+    const radians = angle * Math.PI / 180;
+    const length = (canvas.clientWidth + canvas.clientHeight) * 2;
+    const half = length / 2;
+
+    guide.style.left = `${start.x - Math.cos(radians) * half}px`;
+    guide.style.top = `${start.y - Math.sin(radians) * half}px`;
+    guide.style.width = `${length}px`;
+    guide.style.height = '1px';
+    guide.style.transformOrigin = '0 50%';
+    guide.style.transform = `rotate(${angle}deg)`;
     ensureGuidesLayer().appendChild(guide);
 }
 
