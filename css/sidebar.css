@@ -104,8 +104,9 @@
     transition:transform 140ms ease;
 }
 
+/* Desplegado: flecha hacia arriba. Contraido: flecha hacia abajo. */
 .panel.is-collapsed .panel-collapse svg {
-    transform:rotate(-90deg);
+    transform:rotate(180deg);
 }
 
 .panel-body {
@@ -127,21 +128,9 @@
     overflow-x:hidden;
 }
 
-.panel-empty {
+/* Sin seleccion el panel de propiedades queda vacio, sin texto de ayuda. */
+.size-manager.empty .panel-body > * {
     display:none;
-    margin:6px 0;
-    color:var(--color-caption);
-    font-size:11px;
-    line-height:1.4;
-    text-align:center;
-}
-
-.size-manager.empty .panel-body > *:not(.panel-empty) {
-    display:none;
-}
-
-.size-manager.empty .panel-empty {
-    display:block;
 }
 
 /* Botones de creacion */
