@@ -1,17 +1,16 @@
 // Borrador de creacion: la figura existe en el canvas pero no en el documento.
 // Vive centrada en su room, se puede dimensionar en vivo y solo se guarda (y
-// entra al historial) cuando se fijan las dos medidas o se hace clic afuera.
-import { smAlto, smAncho } from '../core/dom.js';
+// entra al historial) cuando se fijan alto, ancho y nombre, o con clic afuera.
+import { smAlto, smAncho, smNombre } from '../core/dom.js';
+import { setItemName } from '../core/model.js';
 import { state } from '../core/state.js';
 import { guardarCambios } from './persistence.js';
-
-const SETTLE_MS = 300;
 
 export const draftState = {
     active: false,
     itemId: '',
     roomId: '',
-    confirmed: { height: false, width: false },
+    confirmed: { height: false, width: false, name: false },
 };
 
 export function isDrafting() {
@@ -72,8 +71,18 @@ function focusInvalidDraftInput() {
     shakeInput(input);
 }
 
-function focusPendingDraftInput() {
-    focusInput(draftState.confirmed.height ? smAncho : smAlto);
+// Orden de fijacion: alto, ancho y por ultimo el nombre.
+export function getNextDraftInput() {
+    if (!draftState.active) return null;
+    if (!draftState.confirmed.height || !isDimensionValid('height')) return smAlto;
+    if (!draftState.confirmed.width || !isDimensionValid('width')) return smAncho;
+    return smNombre;
+}
+
+export function focusNextDraftInput() {
+    const input = getNextDraftInput();
+    if (!input) return;
+    focusInput(input);
 }
 
 // Cuando el clic afuera no puede fijar la figura (medida en 0) hay que
@@ -95,7 +104,7 @@ export function beginDraft(item) {
     draftState.active = true;
     draftState.itemId = item.id;
     draftState.roomId = item.dataset.roomId || item.parentElement?.id || '';
-    draftState.confirmed = { height: false, width: false };
+    draftState.confirmed = { height: false, width: false, name: false };
 
     item.dataset.draft = 'true';
     item.classList.add('draft');
@@ -113,21 +122,37 @@ export function markDimensionEdited(dimension) {
     emit('edit');
 }
 
+// El nombre se refleja en vivo; si ya estaba confirmado deja de estarlo.
+export function markDraftNameEdited() {
+    if (!draftState.active) return;
+    if (!draftState.confirmed.name) return;
+    draftState.confirmed.name = false;
+    emit('edit');
+}
+
 // 'invalid'  -> el valor no sirve, no se confirma
-// 'pending'  -> quedo confirmada pero falta la otra medida
-// 'done'     -> se confirmaron las dos y la figura ya se fijo
+// 'pending'  -> quedo confirmada pero falta otra medida o el nombre
+// 'done'     -> ya se confirmaron alto, ancho y nombre y la figura se fijo
 export function confirmDraftDimension(dimension) {
     if (!draftState.active) return 'invalid';
     if (!isDimensionValid(dimension)) return 'invalid';
 
     draftState.confirmed[dimension] = true;
 
-    if (draftState.confirmed.height && draftState.confirmed.width) {
+    if (draftState.confirmed.height && draftState.confirmed.width && draftState.confirmed.name) {
         return finalizeDraft() ? 'done' : 'invalid';
     }
 
     emit('dimension');
     return 'pending';
+}
+
+export function confirmDraftName() {
+    if (!draftState.active) return 'invalid';
+    if (!smNombre.value.trim()) return 'invalid';
+
+    draftState.confirmed.name = true;
+    return finalizeDraft() ? 'done' : 'invalid';
 }
 
 // Fija la figura con las medidas que tenga en ese momento. Devuelve false si
@@ -151,13 +176,18 @@ function finalizeDraft() {
     draftState.active = false;
     draftState.itemId = '';
     draftState.roomId = '';
-    draftState.confirmed = { height: false, width: false };
+    draftState.confirmed = { height: false, width: false, name: false };
+
+    // El nombre puede quedar vacio si se borro: se usa el que ya tenia o el
+    // nombre por defecto para no crear objetos sin identificar.
+    const finalName = smNombre.value.trim() || item.dataset.name?.trim() || 'Objeto';
+    setItemName(item, finalName);
+    const layerContent = document.querySelector(`.layer-div[data-target-id="${item.id}"] .layer-content`);
+    if (layerContent) layerContent.textContent = finalName;
 
     delete item.dataset.draft;
-    item.classList.remove('draft');
-    item.classList.add('draft-settling');
+    item.classList.remove('draft', 'is-dragging');
     draftLayerRow(item.id)?.classList.remove('layer-draft');
-    window.setTimeout(() => item.classList.remove('draft-settling'), SETTLE_MS);
 
     // Recien ahora entra en localStorage y en el historial: un solo paso de undo.
     guardarCambios(item);
@@ -173,7 +203,7 @@ export function cancelDraft() {
     draftState.active = false;
     draftState.itemId = '';
     draftState.roomId = '';
-    draftState.confirmed = { height: false, width: false };
+    draftState.confirmed = { height: false, width: false, name: false };
 
     const layer = draftLayerRow(id);
     layer?.remove();
@@ -195,16 +225,14 @@ document.addEventListener('pointerdown', (event) => {
 
     const draftItem = target.closest('.object.draft');
     if (draftItem) {
-        // Mientras se arrastra, la figura deja de flotar: el ancla del arrastre
-        // se mide con su posicion real (la animacion mueve el rect).
         draftItem.classList.add('is-dragging');
-        const stopFloating = () => {
+        const stopDragging = () => {
             draftItem.classList.remove('is-dragging');
-            document.removeEventListener('pointerup', stopFloating, true);
-            document.removeEventListener('pointercancel', stopFloating, true);
+            document.removeEventListener('pointerup', stopDragging, true);
+            document.removeEventListener('pointercancel', stopDragging, true);
         };
-        document.addEventListener('pointerup', stopFloating, true);
-        document.addEventListener('pointercancel', stopFloating, true);
+        document.addEventListener('pointerup', stopDragging, true);
+        document.addEventListener('pointercancel', stopDragging, true);
         return;
     }
     if (target.closest('.size-manager')) return;
@@ -216,10 +244,10 @@ document.addEventListener('pointerdown', (event) => {
         return;
     }
 
-    // La fila del propio borrador solo devuelve el foco a la medida pendiente.
+    // La fila del propio borrador solo devuelve el foco al campo pendiente.
     const row = target.closest('.layer-div');
     if (row && row.dataset.targetId === draftState.itemId) {
-        focusPendingDraftInput();
+        focusNextDraftInput();
         return;
     }
 

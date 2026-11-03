@@ -78,36 +78,59 @@
     color:var(--color-surface);
 }
 
-.size-manager.is-draft .question-box.dim-pending:has(input:focus) input {
-    border-color:rgba(72, 161, 255, 0.65);
-    box-shadow:0 0 0 2px rgba(72, 161, 255, 0.14), 0 0 12px rgba(72, 161, 255, 0.18);
-}
-
-.size-manager.is-draft .question-box.dim-pending:has(input:focus) {
+/* Resaltado del borrador: mientras una medida sigue pendiente se marca en el
+   panel, sin depender de que el campo tenga el foco. */
+.size-manager.is-draft .question-box.dim-pending {
     padding:3px 4px;
     border:1px solid rgba(72, 161, 255, 0.4);
     border-radius:var(--br-reg);
     background:rgba(72, 161, 255, 0.08);
 }
 
-.size-manager.is-draft .question-box.dim-pending:has(input:focus) .dim-mark svg path {
+.size-manager.is-draft .question-box.dim-pending input {
+    border-color:rgba(72, 161, 255, 0.65);
+    box-shadow:0 0 0 2px rgba(72, 161, 255, 0.14), 0 0 12px rgba(72, 161, 255, 0.18);
+}
+
+.size-manager.is-draft .question-box.dim-pending .dim-mark svg path {
     fill:#79baff;
 }
 
-.size-manager.is-draft .question-box.dim-confirmed:has(input:focus) {
+.size-manager.is-draft .question-box.dim-pending:has(input:focus) {
+    box-shadow:0 0 0 2px rgba(72, 161, 255, 0.16), 0 0 18px rgba(72, 161, 255, 0.3);
+}
+
+.size-manager.is-draft .question-box.dim-confirmed {
     padding:3px 4px;
     border:1px solid rgba(0, 255, 102, 0.3);
     border-radius:var(--br-reg);
     background:rgba(0, 255, 102, 0.05);
 }
 
-.size-manager.is-draft .question-box.dim-confirmed:has(input:focus) input {
-    border-color:rgba(0, 255, 102, 0.30);
+.size-manager.is-draft .question-box.dim-confirmed input {
+    border-color:rgba(0, 255, 102, 0.3);
     box-shadow:0 0 0 1px rgba(0, 255, 102, 0.08);
 }
 
-.size-manager.is-draft .question-box.dim-confirmed:has(input:focus) .dim-mark svg path {
+.size-manager.is-draft .question-box.dim-confirmed .dim-mark svg path {
     fill:#6dffa9;
+}
+
+/* El nombre es el ultimo valor: se resalta igual que las medidas. */
+.size-manager.is-draft #sm-nombre.draft-name-pending {
+    border-color:rgba(72, 161, 255, 0.65);
+    background:rgba(72, 161, 255, 0.08);
+    box-shadow:0 0 0 2px rgba(72, 161, 255, 0.14), 0 0 12px rgba(72, 161, 255, 0.18);
+}
+
+.size-manager.is-draft #sm-nombre.draft-name-pending:focus {
+    box-shadow:0 0 0 2px rgba(72, 161, 255, 0.18), 0 0 18px rgba(72, 161, 255, 0.3);
+}
+
+.size-manager.is-draft #sm-nombre.draft-name-confirmed {
+    border-color:rgba(0, 255, 102, 0.32);
+    background:rgba(0, 255, 102, 0.05);
+    box-shadow:0 0 0 1px rgba(0, 255, 102, 0.1);
 }
 
 .draft-shake {

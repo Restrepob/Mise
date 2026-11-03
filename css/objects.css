@@ -311,6 +311,18 @@
     box-shadow: 0 0 5px rgba(255, 255, 255, 0.45);
 }
 
+/* Medida que se esta editando en ese momento. */
+.dim-i-highlight--active .dim-i-cap,
+.dim-i-highlight--active .dim-i-line {
+    background: #9ecbff;
+    box-shadow: 0 0 7px rgba(72, 161, 255, 0.65);
+}
+
+.dim-i-highlight--active .dim-i-badge {
+    border-color: rgba(72, 161, 255, 0.55);
+    box-shadow: 0 0 12px rgba(72, 161, 255, 0.4);
+}
+
 /* Badge con la medida en el centro de la I */
 .dim-i-badge {
     flex-shrink: 0;
@@ -342,31 +354,24 @@
     font-family: inherit;
 }
 
-/* El borde discontinuo indica que el objeto sigue pendiente de medidas. */
+/* Borrador: solo una caja translucida con su nombre; la forma real (relleno y
+   color) aparece recien al fijar las medidas y el nombre. */
 .furniture.draft {
+    background: rgba(72, 161, 255, 0.12) !important;
     border: 1px dashed rgba(72, 161, 255, 0.9) !important;
+    backdrop-filter: blur(2px);
     z-index: 12;
 }
 
+.furniture.draft .balance-name {
+    color: #e2f0ff;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    text-shadow: 0 0 10px rgba(72, 161, 255, 0.85);
+}
+
 /* Al agarrarla para moverla, la figura se apoya: el arrastre usa su posicion
-   real y no la del flotado. */
+   real y no la de ningun efecto visual. */
 .furniture.draft.is-dragging {
     cursor: grabbing;
-}
-
-/* Empalme: la figura se asienta cuando se fijan las medidas. */
-.furniture.draft-settling {
-    animation: draft-settle 0.26s ease-out;
-}
-
-@keyframes draft-settle {
-    0% { scale: 1; }
-    55% { scale: 1.035; }
-    100% { scale: 1; }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .furniture.draft-settling {
-        animation: none;
-    }
 }

@@ -2,7 +2,7 @@
 import { smAlto, smAncho, smNombre, smRadius, smRotate90, smRotation } from '../core/dom.js';
 import { syncDoorPanel, syncEdgePanel, syncOpeningOverlay, syncTolerancePanel } from './door.js';
 import { getActiveRoom, getOpeningWallLength, getSelectedObject, isOpening, setItemName } from '../core/model.js';
-import { confirmDraftDimension, draftState, isDrafting, markDimensionEdited, shakeDraftInput } from './draft.js';
+import { confirmDraftDimension, confirmDraftName, draftState, getNextDraftInput, isDrafting, markDimensionEdited, markDraftNameEdited, shakeDraftInput } from './draft.js';
 import { placeOpening } from './openings.js';
 import { guardarCambios } from './persistence.js';
 import { syncRoomSwitcher } from './rooms.js';
@@ -64,13 +64,7 @@ export function setOpeningPanelFields(item) {
 
 export let currentDimHighlight = null;
 
-export function setDimensionHighlight(dimension) {
-    currentDimHighlight = dimension;
-    document.querySelectorAll('.dim-i-highlight').forEach((el) => el.remove());
-
-    const item = getSelectedObject();
-    if (!item || !dimension || isOpening(item)) return;
-
+function buildDimensionHighlight(item, dimension, active) {
     const swapped = isAxesSwapped(item);
     const isLocalHeight = (dimension === 'height' && !swapped) || (dimension === 'width' && swapped);
 
@@ -80,7 +74,9 @@ export function setDimensionHighlight(dimension) {
     const valueText = `${smFromPx(pixels, unit).toFixed(2)} ${unit}`;
 
     const container = document.createElement('div');
-    container.className = `dim-i-highlight ${isLocalHeight ? 'dim-i-highlight--v' : 'dim-i-highlight--h'}${isDrafting() ? ' dim-i-highlight--draft-active' : ''}`;
+    container.className = `dim-i-highlight ${isLocalHeight ? 'dim-i-highlight--v' : 'dim-i-highlight--h'}`
+        + (isDrafting() ? ' dim-i-highlight--draft-active' : '')
+        + (active ? ' dim-i-highlight--active' : '');
 
     const capStart = document.createElement('div');
     capStart.className = 'dim-i-cap';
@@ -104,7 +100,30 @@ export function setDimensionHighlight(dimension) {
     capEnd.className = 'dim-i-cap';
 
     container.append(capStart, lineBefore, badge, lineAfter, capEnd);
-    item.appendChild(container);
+    return container;
+}
+
+function renderDimensionHighlights(dimensions, active = null) {
+    document.querySelectorAll('.dim-i-highlight').forEach((el) => el.remove());
+
+    const item = getSelectedObject();
+    if (!item || isOpening(item)) return;
+
+    dimensions.filter(Boolean).forEach((dimension) => {
+        item.appendChild(buildDimensionHighlight(item, dimension, dimension === active));
+    });
+}
+
+export function setDimensionHighlight(dimension) {
+    currentDimHighlight = dimension;
+
+    // Mientras hay borrador se muestran siempre las dos medidas; al editar una
+    // de ellas se marca como activa.
+    if (isDrafting()) {
+        renderDimensionHighlights(['height', 'width'], dimension);
+        return;
+    }
+    renderDimensionHighlights(dimension ? [dimension] : []);
 }
 
 export function focusSizeInputForEditing() {
@@ -143,6 +162,15 @@ export function syncDraftUI() {
         box.classList.toggle('dim-pending', drafting && !draftState.confirmed[dimension]);
         box.classList.toggle('dim-confirmed', drafting && draftState.confirmed[dimension]);
     });
+
+    // El nombre es el ultimo valor a fijar: se resalta cuando ya estan las
+    // medidas y todavia falta confirmarlo.
+    const nameIsNext = drafting
+        && draftState.confirmed.height
+        && draftState.confirmed.width
+        && !draftState.confirmed.name;
+    smNombre.classList.toggle('draft-name-pending', nameIsNext);
+    smNombre.classList.toggle('draft-name-confirmed', drafting && draftState.confirmed.name);
 }
 
 export function syncSizeManagerReadout() {
@@ -198,7 +226,7 @@ export function applySizeDimension(input, unit, dimension) {
     return true;
 }
 
-smNombre.addEventListener('change', () => {
+function applySizeName() {
     const item = getSelectedObject();
     if (!item) return;
 
@@ -207,8 +235,29 @@ smNombre.addEventListener('change', () => {
 
     const layerContent = document.querySelector(`.layer-div[data-target-id="${item.id}"] .layer-content`);
     if (layerContent) layerContent.textContent = value;
+
+    // Durante el borrador el nombre se ve en vivo pero no se guarda todavia.
+    if (isDrafting()) {
+        markDraftNameEdited();
+        return;
+    }
     guardarCambios(item);
     syncRoomSwitcher();
+}
+
+smNombre.addEventListener('input', () => applySizeName());
+
+smNombre.addEventListener('change', () => applySizeName());
+
+smNombre.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+
+    if (isDrafting()) {
+        if (confirmDraftName() === 'invalid') shakeDraftInput(smNombre);
+        return;
+    }
+    smNombre.blur();
 });
 
 smAlto.addEventListener('input', () => applySizeDimension(smAlto, smAlMetric, 'height'));
@@ -246,8 +295,11 @@ smAlto.addEventListener('keydown', (event) => {
             return;
         }
         if (result === 'pending') {
-            smAncho.focus();
-            smAncho.select();
+            const next = getNextDraftInput();
+            if (next && next !== smAlto) {
+                next.focus();
+                next.select();
+            }
         } else {
             smAlto.blur();
         }
@@ -298,8 +350,11 @@ smAncho.addEventListener('keydown', (event) => {
             return;
         }
         if (result === 'pending') {
-            smAlto.focus();
-            smAlto.select();
+            const next = getNextDraftInput();
+            if (next && next !== smAncho) {
+                next.focus();
+                next.select();
+            }
         } else {
             smAncho.blur();
         }

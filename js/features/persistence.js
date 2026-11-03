@@ -33,6 +33,12 @@ function getItemColor(item) {
 }
 
 function applyItemColor(rebuilt, elemento) {
+    // El color del mueble identifica su relleno; el borde lo define el CSS. Al
+    // reconstruir (undo/redo, recarga) hay que limpiar cualquier borde inline
+    // que pudiera quedar de una version anterior para que no cambie de color.
+    if (rebuilt.dataset.type !== 'room' && rebuilt.classList.contains('furniture')) {
+        rebuilt.style.borderColor = '';
+    }
     if (!elemento.color) return;
     if (rebuilt.dataset.type === 'room') {
         rebuilt.style.borderColor = elemento.color;

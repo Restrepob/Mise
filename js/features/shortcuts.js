@@ -144,14 +144,27 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('keydown', (event) => {
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
-    if (event.target.closest?.('input, textarea, select, [contenteditable="true"]')) return;
 
     const key = event.key.toLowerCase();
     const isUndo = key === 'z' && !event.shiftKey;
     const isRedo = key === 'y' || (key === 'z' && event.shiftKey);
     if (!isUndo && !isRedo) return;
 
+    const editingField = event.target.closest?.('input, textarea, select, [contenteditable="true"]');
+    // En el panel del objeto seleccionado Ctrl+Z/Y deshace la escena: despues
+    // de editar medidas o el nombre el foco suele quedar ahi, y el undo nativo
+    // solo cambiaria el texto del campo (o lo dejaria sin efecto aparente).
+    const sizePanelField = editingField ? editingField.closest('.size-manager') : null;
+    if (editingField && !sizePanelField) return;
+
     event.preventDefault();
+    if (sizePanelField) {
+        // Se suelta el campo para que la lectura del panel se refresque con el
+        // estado restaurado y no quede el texto viejo seleccionado.
+        editingField.blur();
+        window.getSelection()?.removeAllRanges();
+    }
+
     if (isUndo) {
         undo();
     } else {

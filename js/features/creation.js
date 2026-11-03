@@ -211,7 +211,6 @@ export function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, 
     const nextColor = getNextColor();
     room.style.width=`${ancho}px`;
     room.style.height=`${alto}px`;
-    room.style.borderColor = nextColor;
     room.dataset.edges = '';
     room.dataset.name = name;
     room.dataset.rotation = '0';
@@ -229,6 +228,7 @@ export function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, 
         room.dataset.type = 'room';
         room.classList.add('room', 'object');
         room.style.backgroundColor = 'var(--color-room)';
+        room.style.borderColor = nextColor;
         scene.appendChild(room);
 
         if (inheritContents && baseRoom) {

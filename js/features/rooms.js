@@ -148,7 +148,6 @@ export function cloneFurnitureItem(sourceItem, targetRoom, options = {}) {
     item.style.left = options.left ?? sourceItem.style.left;
     item.style.top = options.top ?? sourceItem.style.top;
     item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
-    item.style.borderColor = sourceItem.style.borderColor || 'transparent';
     item.style.borderRadius = sourceItem.style.borderRadius || '';
     setItemName(item, name);
     targetRoom.appendChild(item);
