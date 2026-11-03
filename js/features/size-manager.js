@@ -224,8 +224,9 @@ export function syncDraftUI() {
         && draftState.confirmed.height
         && draftState.confirmed.width
         && !draftState.confirmed.name;
-    smNombre.classList.toggle('draft-name-pending', nameIsNext);
-    smNombre.classList.toggle('draft-name-confirmed', drafting && draftState.confirmed.name);
+    const nameBox = smNombre.closest('.question-box');
+    nameBox?.classList.toggle('draft-name-pending', nameIsNext);
+    nameBox?.classList.toggle('draft-name-confirmed', drafting && draftState.confirmed.name);
 }
 
 export function syncSizeManagerReadout() {
