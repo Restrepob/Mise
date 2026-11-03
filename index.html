@@ -145,52 +145,57 @@
 
                         <div class="field">
                             <label class="field-label" for="sm-nombre" id="sm-nombre-caption">Nombre</label>
-                            <div class="question-box row" id="sm-nombre-box">
-                                <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg></span>
-                                <input type="text" id="sm-nombre" autocomplete="off" spellcheck="false">
-                            </div>
-                        </div>
-
-                        <div class="field" id="sm-alto-field">
-                            <div class="field-head">
-                                <span class="field-label" id="sm-alto-caption">Altura</span>
-                                <div class="unit-toggle" role="group" aria-label="Unidad de altura">
-                                    <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-alto-m" data-tooltip="Metros">m</button>
-                                    <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-alto-cm" data-tooltip="Centímetros">cm</button>
-                                    <button class="sm-unit-btn" type="button" data-unit="in" id="sm-alto-in" data-tooltip="Pulgadas">in</button>
-                                    <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-alto-ft" data-tooltip="Pies">ft</button>
+                            <div class="field-row">
+                                <div class="question-box row" id="sm-nombre-box">
+                                    <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg></span>
+                                    <input type="text" id="sm-nombre" autocomplete="off" spellcheck="false">
                                 </div>
                             </div>
-                            <div class="question-box row" id="sm-alto-box">
-                                <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
-                                <input type="number" id="sm-alto" min="0.1" step="0.01" inputmode="decimal">
-                            </div>
                         </div>
 
-                        <div class="field" id="sm-ancho-field">
-                            <div class="field-head">
-                                <span class="field-label" id="sm-ancho-caption">Ancho</span>
-                                <div class="unit-toggle" role="group" aria-label="Unidad de ancho">
-                                    <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-ancho-m" data-tooltip="Metros">m</button>
-                                    <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-ancho-cm" data-tooltip="Centímetros">cm</button>
-                                    <button class="sm-unit-btn" type="button" data-unit="in" id="sm-ancho-in" data-tooltip="Pulgadas">in</button>
-                                    <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-ancho-ft" data-tooltip="Pies">ft</button>
+                        <div class="field-pair">
+                            <div class="field" id="sm-alto-field">
+                                <div class="field-head">
+                                    <span class="field-label" id="sm-alto-caption">Altura</span>
+                                    <span class="field-unit" id="sm-alto-unit">m</span>
+                                </div>
+                                <div class="field-row">
+                                    <div class="question-box row" id="sm-alto-box">
+                                        <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                        <input type="number" id="sm-alto" min="0.1" step="0.01" inputmode="decimal">
+                                        <button class="field-config" type="button" id="sm-alto-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-alto-unit-menu" aria-label="Cambiar unidad de altura">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                        </button>
+                                        <div class="unit-menu" id="sm-alto-unit-menu" role="group" aria-label="Unidad de altura">
+                                            <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-alto-m" data-tooltip="Metros">m</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-alto-cm" data-tooltip="Centímetros">cm</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="in" id="sm-alto-in" data-tooltip="Pulgadas">in</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-alto-ft" data-tooltip="Pies">ft</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="question-box row" id="sm-ancho-box">
-                                <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
-                                <input type="number" id="sm-ancho" min="0.1" step="0.01" inputmode="decimal">
-                            </div>
-                        </div>
 
-                        <div class="field" id="sm-radius-field">
-                            <div class="field-head">
-                                <span class="field-label" id="sm-radius-caption">Radio</span>
-                                <span class="field-value" id="sm-radius-value">0</span>
-                            </div>
-                            <div class="question-box row">
-                                <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v80H200v560h560v-240h80v240q0 33-23.5 56.5T760-120Z"/></svg></span>
-                                <input type="number" id="sm-radius" min="0" step="1">
+                            <div class="field" id="sm-ancho-field">
+                                <div class="field-head">
+                                    <span class="field-label" id="sm-ancho-caption">Ancho</span>
+                                    <span class="field-unit" id="sm-ancho-unit">m</span>
+                                </div>
+                                <div class="field-row">
+                                    <div class="question-box row" id="sm-ancho-box">
+                                        <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                        <input type="number" id="sm-ancho" min="0.1" step="0.01" inputmode="decimal">
+                                        <button class="field-config" type="button" id="sm-ancho-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-ancho-unit-menu" aria-label="Cambiar unidad de ancho">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                        </button>
+                                        <div class="unit-menu" id="sm-ancho-unit-menu" role="group" aria-label="Unidad de ancho">
+                                            <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-ancho-m" data-tooltip="Metros">m</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-ancho-cm" data-tooltip="Centímetros">cm</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="in" id="sm-ancho-in" data-tooltip="Pulgadas">in</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-ancho-ft" data-tooltip="Pies">ft</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -199,19 +204,36 @@
                                 <span class="field-label" id="sm-rotation-caption">Rotación</span>
                                 <span class="field-value" id="sm-rotation-value">0°</span>
                             </div>
-                            <div class="question-box row" id="sm-rotation-box">
-                                <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-440q0-75 28.5-140.5t77-114q48.5-48.5 114-77T480-800h6l-62-62 56-58 160 160-160 160-56-58 62-62h-6q-117 0-198.5 81.5T200-440q0 117 81.5 198.5T480-160q89 0 158-51t94-129h84q-27 115-119.5 187.5T480-80Z"/></svg></span>
-                                <input type="number" id="sm-rotation" min="0" max="359" step="1">
-                                <button class="sm-icon-btn" type="button" id="sm-rotate--90" data-tooltip="Girar a la izquierda 90°" aria-label="Girar a la izquierda 90 grados">
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
-                                        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
-                                    </svg>
-                                </button>
-                                <button class="sm-icon-btn" type="button" id="sm-rotate-90" data-tooltip="Girar a la derecha 90°" aria-label="Girar a la derecha 90 grados">
-                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
-                                        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
-                                    </svg>
-                                </button>
+                            <div class="field-row">
+                                <div class="question-box row" id="sm-rotation-box">
+                                    <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-440q0-75 28.5-140.5t77-114q48.5-48.5 114-77T480-800h6l-62-62 56-58 160 160-160 160-56-58 62-62h-6q-117 0-198.5 81.5T200-440q0 117 81.5 198.5T480-160q89 0 158-51t94-129h84q-27 115-119.5 187.5T480-80Z"/></svg></span>
+                                    <input type="number" id="sm-rotation" min="0" max="359" step="1">
+                                </div>
+                                <div class="field-actions" id="sm-rotation-actions">
+                                    <button class="sm-icon-btn" type="button" id="sm-rotate--90" data-tooltip="Girar a la izquierda 90°" aria-label="Girar a la izquierda 90 grados">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
+                                            <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="sm-icon-btn" type="button" id="sm-rotate-90" data-tooltip="Girar a la derecha 90°" aria-label="Girar a la derecha 90 grados">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
+                                            <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field" id="sm-radius-field">
+                            <div class="field-head">
+                                <span class="field-label" id="sm-radius-caption">Radio</span>
+                                <span class="field-value" id="sm-radius-value">0</span>
+                            </div>
+                            <div class="field-row">
+                                <div class="question-box row">
+                                    <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v80H200v560h560v-240h80v240q0 33-23.5 56.5T760-120Z"/></svg></span>
+                                    <input type="number" id="sm-radius" min="0" step="1">
+                                </div>
                             </div>
                         </div>
 

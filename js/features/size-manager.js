@@ -57,6 +57,8 @@ function setDimensionUnit(buttonIds, input, metricState, nextUnit) {
         : null;
 
     metricState.value = nextUnit;
+    const unitLabel = document.getElementById(input === smAlto ? 'sm-alto-unit' : 'sm-ancho-unit');
+    if (unitLabel) unitLabel.textContent = nextUnit;
     buttonIds.forEach((id) => {
         document.getElementById(id).classList.toggle(
             'selected',
@@ -80,6 +82,53 @@ export function configureSizeUnitButtons(buttonIds, input, metricState) {
         });
     });
 }
+
+// Menus de unidades: se abren desde el engranaje del campo y se cierran al
+// elegir una unidad, al hacer clic fuera o con Escape.
+const unitMenus = [];
+
+function setupUnitMenu(configId, menuId) {
+    const config = document.getElementById(configId);
+    const menu = document.getElementById(menuId);
+    if (!config || !menu) return;
+
+    const box = config.closest('.question-box');
+    const setOpen = (open) => {
+        menu.classList.toggle('is-open', open);
+        box?.classList.toggle('is-open', open);
+        config.setAttribute('aria-expanded', String(open));
+    };
+
+    unitMenus.push({ config, menu, box, setOpen });
+
+    config.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setOpen(!menu.classList.contains('is-open'));
+    });
+
+    menu.addEventListener('click', (event) => {
+        if (event.target.closest('.sm-unit-btn')) setOpen(false);
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+        if (!menu.classList.contains('is-open')) return;
+        if (box?.contains(event.target)) return;
+        setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !menu.classList.contains('is-open')) return;
+        setOpen(false);
+        config.focus();
+    });
+}
+
+function closeUnitMenus() {
+    unitMenus.forEach(({ setOpen }) => setOpen(false));
+}
+
+setupUnitMenu('sm-alto-config', 'sm-alto-unit-menu');
+setupUnitMenu('sm-ancho-config', 'sm-ancho-unit-menu');
 
 export function setSizeManagerDisabled(disabled, item = null) {
     document.querySelectorAll('.size-manager .panel-body input, .size-manager .panel-body button').forEach((control) => {

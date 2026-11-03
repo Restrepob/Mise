@@ -187,7 +187,6 @@
 
 /* Controles segmentados (unidades y sistema) */
 .segmented,
-.unit-toggle,
 .unit-system {
     display:inline-flex;
     align-items:center;
@@ -252,11 +251,28 @@
     padding-top:0;
 }
 
+/* Altura y ancho comparten una misma fila horizontal. */
+.field-pair {
+    display:flex;
+    align-items:flex-start;
+    gap:7px;
+    width:100%;
+    padding-top:8px;
+    border-top:1px solid rgba(255, 255, 255, 0.045);
+}
+
+.field-pair > .field {
+    flex:1 1 0;
+    min-width:0;
+    padding-top:0;
+    border-top:none;
+}
+
 .field-head {
     display:flex;
     align-items:center;
-    justify-content:space-between;
-    gap:8px;
+    justify-content:flex-start;
+    gap:6px;
     min-height:20px;
 }
 
@@ -266,7 +282,22 @@
     letter-spacing:0.01em;
 }
 
+/* Unidad activa del campo, visible junto al nombre. */
+.field-unit {
+    color:var(--color-caption);
+    font-size:10px;
+    font-variant-numeric:tabular-nums;
+    opacity:0.8;
+}
+
+.field-unit::before {
+    content:"·";
+    margin-right:4px;
+    opacity:0.7;
+}
+
 .field-value {
+    margin-left:auto;
     color:var(--color-caption);
     font-size:10px;
     font-variant-numeric:tabular-nums;
@@ -274,16 +305,21 @@
 
 /* Caja del campo: el icono y el input transparente comparten el contenedor. */
 .field .question-box {
+    position:relative;
     display:flex;
     align-items:center;
-    gap:7px;
+    gap:5px;
     width:100%;
-    min-height:32px;
-    padding:0 8px 0 7px;
-    border:1px solid rgba(255, 255, 255, 0.06);
+    min-height:28px;
+    padding:0 6px 0 6px;
+    border:1px solid transparent;
     border-radius:7px;
     background:rgba(255, 255, 255, 0.045);
     transition:border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.field .question-box:hover {
+    border-color:rgba(255, 255, 255, 0.11);
 }
 
 .field .question-box:focus-within {
@@ -298,14 +334,14 @@
     flex:1 1 auto;
     width:100%;
     min-width:0;
-    height:30px;
+    height:26px;
     min-height:0;
     padding:0;
     border:none;
     border-radius:0;
     background:transparent;
     color:var(--color-text);
-    font-size:12px;
+    font-size:11px;
 }
 
 .field input[type="number"] {
@@ -371,13 +407,114 @@
     color:#48a1ff;
 }
 
-/* Los botones dentro de la caja se integran con el fondo del campo. */
-.field .question-box .sm-icon-btn {
+/* Engranaje que abre el menu de unidades: solo aparece al pasar el cursor. */
+.field-config {
+    flex:none;
+    width:16px;
+    height:16px;
+    display:grid;
+    place-items:center;
+    padding:0;
+    border:none;
+    border-radius:4px;
     background:transparent;
+    color:var(--color-caption);
+    opacity:0;
+    pointer-events:none;
+    cursor:pointer;
+    transition:opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
-.field .question-box .sm-icon-btn:hover {
+.field-config svg {
+    width:13px;
+    height:13px;
+    display:block;
+}
+
+.field .question-box:hover .field-config,
+.field .question-box:focus-within .field-config,
+.field .question-box.is-open .field-config,
+.field-config:focus-visible {
+    opacity:1;
+    pointer-events:auto;
+}
+
+.field-config:hover {
+    color:var(--color-text);
     background:rgba(255, 255, 255, 0.09);
+}
+
+.field .question-box.is-open {
+    border-color:rgba(255, 255, 255, 0.11);
+}
+
+/* Menu de unidades: cuelga del engranaje, dentro del ancho del panel. */
+.unit-menu {
+    position:absolute;
+    top:calc(100% + 5px);
+    right:0;
+    z-index:40;
+    display:none;
+    align-items:center;
+    gap:2px;
+    padding:3px;
+    border:1px solid rgba(255, 255, 255, 0.09);
+    border-radius:8px;
+    background:var(--color-elevated);
+    box-shadow:0 12px 26px rgba(0, 0, 0, 0.45);
+}
+
+.unit-menu.is-open {
+    display:flex;
+}
+
+.unit-menu .sm-unit-btn {
+    min-width:24px;
+    height:22px;
+}
+
+/* Fila del campo: input a la mitad y acciones en la otra mitad. */
+.field-row {
+    display:flex;
+    align-items:stretch;
+    gap:7px;
+    width:100%;
+}
+
+.field .field-row > .question-box {
+    flex:1 1 0;
+    width:auto;
+    min-width:0;
+}
+
+.field .field-row > .field-actions {
+    flex:0 0 calc(50% - 3.5px);
+    min-width:0;
+}
+
+/* Cada botón de acción vive en su propia caja, como el input. */
+.field-actions {
+    display:flex;
+    align-items:stretch;
+    gap:7px;
+}
+
+.field-actions .sm-icon-btn {
+    flex:1 1 0;
+    width:auto;
+    height:auto;
+    min-height:28px;
+    border:1px solid transparent;
+    border-radius:7px;
+    background:rgba(255, 255, 255, 0.045);
+    color:var(--color-caption);
+    transition:border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+
+.field-actions .sm-icon-btn:hover {
+    border-color:rgba(255, 255, 255, 0.12);
+    background:rgba(255, 255, 255, 0.085);
+    color:var(--color-text);
 }
 
 .sm-icon-btn {
@@ -875,12 +1012,33 @@ body.sidebar-resizing {
     }
 
     .field .question-box {
-        min-height:40px;
+        min-height:34px;
     }
 
     .field input[type="text"],
     .field input[type="number"] {
-        height:36px;
+        height:30px;
+    }
+
+    .field-actions {
+        min-height:34px;
+    }
+
+    .field-actions .sm-icon-btn {
+        height:34px;
+    }
+
+    /* En tactil no hay hover: el engranaje queda siempre visible. */
+    .field-config {
+        width:22px;
+        height:22px;
+        opacity:1;
+        pointer-events:auto;
+    }
+
+    .field-config svg {
+        width:16px;
+        height:16px;
     }
 
     .sm-icon-btn {
