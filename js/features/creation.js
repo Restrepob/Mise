@@ -72,6 +72,76 @@ anBotones.forEach((boton) => {
     });
 });
 
+// Menus de unidades del popup: el engranaje despliega m/cm y el badge del
+// label muestra la unidad activa. Se cierran al elegir, al hacer clic fuera
+// o con Escape, igual que en el panel de propiedades.
+const popupUnitMenus = [];
+
+function setupPopupUnitMenu(configId, menuId, unitLabelId, buttons, getMetric) {
+    const config = document.getElementById(configId);
+    const menu = document.getElementById(menuId);
+    if (!config || !menu) return;
+
+    const box = config.closest('.question-box');
+    const label = document.getElementById(unitLabelId);
+    const setOpen = (open) => {
+        menu.classList.toggle('is-open', open);
+        box?.classList.toggle('is-open', open);
+        config.setAttribute('aria-expanded', String(open));
+    };
+
+    popupUnitMenus.push({ setOpen });
+
+    config.addEventListener('click', (event) => {
+        event.stopPropagation();
+        setOpen(!menu.classList.contains('is-open'));
+    });
+
+    menu.addEventListener('click', (event) => {
+        const button = event.target.closest('.sm-unit-btn');
+        if (!button) return;
+        setOpen(false);
+        if (label) label.textContent = button.dataset.unit;
+        buttons.forEach((item) => {
+            item.classList.toggle('selected', item.dataset.unit === getMetric());
+        });
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+        if (!menu.classList.contains('is-open')) return;
+        if (box?.contains(event.target)) return;
+        setOpen(false);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape' || !menu.classList.contains('is-open')) return;
+        // Escape cierra primero el menu; un segundo Escape cierra el popup.
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        setOpen(false);
+        config.focus();
+    });
+}
+
+function closePopupUnitMenus() {
+    popupUnitMenus.forEach(({ setOpen }) => setOpen(false));
+}
+
+function syncPopupUnits() {
+    const sync = (buttons, metric, labelId) => {
+        buttons.forEach((button) => {
+            button.classList.toggle('selected', button.dataset.unit === metric);
+        });
+        const label = document.getElementById(labelId);
+        if (label) label.textContent = metric;
+    };
+    sync(alBotones, btnAlMetric, 'popup-altura-unit');
+    sync(anBotones, btnAnMetric, 'popup-ancho-unit');
+}
+
+setupPopupUnitMenu('popup-altura-config', 'popup-altura-unit-menu', 'popup-altura-unit', alBotones, () => btnAlMetric);
+setupPopupUnitMenu('popup-ancho-config', 'popup-ancho-unit-menu', 'popup-ancho-unit', anBotones, () => btnAnMetric);
+
 export const cancelar = document.querySelector('.popup-btn-cancelar');
 
 cancelar.addEventListener('click', togglePopup);
@@ -85,6 +155,7 @@ aceptar.addEventListener('click', () => {
 
 popup.addEventListener('click', (event) => {
     if (event.target === event.currentTarget) {
+        closePopupUnitMenus();
         popup.classList.add('hidden');
     }
 })
@@ -256,7 +327,10 @@ ancho.addEventListener('keydown', (evento) => {
 });
 
 export function togglePopup() {
+    const willOpen = popup.classList.contains('hidden');
+    closePopupUnitMenus();
     popup.classList.toggle('hidden');
+    if (willOpen) syncPopupUnits();
 }
 
 export function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, parentRoom, inheritContents = true) {

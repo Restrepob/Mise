@@ -2,6 +2,7 @@
     display:none;
 }
 
+/* Overlay del popup de creacion: scrim suave y tarjeta centrada. */
 .popup-ask-size-on {
     position:fixed;
     width:100%;
@@ -10,9 +11,14 @@
     place-items:center;
     inset:0;
     z-index:99;
-    padding: var(--sp-4);
+    padding:var(--sp-4);
+    background:rgba(0, 0, 0, 0.32);
+    -webkit-backdrop-filter:blur(3px);
+    backdrop-filter:blur(3px);
+    animation:fadeIn 0.15s ease-out;
 }
 
+/* Tarjeta base compartida con la alerta. */
 .popup-content {
     width:min(100%, 420px);
     height:auto;
@@ -25,27 +31,158 @@
     gap:var(--sp-3);
 }
 
-.popup-question {
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:var(--sp-1);
+/* --- Popup: crear room --- */
+#popup-getSize-window {
+    width:min(100%, 372px);
+    gap:12px;
+    padding:14px 14px 12px;
+    border:1px solid rgba(255, 255, 255, 0.08);
+    border-radius:14px;
+    background:
+        radial-gradient(ellipse 120% 100% at 50% 0%,
+            rgba(38, 38, 40, 0.98) 0%,
+            rgba(20, 21, 22, 0.985) 100%);
+    box-shadow:
+        0 26px 64px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    color:var(--color-text);
 }
 
-.popup-controls {
+#popup-getSize-window .popup-head {
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:10px;
+    padding-bottom:10px;
+    border-bottom:1px solid rgba(255, 255, 255, 0.06);
+}
+
+#popup-getSize-window .popup-title {
+    font-size:12px;
+    font-weight:600;
+    letter-spacing:0.03em;
+    color:var(--color-text);
+}
+
+#popup-getSize-window .popup-hint {
+    font-size:9.5px;
+    letter-spacing:0.02em;
+    color:var(--color-caption);
+    opacity:0.75;
+}
+
+#popup-getSize-window .popup-question {
+    display:flex;
+    flex-direction:column;
+    align-items:stretch;
+    justify-content:flex-start;
+    gap:10px;
+    width:100%;
+}
+
+/* Los campos reutilizan los estilos del sidebar; aqui solo se compactan. */
+#popup-getSize-window .field {
+    gap:4px;
+    padding-top:0;
+    border-top:none;
+}
+
+#popup-getSize-window .field-pair {
+    gap:7px;
+    margin-top:1px;
+    padding-top:10px;
+    border-top:1px solid rgba(255, 255, 255, 0.05);
+}
+
+#popup-getSize-window .field-head {
+    min-height:16px;
+}
+
+#popup-getSize-window .field-label {
+    font-size:11px;
+}
+
+/* El contenido de la room cierra el formulario sobre una linea divisoria. */
+#popup-getSize-window .popup-question > .field:last-of-type {
+    margin-top:1px;
+    padding-top:10px;
+    border-top:1px solid rgba(255, 255, 255, 0.05);
+}
+
+#popup-getSize-window .field .question-box {
+    min-height:30px;
+    padding:0 7px;
+}
+
+#popup-getSize-window .field input[type="text"],
+#popup-getSize-window .field input[type="number"] {
+    height:28px;
+    font-size:12px;
+}
+
+#popup-getSize-window .segmented .segmented-btn {
+    height:26px;
+    font-size:11px;
+}
+
+/* Acciones: secundaria discreta a la izquierda, primaria clara a la derecha. */
+#popup-getSize-window .popup-controls {
     display:flex;
     flex-direction:row;
     justify-content:space-between;
-    gap:var(--sp-2);
-    padding-top:var(--sp-2);
+    gap:8px;
+    padding-top:10px;
+    border-top:1px solid rgba(255, 255, 255, 0.06);
 }
 
-.popup-btn-aceptar, .popup-btn-cancelar {
-    width:50%;
+#popup-getSize-window .popup-btn-aceptar,
+#popup-getSize-window .popup-btn-cancelar {
+    flex:1 1 0;
+    min-width:0;
+    height:30px;
     display:flex;
     align-items:center;
     justify-content:center;
-    padding:var(--sp-2);
+    padding:0 12px;
+    border-radius:7px;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:0.01em;
+    cursor:pointer;
+    transition:background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+
+#popup-getSize-window .popup-btn-aceptar {
+    border:1px solid transparent;
+    background:rgba(255, 255, 255, 0.92);
+    color:#111214;
+}
+
+#popup-getSize-window .popup-btn-aceptar:hover {
+    background:#ffffff;
+    color:#111214;
+}
+
+#popup-getSize-window .popup-btn-aceptar:active {
+    transform:scale(0.985);
+}
+
+#popup-getSize-window .popup-btn-cancelar {
+    border:1px solid rgba(255, 255, 255, 0.1);
+    background:transparent;
+    color:var(--color-caption);
+}
+
+#popup-getSize-window .popup-btn-cancelar:hover {
+    border-color:rgba(255, 255, 255, 0.18);
+    background:rgba(255, 255, 255, 0.06);
+    color:var(--color-text);
+}
+
+#popup-getSize-window .popup-btn-aceptar:focus-visible,
+#popup-getSize-window .popup-btn-cancelar:focus-visible {
+    outline:none;
+    box-shadow:0 0 0 2px rgba(72, 161, 255, 0.5);
 }
 
 .column {
@@ -100,6 +237,7 @@ input[type="number"]::-webkit-outer-spin-button {
     display: none;
 }
 
+
 .popup-alerta-on {
     position:fixed;
     width:100%;
@@ -116,13 +254,9 @@ input[type="number"]::-webkit-outer-spin-button {
     display: none;
 }
 
-.al-popup-btn, .an-popup-btn{
-    padding:0px var(--sp-3);
-}
-
-.selected {
-    background:var(--color-text);
-    color:var(--color-surface);
+/* Los botones de unidad del popup comparten el estilo del sidebar. */
+.al-popup-btn, .an-popup-btn {
+    min-width:24px;
 }
 
 /* Popup Crear Objeto (Dock style) */

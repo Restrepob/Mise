@@ -789,29 +789,35 @@
 }
 
 .layer-div {
+    /* Borde degradado: la superficie se recorta al padding-box y deja ver
+       el degradado de la capa inferior solo en el borde. */
+    --layer-surface:var(--surface-col);
+    --layer-border:var(--border-light-glow);
     width:100%;
     min-height:var(--row-h);
     display:flex;
     flex-direction:row;
     align-items:center;
-    background:transparent;
     border:1px solid transparent;
     border-radius:6px;
+    background:
+        linear-gradient(var(--layer-surface), var(--layer-surface)) padding-box,
+        var(--layer-border) border-box;
     cursor:pointer;
     user-select:none;
 }
 
 .layer-div:hover {
-    background:rgba(255, 255, 255, 0.05);
+    --layer-surface:hsl(var(--h-base), 5%, 12%);
 }
 
 .layer-div.selected-layer {
-    background:rgba(72, 161, 255, 0.12);
-    border-color:rgba(72, 161, 255, 0.28);
+    --layer-surface:hsl(210, 26%, 13%);
+    --layer-border:linear-gradient(180deg, rgba(72, 161, 255, 0.65), rgba(72, 161, 255, 0.10));
 }
 
 #room-layer-box .layer-div.active-room {
-    box-shadow:inset 2px 0 0 var(--color-acento);
+    --layer-border:linear-gradient(180deg, rgba(224, 227, 232, 0.42), rgba(224, 227, 232, 0.10));
 }
 
 .layer-div.layer-opening {
@@ -831,7 +837,7 @@
 }
 
 .layer-div.layer-draft {
-    box-shadow:inset 2px 0 0 #48a1ff;
+    --layer-border:linear-gradient(180deg, rgba(72, 161, 255, 0.75), rgba(72, 161, 255, 0.12));
 }
 
 .layer-div.layer-draft .eye-div,

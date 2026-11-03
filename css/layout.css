@@ -50,6 +50,14 @@
         rgba(255, 255, 255, 0.12)
     );
 
+    /* Superficie y borde luminoso de las filas de capas. */
+    --surface-col:hsl(var(--h-base), 6%, 9%);
+    --border-light-glow: linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.16) 0%,
+        rgba(255, 255, 255, 0.04) 100%
+    );
+
 
     /*TEXT-FONTS*/
     --text-title:font-family: 'Inter', sans-serif; line-height: 1.25; 
