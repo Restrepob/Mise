@@ -36,19 +36,19 @@
                 <div class="opening-measure" id="opening-measure"></div>
                 <div class="options-box">
                     <div class="tool-group">
-                        <button class="tool-btn active" data-tool="select" data-shortcut="V" aria-label="Seleccionar">
+                        <button class="tool-btn active" data-tool="select" data-shortcut="V" data-tooltip="Seleccionar (V)" aria-label="Seleccionar">
                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--color-text)">
                                 <path d="m320-410 79-110h170L320-716v306ZM551-80 406-392 240-160v-720l560 440H516l144 309-109 51ZM399-520Z"/>
                             </svg>
                             <span class="tool-label">V</span>
                         </button>
-                        <button class="tool-btn" data-tool="move" data-shortcut="H" aria-label="Mover">
+                        <button class="tool-btn" data-tool="move" data-shortcut="H" data-tooltip="Mover (H)" aria-label="Mover">
                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--color-text)">
                                 <path d="M402-40q-30 0-56-13.5T303-92L48-465l24-23q19-19 45-22t47 12l116 81v-383q0-17 11.5-28.5T320-840q17 0 28.5 11.5T360-800v537L212-367l157 229q5 8 14 13t19 5h278q33 0 56.5-23.5T760-200v-560q0-17 11.5-28.5T800-800q17 0 28.5 11.5T840-760v560q0 66-47 113T680-40H402Zm38-440v-400q0-17 11.5-28.5T480-920q17 0 28.5 11.5T520-880v400h-80Zm160 0v-360q0-17 11.5-28.5T640-880q17 0 28.5 11.5T680-840v360h-80ZM486-300Z"/>
                             </svg>
                             <span class="tool-label">H</span>
                         </button>
-                        <button class="tool-btn" data-tool="measure" data-shortcut="R" aria-label="Medir distancias">
+                        <button class="tool-btn" data-tool="measure" data-shortcut="R" data-tooltip="Medir distancias (R)" aria-label="Medir distancias">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="#e3e3e3" aria-hidden="true">
                                 <path d="M4,18q-0.82,0-1.41-0.59T2,16V8Q2,7.18 2.59,6.59T4,6H20q0.83,0 1.41,0.59Q22,7.18 22,8v8q0,0.82-0.59,1.41T20,18H4Zm0-2H20V8H17v4H15V8H13v4H11V8H9v4H7V8H4v8Zm3-4H9H7Zm4,0h2H11Zm4,0h2H15Zm-3,0Z"/>
                             </svg>
@@ -59,7 +59,7 @@
                         <svg class="room-switcher-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" aria-hidden="true">
                             <path d="M200-160v-366L88-440l-48-64 440-336 160 122v-82h120v174l160 122-48 64-112-86v366H520v-240h-80v240H200Zm80-80h80v-240h240v240h80v-347L480-739 280-587v347Zm120-319h160q0-32-24-52.5T480-632q-32 0-56 20.5T400-559Zm-40 319v-240h240v240-240H360v240Z"/>
                         </svg>
-                        <button id="room-prev" type="button" aria-label="Room anterior">
+                        <button id="room-prev" type="button" data-tooltip="Room anterior ( [ )" aria-label="Room anterior">
                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3" aria-hidden="true">
                                 <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
                             </svg>
@@ -67,7 +67,7 @@
                         <div class="room-switcher-name">
                             <span id="room-switcher-name">—</span>
                         </div>
-                        <button id="room-next" type="button" aria-label="Room siguiente">
+                        <button id="room-next" type="button" data-tooltip="Room siguiente ( ] )" aria-label="Room siguiente">
                             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3" aria-hidden="true">
                                 <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
                             </svg>
@@ -91,104 +91,182 @@
                     <div class="popup-add-object-window" id="popup-add-object-window" role="dialog" aria-modal="true" aria-label="Crear objeto" tabindex="-1">
                         <div class="popup-add-object-header">
                             <span class="popup-add-object-title">Seleccione una forma</span>
+                            <span class="popup-add-object-hint">Enter para crear</span>
                         </div>
                         <div class="popup-add-object-list">
                             <button class="popup-add-object-item" id="btn-create-square" type="button" data-key="1" aria-label="Crear objeto cuadrado">
                                 <div class="popup-square-preview" aria-hidden="true"></div>
+                                <span class="popup-object-label">Cuadrado</span>
                                 <span class="popup-object-shortcut">1</span>
+                            </button>
+                            <button class="popup-add-object-item" id="btn-create-circle" type="button" data-key="2" aria-label="Crear objeto circular">
+                                <div class="popup-circle-preview" aria-hidden="true"></div>
+                                <span class="popup-object-label">Círculo</span>
+                                <span class="popup-object-shortcut">2</span>
                             </button>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <div class="sidebar-box">
-                <div class="room-manager">
-                    <button class="add-object-btn" id="create-room-btn">Create a Room</button>
-                    <div class="layer-box" id="room-layer-box"></div>
-                </div>
+            <aside class="sidebar-box" aria-label="Panel de edición">
+                <section class="panel room-manager" data-panel="rooms">
+                    <header class="panel-header">
+                        <span class="panel-title">Rooms</span>
+                        <span class="panel-count" id="room-count">0</span>
+                        <button class="panel-collapse" type="button" data-collapse="rooms" aria-expanded="true" aria-controls="room-panel-body" data-tooltip="Contraer rooms" aria-label="Contraer rooms">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M480-360 280-560h400L480-360Z"/></svg>
+                        </button>
+                    </header>
+                    <div class="panel-body" id="room-panel-body">
+                        <button class="add-object-btn" id="create-room-btn" type="button" data-tooltip="Crear room: copiar la actual o empezar vacía">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+                            <span>Nueva room</span>
+                        </button>
+                        <div class="layer-box" id="room-layer-box"></div>
+                    </div>
+                </section>
 
                 <div class="sidebar-resizer" data-before="room-manager" data-after="size-manager" data-before-size="rooms" data-after-size="size" role="separator" aria-orientation="horizontal" aria-label="Redimensionar capas de rooms" tabindex="0"></div>
 
-                <div class="size-manager">
-                    <div class="text-popup caption">Nombre</div>
-                    <input type="text" id="sm-nombre">
-
-                    <div class="text-popup caption" id="sm-alto-caption">Altura</div>
-                    <div class="question-box row" id="sm-alto-box">
-                        <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
-                        <input type="number" id="sm-alto" min="0.1" step="0.1">
-                        <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-alto-m">m</button>
-                        <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-alto-cm">cm</button>
-                    </div>
-
-                    <div class="text-popup caption">Ancho</div>
-                    <div class="question-box row">
-                        <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
-                        <input type="number" id="sm-ancho" min="0.1" step="0.1">
-                        <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-ancho-m">m</button>
-                        <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-ancho-cm">cm</button>
-                    </div>
-
-                    <div class="text-popup caption" id="sm-radius-caption">Radio de esquinas (px)</div>
-                    <input type="number" id="sm-radius" min="0" step="1">
-
-                    <div class="text-popup caption" id="sm-rotation-caption">Rotación (grados)</div>
-                    <div class="question-box row" id="sm-rotation-box">
-                        <input type="number" id="sm-rotation" min="0" max="359" step="1">
-                        <button class="sm-unit-btn" type="button" id="sm-rotate-90" aria-label="Girar 90 grados">
-                            <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor">
-                                <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
-                            </svg>
+                <section class="panel size-manager" data-panel="size">
+                    <header class="panel-header">
+                        <span class="panel-title">Propiedades</span>
+                        <div class="unit-system" role="group" aria-label="Sistema de unidades">
+                            <button class="segmented-btn selected" type="button" id="unit-metric" data-system="metric" data-tooltip="Sistema métrico (m)">m</button>
+                            <button class="segmented-btn" type="button" id="unit-imperial" data-system="imperial" data-tooltip="Sistema imperial (ft)">ft</button>
+                        </div>
+                        <button class="panel-collapse" type="button" data-collapse="size" aria-expanded="true" aria-controls="size-panel-body" data-tooltip="Contraer propiedades" aria-label="Contraer propiedades">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M480-360 280-560h400L480-360Z"/></svg>
                         </button>
-                    </div>
+                    </header>
+                    <div class="panel-body" id="size-panel-body">
+                        <p class="panel-empty">Selecciona un objeto para editarlo</p>
 
-                    <div class="edge-manager" id="edge-manager">
-                        <div class="text-popup caption">Edges</div>
-                        <div class="edge-toggler" id="edge-toggler">
-                            <span class="edge-toggler-frame" aria-hidden="true"></span>
-                            <button class="edge-switch edge-switch--top" data-edge="top" type="button" aria-label="Borde superior"></button>
-                            <button class="edge-switch edge-switch--right" data-edge="right" type="button" aria-label="Borde derecho"></button>
-                            <button class="edge-switch edge-switch--bottom" data-edge="bottom" type="button" aria-label="Borde inferior"></button>
-                            <button class="edge-switch edge-switch--left" data-edge="left" type="button" aria-label="Borde izquierdo"></button>
+                        <div class="field">
+                            <label class="field-label" for="sm-nombre" id="sm-nombre-caption">Nombre</label>
+                            <input type="text" id="sm-nombre" autocomplete="off" spellcheck="false">
                         </div>
-                    </div>
 
-                    <div class="tolerance-manager" id="tolerance-manager">
-                        <div class="text-popup caption">Tolerancia (m)</div>
-                        <div class="tolerance-toggler" id="tolerance-toggler">
-                            <span class="tolerance-toggler-frame" aria-hidden="true"></span>
-                            <span class="tol-label tol-label--top" data-tol-side="top">0</span>
-                            <span class="tol-label tol-label--right" data-tol-side="right">0</span>
-                            <span class="tol-label tol-label--bottom" data-tol-side="bottom">0</span>
-                            <span class="tol-label tol-label--left" data-tol-side="left">0</span>
+                        <div class="field" id="sm-alto-field">
+                            <div class="field-head">
+                                <span class="field-label" id="sm-alto-caption">Altura</span>
+                                <div class="unit-toggle" role="group" aria-label="Unidad de altura">
+                                    <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-alto-m" data-tooltip="Metros">m</button>
+                                    <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-alto-cm" data-tooltip="Centímetros">cm</button>
+                                    <button class="sm-unit-btn" type="button" data-unit="in" id="sm-alto-in" data-tooltip="Pulgadas">in</button>
+                                    <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-alto-ft" data-tooltip="Pies">ft</button>
+                                </div>
+                            </div>
+                            <div class="question-box row" id="sm-alto-box">
+                                <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                <input type="number" id="sm-alto" min="0.1" step="0.01" inputmode="decimal">
+                            </div>
                         </div>
-                    </div>
 
-                    <div id="door-props">
-                        <div class="text-popup caption">Dirección de apertura</div>
-                        <div class="question-box row">
-                            <button class="sm-unit-btn selected" type="button" id="door-dir-in">Adentro</button>
-                            <button class="sm-unit-btn" type="button" id="door-dir-out">Afuera</button>
+                        <div class="field" id="sm-ancho-field">
+                            <div class="field-head">
+                                <span class="field-label" id="sm-ancho-caption">Ancho</span>
+                                <div class="unit-toggle" role="group" aria-label="Unidad de ancho">
+                                    <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-ancho-m" data-tooltip="Metros">m</button>
+                                    <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-ancho-cm" data-tooltip="Centímetros">cm</button>
+                                    <button class="sm-unit-btn" type="button" data-unit="in" id="sm-ancho-in" data-tooltip="Pulgadas">in</button>
+                                    <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-ancho-ft" data-tooltip="Pies">ft</button>
+                                </div>
+                            </div>
+                            <div class="question-box row" id="sm-ancho-box">
+                                <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                <input type="number" id="sm-ancho" min="0.1" step="0.01" inputmode="decimal">
+                            </div>
                         </div>
-                        <div class="text-popup caption">Eje de apertura</div>
-                        <div class="question-box row">
-                            <button class="sm-unit-btn selected" type="button" id="door-axis-sup">Superior</button>
-                            <button class="sm-unit-btn" type="button" id="door-axis-inf">Inferior</button>
+
+                        <div class="field" id="sm-radius-field">
+                            <div class="field-head">
+                                <span class="field-label" id="sm-radius-caption">Radio</span>
+                                <span class="field-value" id="sm-radius-value">0</span>
+                            </div>
+                            <div class="question-box row">
+                                <input type="number" id="sm-radius" min="0" step="1">
+                            </div>
+                        </div>
+
+                        <div class="field" id="sm-rotation-field">
+                            <div class="field-head">
+                                <span class="field-label" id="sm-rotation-caption">Rotación</span>
+                                <span class="field-value" id="sm-rotation-value">0°</span>
+                            </div>
+                            <div class="question-box row" id="sm-rotation-box">
+                                <button class="sm-icon-btn" type="button" id="sm-rotate--90" data-tooltip="Girar a la izquierda 90°" aria-label="Girar a la izquierda 90 grados">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
+                                        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+                                    </svg>
+                                </button>
+                                <input type="number" id="sm-rotation" min="0" max="359" step="1">
+                                <button class="sm-icon-btn" type="button" id="sm-rotate-90" data-tooltip="Girar a la derecha 90°" aria-label="Girar a la derecha 90 grados">
+                                    <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
+                                        <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="edge-manager" id="edge-manager">
+                            <div class="text-popup caption">Bordes</div>
+                            <div class="edge-toggler" id="edge-toggler">
+                                <span class="edge-toggler-frame" aria-hidden="true"></span>
+                                <button class="edge-switch edge-switch--top" data-edge="top" type="button" aria-label="Borde superior"></button>
+                                <button class="edge-switch edge-switch--right" data-edge="right" type="button" aria-label="Borde derecho"></button>
+                                <button class="edge-switch edge-switch--bottom" data-edge="bottom" type="button" aria-label="Borde inferior"></button>
+                                <button class="edge-switch edge-switch--left" data-edge="left" type="button" aria-label="Borde izquierdo"></button>
+                            </div>
+                        </div>
+
+                        <div class="tolerance-manager" id="tolerance-manager">
+                            <div class="text-popup caption">Tolerancia (m)</div>
+                            <div class="tolerance-toggler" id="tolerance-toggler">
+                                <span class="tolerance-toggler-frame" aria-hidden="true"></span>
+                                <span class="tol-label tol-label--top" data-tol-side="top">0</span>
+                                <span class="tol-label tol-label--right" data-tol-side="right">0</span>
+                                <span class="tol-label tol-label--bottom" data-tol-side="bottom">0</span>
+                                <span class="tol-label tol-label--left" data-tol-side="left">0</span>
+                            </div>
+                        </div>
+
+                        <div id="door-props">
+                            <div class="text-popup caption">Dirección de apertura</div>
+                            <div class="question-box row">
+                                <button class="sm-unit-btn selected" type="button" id="door-dir-in">Adentro</button>
+                                <button class="sm-unit-btn" type="button" id="door-dir-out">Afuera</button>
+                            </div>
+                            <div class="text-popup caption">Eje de apertura</div>
+                            <div class="question-box row">
+                                <button class="sm-unit-btn selected" type="button" id="door-axis-sup">Superior</button>
+                                <button class="sm-unit-btn" type="button" id="door-axis-inf">Inferior</button>
+                            </div>
                         </div>
                     </div>
-                </div>
+                </section>
 
                 <div class="sidebar-resizer" data-before="size-manager" data-after="object-manager" data-before-size="size" data-after-size="objects" role="separator" aria-orientation="horizontal" aria-label="Redimensionar configuración de objetos" tabindex="0"></div>
 
-                <div class="object-manager">
-                    <button class="add-object-btn" id="add-object-btn">
-                        Add an Object <span class="shortcut-hint">Ctrl + K</span>
-                    </button>
-                    <div class="layer-box" id="object-layer-box"></div>
-                </div>
-
-            </div>
+                <section class="panel object-manager" data-panel="objects">
+                    <header class="panel-header">
+                        <span class="panel-title">Objetos</span>
+                        <span class="panel-count" id="object-count">0</span>
+                        <button class="panel-collapse" type="button" data-collapse="objects" aria-expanded="true" aria-controls="object-panel-body" data-tooltip="Contraer objetos" aria-label="Contraer objetos">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M480-360 280-560h400L480-360Z"/></svg>
+                        </button>
+                    </header>
+                    <div class="panel-body" id="object-panel-body">
+                        <button class="add-object-btn" id="add-object-btn" type="button" data-tooltip="Crear un objeto (Ctrl+Cmd+K)">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+                            <span>Nuevo objeto</span>
+                            <span class="shortcut-hint">Ctrl K</span>
+                        </button>
+                        <div class="layer-box" id="object-layer-box"></div>
+                    </div>
+                </section>
+            </aside>
         </div>
 
         <!-- popup getSize-->
@@ -211,6 +289,12 @@
                         <input type="number" id="ancho" min="0" max="1000" required>
                         <button class="an-popup-btn selected" type="button" data-unit="m" id="btn-anchura-m">m</button>
                         <button class="an-popup-btn" type="button" data-unit="cm" id="btn-anchura-cm">cm</button>
+                    </div>
+
+                    <div class="text-popup caption">Contenido de la nueva room</div>
+                    <div class="segmented" id="room-create-mode" role="group" aria-label="Contenido de la nueva room">
+                        <button class="segmented-btn selected" type="button" data-mode="copy" id="room-mode-copy">Copiar actual</button>
+                        <button class="segmented-btn" type="button" data-mode="new" id="room-mode-new">Vacía</button>
                     </div>
 
                 </div>

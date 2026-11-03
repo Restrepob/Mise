@@ -3,7 +3,7 @@ import { alto, ancho, nombre, objectLayers, popup, roomLayers, scene } from '../
 import { getLayerContext, selectLayer, toggleLayerVisibility } from './layers.js';
 import { clampOpeningOffset, getActiveRoom, getParentInnerSize, getRooms, setItemName, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
-import { guardarCambios } from './persistence.js';
+import { applyBorderRadius, guardarCambios } from './persistence.js';
 import { alerta, popupMenu } from './popups.js';
 import { cloneRoomContents, focusLayerRow, setActiveRoom, syncObjectLayers } from './rooms.js';
 import { applyRotation } from './rotation.js';
@@ -21,6 +21,21 @@ export let objectName='';
 export let currentBtnId='';
 
 export let roomSeq = 0;
+
+// Contenido de la proxima room: 'copy' clona la room activa (muebles y
+// aperturas), 'new' crea una room vacia con las mismas medidas sugeridas.
+export let roomCreateMode = 'copy';
+
+const roomModeButtons = document.querySelectorAll('#room-create-mode .segmented-btn');
+
+roomModeButtons.forEach((button) => {
+    button.addEventListener('click', () => {
+        roomCreateMode = button.dataset.mode === 'new' ? 'new' : 'copy';
+        roomModeButtons.forEach((item) => {
+            item.classList.toggle('selected', item.dataset.mode === roomCreateMode);
+        });
+    });
+});
 
 export const alBotones = document.querySelectorAll('.al-popup-btn');
 
@@ -83,7 +98,9 @@ export function openAddObjectPopup() {
     const popupAdd = document.getElementById('popupAddObject');
     if (!popupAdd) return;
     popupAdd.classList.remove('hidden');
-    document.getElementById('popup-add-object-window')?.focus();
+
+    // La forma cuadrada queda seleccionada y enfocada: Enter la crea directo.
+    selectShape('1', { focus: true });
 }
 
 export function closeAddObjectPopup() {
@@ -92,7 +109,31 @@ export function closeAddObjectPopup() {
     popupAdd.classList.add('hidden');
 }
 
-export function createSquareObject() {
+function selectShape(key, options = {}) {
+    const popupAdd = document.getElementById('popupAddObject');
+    if (!popupAdd) return;
+
+    const buttons = [...popupAdd.querySelectorAll('.popup-add-object-item')];
+    const target = buttons.find((button) => button.dataset.key === key);
+    if (!target) return;
+
+    buttons.forEach((button) => {
+        const selected = button === target;
+        button.classList.toggle('is-selected', selected);
+        if (selected) button.setAttribute('aria-current', 'true');
+        else button.removeAttribute('aria-current');
+    });
+
+    if (options.focus) target.focus({ preventScroll: true });
+}
+
+function createSelectedShape(key) {
+    closeAddObjectPopup();
+    if (key === '2') createCircleObject();
+    else createSquareObject();
+}
+
+function createShapeObject(options = {}) {
     const activeRoom = getActiveRoom() || getRooms()[0];
     if (!activeRoom) {
         alerta('Debe haber una habitación primero');
@@ -113,6 +154,10 @@ export function createSquareObject() {
     );
     if (!createdItem) return null;
 
+    // El circulo es un cuadrado con radio relativo: al redimensionarlo sigue
+    // siendo una elipse/circulo sin tener que recalcular pixeles.
+    if (options.borderRadius) createdItem.style.borderRadius = options.borderRadius;
+
     beginDraft(createdItem);
     const layer = document.querySelector(`.layer-div[data-target-id="${createdItem.id}"]`);
     if (layer) selectLayer(layer);
@@ -122,16 +167,27 @@ export function createSquareObject() {
     return createdItem;
 }
 
+export function createSquareObject() {
+    return createShapeObject();
+}
+
+export function createCircleObject() {
+    // El rojo es solo del preview del modal: el objeto creado usa la paleta
+    // como cualquier otro mueble.
+    return createShapeObject({ borderRadius: '100%' });
+}
+
 document.getElementById('add-object-btn').addEventListener('click', () => {
     openAddObjectPopup();
 });
 
 const popupAdd = document.getElementById('popupAddObject');
-const btnCreateSquare = document.getElementById('btn-create-square');
 
-btnCreateSquare?.addEventListener('click', () => {
-    closeAddObjectPopup();
-    createSquareObject();
+popupAdd?.querySelectorAll('.popup-add-object-item').forEach((button) => {
+    button.addEventListener('click', () => createSelectedShape(button.dataset.key));
+    // Al navegar con Tab la seleccion sigue al foco para que Enter cree la
+    // forma correcta.
+    button.addEventListener('focus', () => selectShape(button.dataset.key));
 });
 
 popupAdd?.addEventListener('click', (event) => {
@@ -149,10 +205,17 @@ document.addEventListener('keydown', (event) => {
         return;
     }
 
-    if (event.key === '1' && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    // Enter crea la forma seleccionada (el cuadrado por defecto).
+    if (event.key === 'Enter' && !event.repeat) {
         event.preventDefault();
-        closeAddObjectPopup();
-        createSquareObject();
+        const selected = popupAdd.querySelector('.popup-add-object-item.is-selected');
+        createSelectedShape(selected?.dataset.key || '1');
+        return;
+    }
+
+    if ((event.key === '1' || event.key === '2') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+        event.preventDefault();
+        createSelectedShape(event.key);
     }
 });
 
@@ -330,7 +393,7 @@ export function rebuildOpening(elemento, parentRoom) {
         objectMenuOptions,
         type,
     );
-    if (elemento.borderRadius) item.style.borderRadius = `${elemento.borderRadius}px`;
+    applyBorderRadius(item, elemento.borderRadius);
     return item;
 }
 
@@ -470,6 +533,8 @@ export function getSize() {
         btnAnMetric,
         objectName,
         currentBtnId,
+        undefined,
+        currentBtnId === 'create-room-btn' ? roomCreateMode === 'copy' : true,
     );
     guardarCambios(createdItem);
     if (createdItem?.dataset.type === 'room') {

@@ -142,19 +142,31 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 .popup-add-object-window {
-    width: min(80%, 600px);
+    position: relative;
+    width: min(84%, 540px);
     height: auto;
-    border:1px solid #8d8d8d20;
-    background:linear-gradient(135deg, #6263685f, transparent 48%, #6263683c) border-box, rgba(38, 38, 38, 0.24) padding-box;
-    backdrop-filter: blur(10px);
-    border-radius: 44px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    /* Gradiente semitranslucido #212123 -> #0C0D0E -> #212123: el centro
+       oscuro se mantiene y los bordes quedan mas claros. */
+    background:
+        radial-gradient(ellipse 50% 50% at 50% 50%,
+            rgba(12, 13, 14, 0.97) 0%,
+            rgba(12, 13, 14, 0.95) 30%,
+            rgba(33, 33, 35, 0.94) 100%);
+    -webkit-backdrop-filter: blur(18px) saturate(0.85);
+    backdrop-filter: blur(18px) saturate(0.85);
+    border-radius: 30px;
     corner-shape: squircle;
-    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-    padding: 14px 18px 16px;
+    box-shadow:
+        0 28px 70px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.35);
+    padding: 20px 22px 22px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 16px;
     color: var(--color-text);
     isolation: isolate;
 }
@@ -165,70 +177,121 @@ input[type="number"]::-webkit-outer-spin-button {
 
 .popup-add-object-header {
     display: flex;
-    justify-content: flex-start;
+    justify-content: space-between;
     align-items: center;
+    gap: 12px;
     width: 100%;
-    padding-bottom: 6px;
+    padding-bottom: 12px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .popup-add-object-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    color: var(--color-text);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(232, 232, 232, 0.72);
+}
+
+.popup-add-object-hint {
+    font-size: 10px;
+    letter-spacing: 0.02em;
+    color: rgba(232, 232, 232, 0.45);
 }
 
 .popup-add-object-list {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
 }
 
 .popup-add-object-item {
+    position: relative;
+    width: min(100%, 220px);
+    max-width: 220px;
+    flex: 1 1 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: var(--sp-4) var(--sp-4);
-    border-radius: var(--br-xxl);
-    corner-shape:squircle;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid transparent;
+    gap: 12px;
+    padding: 20px 20px 16px;
+    border-radius: 24px;
+    corner-shape: squircle;
+    background: rgba(255, 255, 255, 0.045);
+    border: 1px solid rgba(255, 255, 255, 0.09);
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
 .popup-add-object-item:hover {
-    background: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.085);
     color: var(--color-text);
+}
+
+.popup-add-object-item.is-selected {
+    background: rgba(72, 161, 255, 0.10);
+    border-color: rgba(72, 161, 255, 0.65);
+}
+
+.popup-add-object-item:active {
+    transform: scale(0.985);
 }
 
 .popup-add-object-item:focus {
     outline: none;
 }
 
+/* La seleccion ya marca el foco con su borde: sin anillo duplicado. */
 .popup-add-object-item:focus-visible {
-    background: rgba(255, 255, 255, 0.06);
     color: var(--color-text);
-    outline: 1px solid rgba(255, 255, 255, 0.24);
-    outline-offset: 2px;
+    outline: none;
 }
 
 .popup-square-preview {
-    width: 140px;
-    height: 140px;
+    width: min(100%, 128px);
+    aspect-ratio: 1;
     background: #FF7C39;
-    border: 4px solid transparent;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 4px;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 10px 24px rgba(0, 0, 0, 0.3);
 }
 
-.popup-square-preview:hover {
-    border-color: #48A1FF;
+.popup-circle-preview {
+    width: min(100%, 128px);
+    aspect-ratio: 1;
+    background: #FF3939;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 100%;
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.18),
+        0 10px 24px rgba(0, 0, 0, 0.3);
+}
+
+.popup-object-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(232, 232, 232, 0.82);
 }
 
 .popup-object-shortcut {
-    font-size: 9px;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: grid;
+    place-items: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.22);
+    font-size: 10px;
     line-height: 1;
     letter-spacing: 0.5px;
-    color: #fff;
+    color: rgba(255, 255, 255, 0.72);
 }

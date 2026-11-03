@@ -545,11 +545,62 @@ button:hover {
 @media (max-width: 700px) {
     .main {
         grid-template-columns:1fr;
-        grid-template-rows:minmax(320px, 1fr) auto;
+        grid-template-rows:minmax(240px, 1fr) minmax(0, 52dvh);
     }
 
     .sidebar-box {
-        min-height:400px;
+        min-height:0;
+    }
+}
+
+/* Tooltips flotantes (js/features/tooltips.js). Viven en body para que no los
+   recorte el overflow del sidebar. */
+.ui-tooltip {
+    position:fixed;
+    top:0;
+    left:0;
+    z-index:99999999;
+    max-width:240px;
+    padding:5px 8px;
+    border:1px solid rgba(255, 255, 255, 0.1);
+    border-radius:6px;
+    background:rgba(28, 28, 30, 0.96);
+    box-shadow:0 6px 18px rgba(0, 0, 0, 0.35);
+    color:var(--color-text);
+    font-size:11px;
+    line-height:1.3;
+    white-space:nowrap;
+    pointer-events:none;
+    opacity:0;
+    transform:translateY(2px);
+    transition:opacity 120ms ease, transform 120ms ease;
+}
+
+.ui-tooltip.is-visible {
+    opacity:1;
+    transform:translateY(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ui-tooltip {
+        transition:none;
+    }
+}
+
+/* En pantallas tactiles los controles del dock tambien crecen. */
+@media (pointer: coarse) {
+    .tool-btn {
+        width:52px;
+        height:52px;
+    }
+
+    .room-switcher {
+        width:220px;
+    }
+
+    .room-switcher button {
+        width:36px;
+        height:36px;
     }
 }
 

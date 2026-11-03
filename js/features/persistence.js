@@ -47,9 +47,33 @@ function applyItemColor(rebuilt, elemento) {
     }
 }
 
+// El radio puede ser absoluto (px) o relativo (%). Las versiones anteriores
+// guardaban solo numeros, que equivalen a pixeles.
+export function applyBorderRadius(element, value) {
+    if (!element) return;
+    if (value == null || value === '') {
+        element.style.borderRadius = '';
+        return;
+    }
+    if (typeof value === 'number') {
+        element.style.borderRadius = value > 0 ? `${value}px` : '';
+        return;
+    }
+    const text = String(value).trim();
+    if (!text) {
+        element.style.borderRadius = '';
+        return;
+    }
+    if (/^-?\d*\.?\d+$/.test(text)) {
+        element.style.borderRadius = Number(text) > 0 ? `${text}px` : '';
+        return;
+    }
+    element.style.borderRadius = text;
+}
+
 export function applyItemStateDetails(rebuilt, elemento) {
     if (!rebuilt) return;
-    if (elemento.borderRadius) rebuilt.style.borderRadius = `${elemento.borderRadius}px`;
+    applyBorderRadius(rebuilt, elemento.borderRadius);
     applyItemColor(rebuilt, elemento);
     const opening = isOpening(rebuilt);
     if (!opening) {
@@ -217,7 +241,7 @@ export function getItemState(item) {
         alto: height / metro,
         unidadAncho: 'm',
         unidadAlto: 'm',
-        borderRadius: parseFloat(item.style.borderRadius) || 0,
+        borderRadius: item.style.borderRadius || '',
         color: getItemColor(item),
         rotacion: getRotation(item),
         edges: item.classList.contains('furniture') ? item.dataset.edges || '' : '',

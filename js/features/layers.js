@@ -1,7 +1,8 @@
 // Acciones sobre las filas de capas
+import { smNombre } from '../core/dom.js';
 import { addOpeningFromRoom } from './creation.js';
 import { clearOpeningOverlay, syncOpeningOverlay } from './door.js';
-import { getRooms, getSelectedObject, isOpening, setItemName } from '../core/model.js';
+import { getRooms, getSelectedObject, isOpening } from '../core/model.js';
 import { eliminarGuardado, guardarCambios } from './persistence.js';
 import { popupMenu } from './popups.js';
 import { duplicateLayer, setActiveRoom, syncRoomLayerActive, syncRoomSwitcher } from './rooms.js';
@@ -63,27 +64,17 @@ export function toggleLayerVisibility(targetElement) {
     guardarCambios(context.sceneTarget);
 }
 
+// Renombrar no abre el prompt nativo del navegador: selecciona el item y
+// lleva el foco al campo Nombre del sidebar, donde el cambio se ve en vivo.
 export function renameLayer(targetElement) {
     const context = getLayerContext(targetElement);
-    if (!context) return;
+    if (!context || !context.sceneTarget) return;
 
-    const layerContent = context.layerDiv.querySelector('.layer-content');
-    const currentName = layerContent.textContent.trim();
-    const newName = window.prompt('Nuevo nombre de la capa', currentName);
-
-    if (newName === null) return;
-
-    const cleanName = newName.trim();
-    if (!cleanName) return;
-
-    layerContent.textContent = cleanName;
-    if (context.sceneTarget) {
-        const item = context.sceneTarget;
-        setItemName(item, cleanName);
-        guardarCambios(item);
-        syncSizeManager();
-        syncRoomSwitcher();
-    }
+    selectLayer(context.layerDiv);
+    requestAnimationFrame(() => {
+        smNombre.focus();
+        smNombre.select();
+    });
 }
 
 export function deleteLayer(targetElement) {

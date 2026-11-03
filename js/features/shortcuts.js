@@ -121,9 +121,12 @@ document.addEventListener('keydown', (event) => {
 
 document.addEventListener('keydown', (event) => {
     if (event.target.matches?.('input, textarea, select, [contenteditable]')) return;
-    if (event.shiftKey && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+    if (event.ctrlKey || event.metaKey || event.altKey) return;
+    // Las flechas quedan libres para el movimiento fino del objeto. El cambio
+    // de room usa corchetes, estilo Linear, y no compite con el nudge.
+    if (event.key === '[' || event.key === ']') {
         event.preventDefault();
-        switchActiveRoom(event.key === 'ArrowRight' ? 1 : -1);
+        switchActiveRoom(event.key === ']' ? 1 : -1);
     }
 });
 

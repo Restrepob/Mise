@@ -2,12 +2,25 @@
 import { getOpeningWidth, isOpening } from './model.js';
 import { OPENING_DEPTH, metro } from './state.js';
 
+// Cuantos metros representa una unidad visible. El lienzo siempre trabaja en
+// pixeles de escena; estas equivalencias solo viven en la capa de UI.
+export const UNIT_METERS = {
+    m: 1,
+    cm: 0.01,
+    in: 0.0254,
+    ft: 0.3048,
+};
+
+function unitToMeters(unit) {
+    return UNIT_METERS[unit] ?? UNIT_METERS.m;
+}
+
 export function smToPx(value, unit) {
-    return value * (unit === 'cm' ? metro / 100 : metro);
+    return value * unitToMeters(unit) * metro;
 }
 
 export function smFromPx(px, unit) {
-    return px / (unit === 'cm' ? metro / 100 : metro);
+    return px / (unitToMeters(unit) * metro);
 }
 
 export function getRotation(item) {

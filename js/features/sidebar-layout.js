@@ -39,8 +39,12 @@ export function saveSidebarSizes() {
 
 export function getSidebarChromeHeight(element) {
     const style = getComputedStyle(element);
-    return ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth']
+    const box = ['paddingTop', 'paddingBottom', 'borderTopWidth', 'borderBottomWidth']
         .reduce((total, property) => total + (parseFloat(style[property]) || 0), 0);
+    // El header del panel no es parte del area redimensionable: se descuenta
+    // igual que el padding para que las proporciones guardadas sigan estables.
+    const header = [...element.children].find((child) => child.classList.contains('panel-header'));
+    return box + (header ? header.getBoundingClientRect().height : 0);
 }
 
 export function getSidebarResizeTarget(resizer) {
@@ -122,6 +126,46 @@ export function nudgeSidebarResize(resizer, delta) {
     applySidebarResize(target, delta);
     saveSidebarSizes();
 }
+
+export const SIDEBAR_COLLAPSE_KEY = 'mise-sidebar-collapsed';
+
+function loadCollapsedPanels() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(SIDEBAR_COLLAPSE_KEY));
+        return new Set(Array.isArray(saved) ? saved : []);
+    } catch {
+        return new Set();
+    }
+}
+
+const collapsedPanels = loadCollapsedPanels();
+
+function setPanelCollapsed(panel, button, collapsed) {
+    if (!panel || !button) return;
+    panel.classList.toggle('is-collapsed', collapsed);
+    button.setAttribute('aria-expanded', String(!collapsed));
+    button.dataset.tooltip = collapsed ? 'Expandir panel' : 'Contraer panel';
+    button.setAttribute('aria-label', collapsed ? 'Expandir panel' : 'Contraer panel');
+}
+
+function saveCollapsedPanels() {
+    localStorage.setItem(SIDEBAR_COLLAPSE_KEY, JSON.stringify([...collapsedPanels]));
+}
+
+document.querySelectorAll('.panel-collapse').forEach((button) => {
+    const panel = button.closest('.panel');
+    const key = button.dataset.collapse;
+    if (!panel || !key) return;
+
+    setPanelCollapsed(panel, button, collapsedPanels.has(key));
+    button.addEventListener('click', () => {
+        const collapsed = !panel.classList.contains('is-collapsed');
+        if (collapsed) collapsedPanels.add(key);
+        else collapsedPanels.delete(key);
+        setPanelCollapsed(panel, button, collapsed);
+        saveCollapsedPanels();
+    });
+});
 
 loadSidebarSizes();
 

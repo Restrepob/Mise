@@ -9,6 +9,8 @@ import './features/creation.js';
 import './features/draft.js';
 import './features/size-manager.js';
 import './features/shortcuts.js';
+import './features/nudge.js';
+import './features/tooltips.js';
 import './features/rooms.js';
 import './features/view.js';
 import './features/sidebar-layout.js';

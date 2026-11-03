@@ -152,7 +152,9 @@ export function confirmDraftName() {
     if (!smNombre.value.trim()) return 'invalid';
 
     draftState.confirmed.name = true;
-    return finalizeDraft() ? 'done' : 'invalid';
+    // Aunque el nombre se confirme al final, las medidas tambien deben ser
+    // validas: si alguna quedo en 0, se vuelve a ese campo.
+    return tryFinalizeDraft() ? 'done' : 'invalid';
 }
 
 // Fija la figura con las medidas que tenga en ese momento. Devuelve false si

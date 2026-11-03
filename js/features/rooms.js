@@ -20,14 +20,20 @@ export function syncRoomLayerActive() {
         const isActive = row.dataset.targetId === state.activeRoomId;
         row.classList.toggle('active-room', isActive);
     });
+    const count = document.getElementById('room-count');
+    if (count) count.textContent = String(getRooms().length);
 }
 
 export function syncObjectLayers() {
+    let visible = 0;
     objectLayers.querySelectorAll('.layer-div').forEach((row) => {
         const belongsToActiveRoom = !!state.activeRoomId && row.dataset.roomId === state.activeRoomId;
         row.classList.toggle('is-out-of-room', !belongsToActiveRoom);
         row.setAttribute('aria-hidden', String(!belongsToActiveRoom));
+        if (belongsToActiveRoom) visible += 1;
     });
+    const count = document.getElementById('object-count');
+    if (count) count.textContent = String(visible);
 }
 
 export function syncRoomSwitcher() {
