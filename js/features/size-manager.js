@@ -255,12 +255,8 @@ function renderDimensionHighlights(dimensions, active = null) {
 export function setDimensionHighlight(dimension) {
     currentDimHighlight = dimension;
 
-    // Mientras hay borrador se muestran siempre las dos medidas; al editar una
-    // de ellas se marca como activa.
-    if (isDrafting()) {
-        renderDimensionHighlights(['height', 'width'], dimension);
-        return;
-    }
+    // Solo se muestra la medida del campo que se esta editando, tambien
+    // durante el borrador: nunca las dos cotas al mismo tiempo.
     renderDimensionHighlights(dimension ? [dimension] : [], dimension);
 }
 
