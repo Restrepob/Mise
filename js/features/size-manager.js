@@ -1,6 +1,7 @@
 // Panel de tamanio y rotacion
-import { smAlto, smAncho, smNombre, smRadius, smRotate90, smRotation } from '../core/dom.js';
+import { smAlto, smAncho, smLArmX, smLArmY, smNombre, smRadius, smRotate90, smRotation } from '../core/dom.js';
 import { syncDoorPanel, syncEdgePanel, syncOpeningOverlay, syncTolerancePanel } from './door.js';
+import { getLShapeMetrics, isLShape, setLShapeArm, syncLShape } from './l-shape.js';
 import { getActiveRoom, getOpeningWallLength, getSelectedObject, isOpening, setItemName } from '../core/model.js';
 import { confirmDraftDimension, confirmDraftName, draftState, getNextDraftInput, isDrafting, markDimensionEdited, markDraftNameEdited, shakeDraftInput } from './draft.js';
 import { placeOpening } from './openings.js';
@@ -15,12 +16,18 @@ export let smAlMetric = 'm';
 
 export let smAnMetric = 'm';
 
+export let smLArmXMetric = 'm';
+
+export let smLArmYMetric = 'm';
+
 const smRadiusValue = document.getElementById('sm-radius-value');
 const smRotationValue = document.getElementById('sm-rotation-value');
 const UNIT_SYSTEM_KEY = 'mise-unit-system';
 const UNIT_IDS = {
     height: ['sm-alto-m', 'sm-alto-cm', 'sm-alto-in', 'sm-alto-ft'],
     width: ['sm-ancho-m', 'sm-ancho-cm', 'sm-ancho-in', 'sm-ancho-ft'],
+    lArmX: ['sm-l-arm-x-m', 'sm-l-arm-x-cm', 'sm-l-arm-x-in', 'sm-l-arm-x-ft'],
+    lArmY: ['sm-l-arm-y-m', 'sm-l-arm-y-cm', 'sm-l-arm-y-in', 'sm-l-arm-y-ft'],
 };
 
 function syncRadiusControls() {
@@ -50,35 +57,55 @@ function syncRotationControls() {
     if (smRotationValue) smRotationValue.textContent = `${Math.round(value)}°`;
 }
 
-function setDimensionUnit(buttonIds, input, metricState, nextUnit) {
+function setLengthUnit(buttonIds, input, metricState, nextUnit, unitLabelId, getPixels) {
     const item = getSelectedObject();
-    const currentPixels = item
-        ? getItemLayout(item)[input === smAlto ? 'height' : 'width']
-        : null;
+    const currentPixels = item ? getPixels(item) : null;
 
     metricState.value = nextUnit;
-    const unitLabel = document.getElementById(input === smAlto ? 'sm-alto-unit' : 'sm-ancho-unit');
+    const unitLabel = document.getElementById(unitLabelId);
     if (unitLabel) unitLabel.textContent = nextUnit;
     buttonIds.forEach((id) => {
-        document.getElementById(id).classList.toggle(
-            'selected',
-            document.getElementById(id).dataset.unit === nextUnit,
-        );
+        const button = document.getElementById(id);
+        button?.classList.toggle('selected', button.dataset.unit === nextUnit);
     });
 
     if (Number.isFinite(currentPixels)) {
         input.value = smFromPx(currentPixels, nextUnit).toFixed(2);
     }
+}
+
+function setDimensionUnit(buttonIds, input, metricState, nextUnit) {
+    const dimension = input === smAlto ? 'height' : 'width';
+    setLengthUnit(
+        buttonIds,
+        input,
+        metricState,
+        nextUnit,
+        input === smAlto ? 'sm-alto-unit' : 'sm-ancho-unit',
+        (item) => getItemLayout(item)[dimension],
+    );
     if (currentDimHighlight) {
         setDimensionHighlight(currentDimHighlight);
     }
 }
 
-export function configureSizeUnitButtons(buttonIds, input, metricState) {
+function setLArmUnit(buttonIds, input, metricState, nextUnit, axis) {
+    setLengthUnit(
+        buttonIds,
+        input,
+        metricState,
+        nextUnit,
+        axis === 'armX' ? 'sm-l-arm-x-unit' : 'sm-l-arm-y-unit',
+        (item) => getLShapeMetrics(item)[axis],
+    );
+}
+
+export function configureSizeUnitButtons(buttonIds, input, metricState, onChange = null) {
     buttonIds.forEach((buttonId) => {
         document.getElementById(buttonId).addEventListener('click', () => {
             const nextUnit = document.getElementById(buttonId).dataset.unit;
-            setDimensionUnit(buttonIds, input, metricState, nextUnit);
+            if (onChange) onChange(nextUnit);
+            else setDimensionUnit(buttonIds, input, metricState, nextUnit);
         });
     });
 }
@@ -129,6 +156,8 @@ function closeUnitMenus() {
 
 setupUnitMenu('sm-alto-config', 'sm-alto-unit-menu');
 setupUnitMenu('sm-ancho-config', 'sm-ancho-unit-menu');
+setupUnitMenu('sm-l-arm-x-config', 'sm-l-arm-x-unit-menu');
+setupUnitMenu('sm-l-arm-y-config', 'sm-l-arm-y-unit-menu');
 
 export function setSizeManagerDisabled(disabled, item = null) {
     document.querySelectorAll('.size-manager .panel-body input, .size-manager .panel-body button').forEach((control) => {
@@ -146,9 +175,14 @@ export function setSizeManagerDisabled(disabled, item = null) {
 
 export function setOpeningPanelFields(item) {
     const opening = isOpening(item);
-    ['sm-alto-field', 'sm-radius-field', 'sm-rotation-field'].forEach((id) => {
+    const lShape = !opening && isLShape(item);
+
+    ['sm-alto-field', 'sm-rotation-field'].forEach((id) => {
         document.getElementById(id).style.display = opening ? 'none' : '';
     });
+    // La L no admite radio: su contorno lo define el clip-path de los brazos.
+    document.getElementById('sm-radius-field').style.display = opening || lShape ? 'none' : '';
+    document.getElementById('l-shape-fields').style.display = lShape ? '' : 'none';
 }
 
 export let currentDimHighlight = null;
@@ -284,6 +318,8 @@ export function syncSizeManagerReadout() {
         smNombre.value = '';
         smAlto.value = '';
         smAncho.value = '';
+        smLArmX.value = '';
+        smLArmY.value = '';
         smRadius.value = '';
         smRotation.value = '';
         syncRadiusControls();
@@ -296,6 +332,14 @@ export function syncSizeManagerReadout() {
     smNombre.value = item.dataset.name || layer?.querySelector('.layer-content')?.textContent.trim() || '';
     smAlto.value = smFromPx(height, smAlMetric).toFixed(2);
     smAncho.value = smFromPx(width, smAnMetric).toFixed(2);
+    if (isLShape(item)) {
+        const arms = getLShapeMetrics(item);
+        smLArmX.value = smFromPx(arms.armX, smLArmXMetric).toFixed(2);
+        smLArmY.value = smFromPx(arms.armY, smLArmYMetric).toFixed(2);
+    } else {
+        smLArmX.value = '';
+        smLArmY.value = '';
+    }
     smRadius.value = parseFloat(item.style.borderRadius) || 0;
     smRotation.value = isOpening(item) ? '' : Math.round(getRotation(item));
     syncRadiusControls();
@@ -334,6 +378,11 @@ export function applySizeDimension(input, unit, dimension) {
         ? (dimension === 'width' ? 'height' : 'width')
         : dimension;
     item.style[localDimension] = `${smToPx(value, unit)}px`;
+    if (isLShape(item)) {
+        const arms = syncLShape(item);
+        smLArmX.value = smFromPx(arms.armX, smLArmXMetric).toFixed(2);
+        smLArmY.value = smFromPx(arms.armY, smLArmYMetric).toFixed(2);
+    }
     updateSceneSize(item);
     if (item === getActiveRoom()) {
         updateMinScaleForRoom(item);
@@ -542,6 +591,73 @@ smAncho.addEventListener('keydown', (event) => {
     smAncho.blur();
 });
 
+function applyLArmDimension(input, unit, axis) {
+    const item = getSelectedObject();
+    if (!item || !isLShape(item)) return false;
+
+    const value = Number(input.value);
+    if (!Number.isFinite(value) || value <= 0) return false;
+
+    setLShapeArm(item, axis, smToPx(value, unit));
+    if (!isDrafting()) guardarCambios(item);
+    return true;
+}
+
+function refreshLArmField(input, unit, axis) {
+    const item = getSelectedObject();
+    if (!item || !isLShape(item)) return;
+    input.value = smFromPx(getLShapeMetrics(item)[axis], unit).toFixed(2);
+}
+
+smLArmX.addEventListener('input', () => applyLArmDimension(smLArmX, smLArmXMetric, 'armX'));
+
+smLArmX.addEventListener('change', () => refreshLArmField(smLArmX, smLArmXMetric, 'armX'));
+
+smLArmX.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        applyLArmDimension(smLArmX, smLArmXMetric, 'armX');
+        refreshLArmField(smLArmX, smLArmXMetric, 'armX');
+        smLArmX.blur();
+        return;
+    }
+    if (event.key === 'Tab' && !event.shiftKey) {
+        event.preventDefault();
+        if (applyLArmDimension(smLArmX, smLArmXMetric, 'armX')) {
+            refreshLArmField(smLArmX, smLArmXMetric, 'armX');
+        }
+        smLArmY.focus();
+        smLArmY.select();
+    }
+});
+
+smLArmY.addEventListener('input', () => applyLArmDimension(smLArmY, smLArmYMetric, 'armY'));
+
+smLArmY.addEventListener('change', () => refreshLArmField(smLArmY, smLArmYMetric, 'armY'));
+
+smLArmY.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        applyLArmDimension(smLArmY, smLArmYMetric, 'armY');
+        refreshLArmField(smLArmY, smLArmYMetric, 'armY');
+        smLArmY.blur();
+        return;
+    }
+    if (event.key === 'Tab') {
+        event.preventDefault();
+        if (!event.shiftKey) {
+            if (applyLArmDimension(smLArmY, smLArmYMetric, 'armY')) {
+                refreshLArmField(smLArmY, smLArmYMetric, 'armY');
+            }
+            smRotation.focus();
+            smRotation.select();
+        } else {
+            smLArmX.focus();
+            smLArmX.select();
+        }
+    }
+});
+
 smRadius.addEventListener('input', () => {
     const item = getSelectedObject();
     const value = Number(smRadius.value);
@@ -595,9 +711,27 @@ export const smAlMetricState = { get value() { return smAlMetric; }, set value(v
 
 export const smAnMetricState = { get value() { return smAnMetric; }, set value(value) { smAnMetric = value; } };
 
+export const smLArmXMetricState = { get value() { return smLArmXMetric; }, set value(value) { smLArmXMetric = value; } };
+
+export const smLArmYMetricState = { get value() { return smLArmYMetric; }, set value(value) { smLArmYMetric = value; } };
+
 configureSizeUnitButtons(UNIT_IDS.height, smAlto, smAlMetricState);
 
 configureSizeUnitButtons(UNIT_IDS.width, smAncho, smAnMetricState);
+
+configureSizeUnitButtons(
+    UNIT_IDS.lArmX,
+    smLArmX,
+    smLArmXMetricState,
+    (unit) => setLArmUnit(UNIT_IDS.lArmX, smLArmX, smLArmXMetricState, unit, 'armX'),
+);
+
+configureSizeUnitButtons(
+    UNIT_IDS.lArmY,
+    smLArmY,
+    smLArmYMetricState,
+    (unit) => setLArmUnit(UNIT_IDS.lArmY, smLArmY, smLArmYMetricState, unit, 'armY'),
+);
 
 const unitSystemButtons = [...document.querySelectorAll('.unit-system .segmented-btn')];
 
@@ -612,6 +746,8 @@ function setUnitSystem(system) {
     const unit = nextSystem === 'imperial' ? 'ft' : 'm';
     setDimensionUnit(UNIT_IDS.height, smAlto, smAlMetricState, unit);
     setDimensionUnit(UNIT_IDS.width, smAncho, smAnMetricState, unit);
+    setLArmUnit(UNIT_IDS.lArmX, smLArmX, smLArmXMetricState, unit, 'armX');
+    setLArmUnit(UNIT_IDS.lArmY, smLArmY, smLArmYMetricState, unit, 'armY');
     markUnitSystem(nextSystem);
     localStorage.setItem(UNIT_SYSTEM_KEY, nextSystem);
 }

@@ -1,6 +1,7 @@
 // Modelo de items: rooms, muebles y aperturas
 import { scene } from './dom.js';
 import { getGridStep } from '../features/snapping.js';
+import { isLShape } from '../features/l-shape.js';
 import { MARGEN_ESQUINA, OPENING_MIN, state } from './state.js';
 import { getRotation, normalizeDeg, snapNameRotation } from './units.js';
 
@@ -21,7 +22,8 @@ export function setItemName(item, value) {
             if (node.nodeType === Node.TEXT_NODE) node.remove();
         });
         item.appendChild(nameEl);
-        nameEl.style.transform = `rotate(${snapNameRotation(getRotation(item))}deg)`;
+        const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
+        nameEl.style.transform = `${translate}rotate(${snapNameRotation(getRotation(item))}deg)`;
     }
     let textEl = nameEl.querySelector('.balance-text');
     if (!textEl) {

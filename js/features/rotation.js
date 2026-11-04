@@ -1,5 +1,6 @@
 // Handle de rotacion
 import { syncEdgeTogglerRotation, syncToleranceTogglerRotation } from './door.js';
+import { isLShape } from './l-shape.js';
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { syncSizeManagerReadout } from './size-manager.js';
 import { toolState } from '../core/state.js';
@@ -14,7 +15,10 @@ export function applyRotation(item, deg) {
         handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg)`;
     });
     const nameEl = item.querySelector(':scope > .balance-name');
-    if (nameEl) nameEl.style.transform = `rotate(${snapNameRotation(rotation)}deg)`;
+    if (nameEl) {
+        const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
+        nameEl.style.transform = `${translate}rotate(${snapNameRotation(rotation)}deg)`;
+    }
     if (getSelectedObject() === item) {
         syncEdgeTogglerRotation(rotation);
         syncToleranceTogglerRotation(rotation);

@@ -8,6 +8,7 @@ import { alerta, popupMenu } from './popups.js';
 import { cloneRoomContents, focusLayerRow, setActiveRoom, syncObjectLayers } from './rooms.js';
 import { applyRotation } from './rotation.js';
 import { beginDraft, cancelDraft, isDrafting } from './draft.js';
+import { setupLShape } from './l-shape.js';
 import { focusSizeInputForEditing } from './size-manager.js';
 import { OPENING_DEFAULT, OPENING_DEPTH, OPENING_MIN, getNextColor, metro, objectMenuOptions, roomMenuOptions, state } from '../core/state.js';
 import { getRotation, smFromPx } from '../core/units.js';
@@ -201,6 +202,7 @@ function selectShape(key, options = {}) {
 function createSelectedShape(key) {
     closeAddObjectPopup();
     if (key === '2') createCircleObject();
+    else if (key === '3') createLShapeObject();
     else createSquareObject();
 }
 
@@ -227,7 +229,13 @@ function createShapeObject(options = {}) {
 
     // El circulo es un cuadrado con radio relativo: al redimensionarlo sigue
     // siendo una elipse/circulo sin tener que recalcular pixeles.
-    if (options.borderRadius) createdItem.style.borderRadius = options.borderRadius;
+    if (options.shape === 'l') {
+        // Los brazos iniciales ocupan el 40% de la caja de 1m x 1m. Despues
+        // se ajustan con los campos Grosor izq./inf. del sidebar.
+        setupLShape(createdItem, { armX: metro * 0.4, armY: metro * 0.4 });
+    } else if (options.borderRadius) {
+        createdItem.style.borderRadius = options.borderRadius;
+    }
 
     beginDraft(createdItem);
     const layer = document.querySelector(`.layer-div[data-target-id="${createdItem.id}"]`);
@@ -246,6 +254,10 @@ export function createCircleObject() {
     // El rojo es solo del preview del modal: el objeto creado usa la paleta
     // como cualquier otro mueble.
     return createShapeObject({ borderRadius: '100%' });
+}
+
+export function createLShapeObject() {
+    return createShapeObject({ shape: 'l' });
 }
 
 document.getElementById('add-object-btn').addEventListener('click', () => {
@@ -284,7 +296,7 @@ document.addEventListener('keydown', (event) => {
         return;
     }
 
-    if ((event.key === '1' || event.key === '2') && !event.ctrlKey && !event.metaKey && !event.altKey) {
+    if ((event.key === '1' || event.key === '2' || event.key === '3') && !event.ctrlKey && !event.metaKey && !event.altKey) {
         event.preventDefault();
         createSelectedShape(event.key);
     }

@@ -104,6 +104,11 @@
                                 <span class="popup-object-label">Círculo</span>
                                 <span class="popup-object-shortcut">2</span>
                             </button>
+                            <button class="popup-add-object-item" id="btn-create-l" type="button" data-key="3" aria-label="Crear objeto con forma de L">
+                                <div class="popup-l-preview" aria-hidden="true"></div>
+                                <span class="popup-object-label">Forma L</span>
+                                <span class="popup-object-shortcut">3</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -191,6 +196,52 @@
                                             <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-ancho-cm" data-tooltip="Centímetros">cm</button>
                                             <button class="sm-unit-btn" type="button" data-unit="in" id="sm-ancho-in" data-tooltip="Pulgadas">in</button>
                                             <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-ancho-ft" data-tooltip="Pies">ft</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field-pair" id="l-shape-fields">
+                            <div class="field" id="sm-l-arm-x-field">
+                                <div class="field-head">
+                                    <span class="field-label" id="sm-l-arm-x-caption" title="Grosor del brazo vertical (izquierdo)">Grosor izq.</span>
+                                    <span class="field-unit" id="sm-l-arm-x-unit">m</span>
+                                </div>
+                                <div class="field-row">
+                                    <div class="question-box row" id="sm-l-arm-x-box">
+                                        <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                        <input type="number" id="sm-l-arm-x" min="0.01" step="0.01" inputmode="decimal" aria-labelledby="sm-l-arm-x-caption">
+                                        <button class="field-config" type="button" id="sm-l-arm-x-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-l-arm-x-unit-menu" aria-label="Cambiar unidad de grosor izquierdo">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                        </button>
+                                        <div class="unit-menu" id="sm-l-arm-x-unit-menu" role="group" aria-label="Unidad de grosor izquierdo">
+                                            <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-l-arm-x-m" data-tooltip="Metros">m</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-l-arm-x-cm" data-tooltip="Centímetros">cm</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="in" id="sm-l-arm-x-in" data-tooltip="Pulgadas">in</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-l-arm-x-ft" data-tooltip="Pies">ft</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="field" id="sm-l-arm-y-field">
+                                <div class="field-head">
+                                    <span class="field-label" id="sm-l-arm-y-caption" title="Grosor del brazo horizontal (inferior)">Grosor inf.</span>
+                                    <span class="field-unit" id="sm-l-arm-y-unit">m</span>
+                                </div>
+                                <div class="field-row">
+                                    <div class="question-box row" id="sm-l-arm-y-box">
+                                        <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                        <input type="number" id="sm-l-arm-y" min="0.01" step="0.01" inputmode="decimal" aria-labelledby="sm-l-arm-y-caption">
+                                        <button class="field-config" type="button" id="sm-l-arm-y-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-l-arm-y-unit-menu" aria-label="Cambiar unidad de grosor inferior">
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                        </button>
+                                        <div class="unit-menu" id="sm-l-arm-y-unit-menu" role="group" aria-label="Unidad de grosor inferior">
+                                            <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-l-arm-y-m" data-tooltip="Metros">m</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-l-arm-y-cm" data-tooltip="Centímetros">cm</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="in" id="sm-l-arm-y-in" data-tooltip="Pulgadas">in</button>
+                                            <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-l-arm-y-ft" data-tooltip="Pies">ft</button>
                                         </div>
                                     </div>
                                 </div>

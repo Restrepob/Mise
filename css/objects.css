@@ -76,6 +76,45 @@
     border:1px solid transparent;
 }
 
+/* Forma L: la caja exterior conserva las medidas, la seleccion y el handle de
+   rotacion; el relleno recortado es el que dibuja los dos brazos. */
+.furniture.l-shape {
+    background:transparent;
+    border-color:transparent;
+}
+
+.l-shape-fill {
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:var(--l-fill, #62DBFF);
+}
+
+.furniture.l-shape > .balance-name {
+    position:absolute;
+    left:50%;
+    top:var(--l-name-y, 50%);
+    transform:translate(-50%, -50%);
+}
+
+/* El box-shadow de seleccion no sigue el recorte: el contorno azul se aplica
+   al relleno con drop-shadow, que si respeta el poligono. */
+.furniture.l-shape.selected {
+    box-shadow:none;
+}
+
+.furniture.l-shape.selected .l-shape-fill {
+    filter:drop-shadow(0 0 1px #48a1ff) drop-shadow(0 0 1px #48a1ff);
+}
+
+.furniture.l-shape.draft {
+    border-color:transparent !important;
+}
+
+.furniture.l-shape.draft .l-shape-fill {
+    filter:drop-shadow(0 0 1px rgba(72, 161, 255, 0.9));
+}
+
 .opening {
     border:1px solid #48a1ff;
     z-index:6;

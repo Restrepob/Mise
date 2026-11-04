@@ -33,6 +33,10 @@ export const smAlto = document.getElementById('sm-alto');
 
 export const smAncho = document.getElementById('sm-ancho');
 
+export const smLArmX = document.getElementById('sm-l-arm-x');
+
+export const smLArmY = document.getElementById('sm-l-arm-y');
+
 export const smRadius = document.getElementById('sm-radius');
 
 export const smRotation = document.getElementById('sm-rotation');

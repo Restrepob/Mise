@@ -24,6 +24,7 @@ js/
   features/
     creation.js     Crear rooms/muebles/capas y popup de creación.
     draft.js        Borrador de creación (existe en escena, aún no se guarda).
+    l-shape.js      Forma L: brazos, clip-path, color y medidas propias.
     size-manager.js Panel de propiedades: nombre, medidas, radio, rotación.
     rotation.js     Handle de rotación y rotación por clic/teclado.
     drag.js         Arrastre, autoscroll, pan, pinch-zoom y menú contextual.
@@ -71,6 +72,10 @@ consulta por id/clase o mediante `core/dom.js`.
 - **Aperturas:** viven sobre una pared con `dataset.edge` y `dataset.offset`
   (distancia al inicio de la pared). `placeOpening()` es la única función que
   debe recalcular su geometría.
+- **Forma L:** la caja total sigue siendo ancho × alto; los brazos se guardan en
+  `dataset.armX`/`dataset.armY` (px de escena) y el contorno se dibuja con un
+  `clip-path` sobre el hijo `.l-shape-fill`. La selección, el handle de rotación,
+  el nombre y las cotas viven en la caja exterior. El radio no aplica a la L.
 - **Borrador:** un objeto creado desde el popup existe en la escena con
   `dataset.draft="true"` pero no se guarda ni entra al historial hasta fijar
   alto, ancho y nombre (o hacer clic afuera).
@@ -93,7 +98,8 @@ consulta por id/clase o mediante `core/dom.js`.
   módulo.
 - Los ids del sidebar usan prefijo `sm-`; los de creación/popup usan `popup-`.
 - Los atributos de dominio van en `dataset` (`type`, `roomId`, `rotation`,
-  `edge`, `offset`, `openingWidth`, `edges`, `tolerance`, `draft`).
+  `edge`, `offset`, `openingWidth`, `edges`, `tolerance`, `draft`, `shape`,
+  `armX`, `armY`).
 - Toda modificación persistente termina en `guardarCambios(item)`.
 - No tocar la geometría de aperturas fuera de `placeOpening()`.
 - Los inputs numéricos del sidebar actualizan el objeto en vivo, no al blur.
@@ -104,10 +110,12 @@ consulta por id/clase o mediante `core/dom.js`.
 
 Implementado y estable:
 
-- Creación de rooms y objetos (cuadrado/círculo), borrador con medidas.
+- Creación de rooms y objetos (cuadrado/círculo/forma L), borrador con medidas.
 - Rooms: switcher, duplicado, contenido clonado, capas y visibilidad.
 - Muebles: arrastre con snap, rotación libre/90°, medidas, radio, nombre,
   edges, tolerancia y duplicado.
+- Forma L: brazos editables (grosor izq./inf.), unidades, persistencia,
+  duplicado, rotación y exportación.
 - Puertas/ventanas: colocación en paredes, dirección, eje y ancho.
 - Medición de distancia/área, zoom, pan, pinch y espacio virtual infinito.
 - Undo/redo, persistencia y rebuild de escena.

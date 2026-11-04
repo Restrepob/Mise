@@ -4,6 +4,7 @@ import { objectLayers } from '../core/dom.js';
 import { cancelDraft, getDraftRoomId, isDrafting } from './draft.js';
 import { clearOpeningOverlay, renderEdges, renderTolerance } from './door.js';
 import { getLayerContext, selectLayer } from './layers.js';
+import { getLShapeFillColor, isLShape, setupLShape } from './l-shape.js';
 import { endMeasurement } from './measure.js';
 import { clampOpeningOffset, getActiveRoom, getItemBoxSize, getOpeningWidth, getParentInnerSize, getRooms, isOpening, setItemName } from '../core/model.js';
 import { placeOpening } from './openings.js';
@@ -153,8 +154,16 @@ export function cloneFurnitureItem(sourceItem, targetRoom, options = {}) {
     item.style.height = sourceItem.style.height;
     item.style.left = options.left ?? sourceItem.style.left;
     item.style.top = options.top ?? sourceItem.style.top;
-    item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
-    item.style.borderRadius = sourceItem.style.borderRadius || '';
+    if (isLShape(sourceItem)) {
+        setupLShape(item, {
+            armX: Number.parseFloat(sourceItem.dataset.armX),
+            armY: Number.parseFloat(sourceItem.dataset.armY),
+            color: getLShapeFillColor(sourceItem) || sourceItem.style.backgroundColor,
+        });
+    } else {
+        item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
+        item.style.borderRadius = sourceItem.style.borderRadius || '';
+    }
     setItemName(item, name);
     targetRoom.appendChild(item);
     if (item.dataset.edges) renderEdges(item);

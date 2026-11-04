@@ -4,6 +4,7 @@ import { renderEdges, renderTolerance } from './door.js';
 import { resetHistory, scheduleHistoryCommit } from './history.js';
 import { setItemVisibility } from './layers.js';
 import { getActiveRoom, getOpeningWidth, isOpening } from '../core/model.js';
+import { ensureLShapeFill, getLShapeArmsInMeters, getLShapeFillColor, isLShape, setupLShape } from './l-shape.js';
 import { setActiveRoom } from './rooms.js';
 import { applyRotation } from './rotation.js';
 import { syncSizeManager } from './size-manager.js';
@@ -28,6 +29,7 @@ export function flushActiveView() {
 function getItemColor(item) {
     if (isOpening(item)) return '';
     if (item.dataset.type === 'room') return item.style.borderColor || '';
+    if (isLShape(item)) return getLShapeFillColor(item);
     if (item.classList.contains('furniture')) return item.style.backgroundColor || '';
     return '';
 }
@@ -38,6 +40,13 @@ function applyItemColor(rebuilt, elemento) {
     // que pudiera quedar de una version anterior para que no cambie de color.
     if (rebuilt.dataset.type !== 'room' && rebuilt.classList.contains('furniture')) {
         rebuilt.style.borderColor = '';
+    }
+    if (isLShape(rebuilt)) {
+        // La forma L pinta su relleno en el hijo recortado, no en la caja.
+        const fill = ensureLShapeFill(rebuilt);
+        if (fill && elemento.color) fill.style.backgroundColor = elemento.color;
+        rebuilt.style.backgroundColor = '';
+        return;
     }
     if (!elemento.color) return;
     if (rebuilt.dataset.type === 'room') {
@@ -74,6 +83,12 @@ export function applyBorderRadius(element, value) {
 export function applyItemStateDetails(rebuilt, elemento) {
     if (!rebuilt) return;
     applyBorderRadius(rebuilt, elemento.borderRadius);
+    if (elemento.shape === 'l') {
+        setupLShape(rebuilt, {
+            armX: Number.isFinite(elemento.armX) ? elemento.armX * metro : undefined,
+            armY: Number.isFinite(elemento.armY) ? elemento.armY * metro : undefined,
+        });
+    }
     applyItemColor(rebuilt, elemento);
     const opening = isOpening(rebuilt);
     if (!opening) {
@@ -213,6 +228,7 @@ export function getItemState(item) {
     const width = opening ? getOpeningWidth(item) : parseFloat(item.style.width) || item.offsetWidth;
     const height = opening ? OPENING_DEPTH : parseFloat(item.style.height) || item.offsetHeight;
     const isRoom = item.dataset.type === 'room';
+    const lArms = isLShape(item) ? getLShapeArmsInMeters(item) : null;
 
     // En rooms inactivas (display:none) offsetLeft/offsetTop valen 0. Guardamos
     // la última posición medida y usamos el estilo inline como respaldo para no
@@ -242,6 +258,9 @@ export function getItemState(item) {
         unidadAncho: 'm',
         unidadAlto: 'm',
         borderRadius: item.style.borderRadius || '',
+        shape: item.dataset.shape || '',
+        armX: lArms ? lArms.armX : undefined,
+        armY: lArms ? lArms.armY : undefined,
         color: getItemColor(item),
         rotacion: getRotation(item),
         edges: item.classList.contains('furniture') ? item.dataset.edges || '' : '',

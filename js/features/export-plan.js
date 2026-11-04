@@ -29,13 +29,19 @@ export function exportPlanText() {
 
             const childHeight = parseFloat(child.style.height) || child.offsetHeight;
             const childWidth = parseFloat(child.style.width) || child.offsetWidth;
-            lines.push([
+            const parts = [
                 '    object',
                 name,
                 `${formatMeters(childHeight / metro)} x ${formatMeters(childWidth / metro)}`,
                 `at ${formatMeters(child.offsetTop / metro)} ${formatMeters(child.offsetLeft / metro)}`,
                 `rot ${Math.round(getRotation(child))}`,
-            ].join(' '));
+            ];
+            if (child.dataset.shape === 'l') {
+                const armX = (parseFloat(child.dataset.armX) || 0) / metro;
+                const armY = (parseFloat(child.dataset.armY) || 0) / metro;
+                parts.push('shape l', `arms ${formatMeters(armX)} ${formatMeters(armY)}`);
+            }
+            lines.push(parts.join(' '));
         });
     });
     return lines.join('\n');
