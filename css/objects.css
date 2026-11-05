@@ -41,10 +41,13 @@
     border:1px solid rgba(133, 132, 132, 0.381);
 }
 
+/* La seleccion ocupa el propio borde y crece hacia dentro, sin sobresalir del
+   objeto. El border tambien se pinta de azul para que no quede el color del
+   objeto entre la linea de seleccion y el exterior. */
 .room.selected,
 .furniture.selected {
-    border-color:transparent !important;
-    box-shadow:inset 0 0 0 3px #48a1ff;
+    border-color:#48a1ff !important;
+    box-shadow:inset 0 0 0 2px #48a1ff;
     filter:none;
     z-index:10;
 }
@@ -77,10 +80,11 @@
 }
 
 /* Forma L: la caja exterior conserva las medidas, la seleccion y el handle de
-   rotacion; el relleno recortado es el que dibuja los dos brazos. */
+   rotacion; el relleno recortado es el que dibuja los dos brazos. El borde se
+   elimina para que el relleno llegue hasta los limites reales de la caja. */
 .furniture.l-shape {
     background:transparent;
-    border-color:transparent;
+    border:0;
 }
 
 .l-shape-fill {
@@ -88,6 +92,20 @@
     inset:0;
     pointer-events:none;
     background:var(--l-fill, #62DBFF);
+    clip-path:var(--l-clip);
+}
+
+/* Contorno de seleccion por debajo del relleno. El relleno se recorta hacia
+   dentro con --l-inner-clip, dejando ver este borde azul sin que el clip-path
+   lo elimine (como ocurria con drop-shadow). */
+.furniture.l-shape::before {
+    content:"";
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+    background:#48a1ff;
+    clip-path:var(--l-clip);
+    opacity:0;
 }
 
 .furniture.l-shape > .balance-name {
@@ -97,22 +115,34 @@
     transform:translate(-50%, -50%);
 }
 
-/* El box-shadow de seleccion no sigue el recorte: el contorno azul se aplica
-   al relleno con drop-shadow, que si respeta el poligono. */
 .furniture.l-shape.selected {
+    border-width:0 !important;
     box-shadow:none;
 }
 
+.furniture.l-shape.selected::before {
+    opacity:1;
+}
+
 .furniture.l-shape.selected .l-shape-fill {
-    filter:drop-shadow(0 0 1px #48a1ff) drop-shadow(0 0 1px #48a1ff);
+    clip-path:var(--l-inner-clip, var(--l-clip));
 }
 
 .furniture.l-shape.draft {
-    border-color:transparent !important;
+    border-width:0 !important;
+}
+
+.furniture.l-shape.draft::before {
+    opacity:1;
+    background:repeating-linear-gradient(
+        45deg,
+        rgba(72, 161, 255, 0.95) 0 4px,
+        transparent 4px 8px
+    );
 }
 
 .furniture.l-shape.draft .l-shape-fill {
-    filter:drop-shadow(0 0 1px rgba(72, 161, 255, 0.9));
+    clip-path:var(--l-inner-clip, var(--l-clip));
 }
 
 .opening {

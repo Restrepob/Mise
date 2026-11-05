@@ -61,16 +61,28 @@ export function syncLShape(item) {
 
     const x = (armX / width) * 100;
     const notchY = ((height - armY) / height) * 100;
+    const outerClip = `polygon(0 0, ${x}% 0, ${x}% ${notchY}%, 100% ${notchY}%, 100% 100%, 0 100%)`;
+
+    // Contorno interior para la seleccion: el relleno se recorta unos pixeles
+    // hacia dentro y deja ver el borde azul que pinta el pseudo-elemento.
+    const border = Math.max(0, Math.min(3, armX / 2, armY / 2));
+    const left = (border / width) * 100;
+    const top = (border / height) * 100;
+    const right = ((width - border) / width) * 100;
+    const bottom = ((height - border) / height) * 100;
+    const innerRight = ((armX - border) / width) * 100;
+    const innerTop = ((height - armY + border) / height) * 100;
+    const innerClip = `polygon(${left}% ${top}%, ${innerRight}% ${top}%, ${innerRight}% ${innerTop}%, ${right}% ${innerTop}%, ${right}% ${bottom}%, ${left}% ${bottom}%)`;
 
     item.dataset.armX = String(armX);
     item.dataset.armY = String(armY);
     item.style.backgroundColor = '';
     item.style.setProperty('--l-name-y', `${height - armY / 2}px`);
+    item.style.setProperty('--l-clip', outerClip);
+    item.style.setProperty('--l-inner-clip', innerClip);
 
     const fill = ensureLShapeFill(item);
-    if (fill) {
-        fill.style.clipPath = `polygon(0 0, ${x}% 0, ${x}% ${notchY}%, 100% ${notchY}%, 100% 100%, 0 100%)`;
-    }
+    if (fill) fill.style.clipPath = '';
 
     return metrics;
 }
