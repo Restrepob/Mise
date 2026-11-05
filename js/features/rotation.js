@@ -56,7 +56,7 @@ export function syncRotationHandle(item) {
         handle = document.createElement('button');
         handle.type = 'button';
         handle.className = 'rotate-handle';
-        handle.setAttribute('aria-label', 'Girar objeto: arrastra para rotar libre, Shift + clic izquierdo/derecho para girar 90 grados');
+        handle.setAttribute('aria-label', 'Girar objeto: arrastra para rotar libre, Alt + clic izquierdo/derecho para girar 90 grados');
         handle.innerHTML = ROTATE_HANDLE_SVG_FREE;
         handle.addEventListener('pointerdown', startRotationDrag);
         handle.addEventListener('pointerup', finishRotationClick);
@@ -70,10 +70,11 @@ export function syncRotationHandle(item) {
 export function startRotationDrag(event) {
     if (event.button !== 0 && event.button !== 2) return;
 
-    // Con Shift, el clic sobre el handle sigue la misma regla que el resto del
-    // objeto (giro de 90 grados: horario con clic derecho, antihorario con clic
-    // izquierdo) y no inicia arrastre.
-    if (event.shiftKey) return;
+    // Con Alt, el clic sobre el handle sigue la misma regla que el resto del
+    // objeto (giro de 90 grados: horario con clic derecho, antihorario con
+    // clic izquierdo) y no inicia arrastre. El canvas se encarga del giro y de
+    // guardar el cambio.
+    if (event.altKey) return;
 
     event.stopPropagation();
     event.preventDefault();

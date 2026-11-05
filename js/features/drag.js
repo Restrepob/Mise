@@ -14,7 +14,7 @@ import { getRotation, snapRotation } from '../core/units.js';
 import { pointerToScene, sceneDeltaToLocal, sceneToLocal, setViewScroll, zoomAtPoint, zoomAtScreenPoint } from './view.js';
 
 export let autoscrollRaf = null;
-let lastShiftRotateTime = 0;
+let lastModifierRotateTime = 0;
 
 export function positionDraggedObject(clientX, clientY) {
     const { item, parent, startPointer, startLocal, shiftKey } = toolState.dragObject;
@@ -134,13 +134,16 @@ canvas.addEventListener('pointerdown', (event) => {
     }
 
     const targetItem = event.target.closest('.object');
-    // Shift + clic (derecho o izquierdo) sobre el objeto: gira 90 grados sin
-    // moverlo. Clic derecho = sentido horario (+90), Clic izquierdo = sentido antihorario (-90).
-    // Tiene prioridad sobre el modo mover, sobre el handle de rotacion y sobre
-    // el menu contextual: con Shift el objeto gira, no se desplaza ni se abre el popup.
-    if (event.shiftKey && targetItem && (event.button === 0 || event.button === 2)) {
+    // Alt + clic (derecho o izquierdo) sobre el objeto: gira 90 grados sin
+    // moverlo. Clic derecho = sentido horario (+90), Clic izquierdo = sentido
+    // antihorario (-90). Tiene prioridad sobre el modo mover, sobre el handle
+    // de rotacion y sobre el menu contextual: con Alt el objeto gira, no se
+    // desplaza ni se abre el popup.
+    // Se usa Alt y no Shift porque Firefox/Zen reservan Shift + clic derecho
+    // para abrir su propio menu y no permiten cancelarlo desde la web.
+    if (event.altKey && targetItem && (event.button === 0 || event.button === 2)) {
         event.preventDefault();
-        lastShiftRotateTime = Date.now();
+        lastModifierRotateTime = Date.now();
         clearSnapGuides();
         selectVisibleObject(targetItem);
         if (!isOpening(targetItem)) {
@@ -355,7 +358,22 @@ export function setDragShift(shiftKey) {
     }
 }
 
+// El menu nativo no debe aparecer en el area del editor. El contextmenu puede
+// terminar sobre la barra de herramientas o fuera del canvas si el objeto gira
+// justo debajo del puntero, por eso se bloquea tambien en fase de captura y
+// cubriendo todo el content-box, no solo el canvas.
+window.addEventListener('contextmenu', (event) => {
+    const inEditor = event.target instanceof Element && event.target.closest('.content-box');
+    const rotating = event.altKey || Date.now() - lastModifierRotateTime < 500;
+    if (inEditor || rotating) event.preventDefault();
+}, true);
+
 canvas.addEventListener('contextmenu', (event) => {
+    // Dentro del lienzo el menu contextual siempre lo gestiona la app. Evita
+    // que el navegador abra su menu nativo, incluso si el objeto se movio o
+    // giro entre pointerdown y contextmenu (Alt + clic derecho).
+    event.preventDefault();
+
     if (toolState.active === 'measure') return;
 
     // Un objeto en borrador todavia no tiene menu de capa: duplicarlo o
@@ -366,10 +384,10 @@ canvas.addEventListener('contextmenu', (event) => {
         return;
     }
 
-    // Con Shift el clic derecho es un giro de 90 grados: no abrimos el menu,
-    // ni siquiera cuando el clic cae sobre el handle de rotacion o si se solto
-    // Shift una fraccion de segundo antes de contextmenu.
-    if ((event.shiftKey || Date.now() - lastShiftRotateTime < 400) && event.target.closest('.object')) {
+    // Con Alt el clic derecho es un giro de 90 grados: no abrimos el menu, ni
+    // siquiera cuando el clic cae sobre el handle de rotacion o si se solto el
+    // modificador una fraccion de segundo antes de contextmenu.
+    if ((event.altKey || Date.now() - lastModifierRotateTime < 400) && event.target.closest('.object')) {
         event.preventDefault();
         document.querySelector('.popup-menu-box')?.remove();
         return;
