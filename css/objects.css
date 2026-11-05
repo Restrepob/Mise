@@ -314,6 +314,23 @@
     justify-content: space-between;
 }
 
+/* Grosor del brazo vertical (armX): I horizontal sobre el brazo izquierdo. */
+.dim-i-highlight--arm-x {
+    top: -18px;
+    bottom: auto;
+    left: 0;
+    right: auto;
+    max-width: 100%;
+}
+
+/* Grosor del brazo horizontal (armY): I vertical junto al brazo inferior. */
+.dim-i-highlight--arm-y {
+    top: auto;
+    bottom: 0;
+    left: -18px;
+    right: auto;
+}
+
 /* Ticks perpendiculares en los extremos (los topes de la I) */
 .dim-i-highlight--v .dim-i-cap {
     width: 10px;

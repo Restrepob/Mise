@@ -98,6 +98,7 @@ function setLArmUnit(buttonIds, input, metricState, nextUnit, axis) {
         axis === 'armX' ? 'sm-l-arm-x-unit' : 'sm-l-arm-y-unit',
         (item) => getLShapeMetrics(item)[axis],
     );
+    if (currentDimHighlight === axis) setDimensionHighlight(axis);
 }
 
 export function configureSizeUnitButtons(buttonIds, input, metricState, onChange = null) {
@@ -188,16 +189,46 @@ export function setOpeningPanelFields(item) {
 export let currentDimHighlight = null;
 
 function dimensionInput(dimension) {
-    return dimension === 'height' ? smAlto : smAncho;
+    if (dimension === 'height') return smAlto;
+    if (dimension === 'width') return smAncho;
+    if (dimension === 'armX') return smLArmX;
+    return smLArmY;
+}
+
+function clearDimensionHighlightOnBlur() {
+    setTimeout(() => {
+        const inputs = [smAlto, smAncho, smLArmX, smLArmY];
+        if (!inputs.includes(document.activeElement)) setDimensionHighlight(null);
+    }, 50);
+}
+
+function isArmDimension(dimension) {
+    return dimension === 'armX' || dimension === 'armY';
 }
 
 function buildDimensionHighlight(item, dimension, active) {
     const swapped = isAxesSwapped(item);
-    const isLocalHeight = (dimension === 'height' && !swapped) || (dimension === 'width' && swapped);
+    const arm = isArmDimension(dimension);
+    let pixels;
+    let unit;
+    let orientation;
+    let extraClass = '';
 
-    const layout = getItemLayout(item);
-    const pixels = isLocalHeight ? (swapped ? layout.width : layout.height) : (swapped ? layout.height : layout.width);
-    const unit = dimension === 'height' ? smAlMetric : smAnMetric;
+    if (arm) {
+        // Los brazos se miden en coordenadas locales de la L: no dependen del
+        // intercambio de ejes que usa el sidebar al rotar la caja.
+        const metrics = getLShapeMetrics(item);
+        pixels = dimension === 'armX' ? metrics.armX : metrics.armY;
+        unit = dimension === 'armX' ? smLArmXMetric : smLArmYMetric;
+        orientation = dimension === 'armX' ? 'dim-i-highlight--h' : 'dim-i-highlight--v';
+        extraClass = dimension === 'armX' ? ' dim-i-highlight--arm-x' : ' dim-i-highlight--arm-y';
+    } else {
+        const isLocalHeight = (dimension === 'height' && !swapped) || (dimension === 'width' && swapped);
+        const layout = getItemLayout(item);
+        pixels = isLocalHeight ? (swapped ? layout.width : layout.height) : (swapped ? layout.height : layout.width);
+        unit = dimension === 'height' ? smAlMetric : smAnMetric;
+        orientation = isLocalHeight ? 'dim-i-highlight--v' : 'dim-i-highlight--h';
+    }
 
     // Mientras se escribe, el campo del objeto es un espejo exacto del input
     // del sidebar: mismo texto crudo (sin redondear) e incluso vacio al borrar.
@@ -208,9 +239,11 @@ function buildDimensionHighlight(item, dimension, active) {
         : `${smFromPx(pixels, unit).toFixed(2)} ${unit}`;
 
     const container = document.createElement('div');
-    container.className = `dim-i-highlight ${isLocalHeight ? 'dim-i-highlight--v' : 'dim-i-highlight--h'}`
+    container.className = `dim-i-highlight ${orientation}${extraClass}`
         + (isDrafting() ? ' dim-i-highlight--draft-active' : '')
         + (active ? ' dim-i-highlight--active' : '');
+    if (dimension === 'armX') container.style.width = `${pixels}px`;
+    if (dimension === 'armY') container.style.height = `${pixels}px`;
 
     const capStart = document.createElement('div');
     capStart.className = 'dim-i-cap';
@@ -247,9 +280,11 @@ function renderDimensionHighlights(dimensions, active = null) {
     const item = getSelectedObject();
     if (!item || isOpening(item)) return;
 
-    dimensions.filter(Boolean).forEach((dimension) => {
-        item.appendChild(buildDimensionHighlight(item, dimension, dimension === active));
-    });
+    dimensions
+        .filter((dimension) => dimension && (!isArmDimension(dimension) || isLShape(item)))
+        .forEach((dimension) => {
+            item.appendChild(buildDimensionHighlight(item, dimension, dimension === active));
+        });
 }
 
 export function setDimensionHighlight(dimension) {
@@ -287,10 +322,17 @@ export function syncDraftUI() {
     const drafting = isDrafting();
     document.querySelector('.size-manager')?.classList.toggle('is-draft', drafting);
 
+    const item = getSelectedObject();
     const fields = [
         [smAlto.closest('.question-box'), 'height'],
         [smAncho.closest('.question-box'), 'width'],
     ];
+    if (isLShape(item)) {
+        fields.push(
+            [smLArmX.closest('.question-box'), 'armX'],
+            [smLArmY.closest('.question-box'), 'armY'],
+        );
+    }
     fields.forEach(([box, dimension]) => {
         if (!box) return;
         box.classList.toggle('dim-pending', drafting && !draftState.confirmed[dimension]);
@@ -298,11 +340,10 @@ export function syncDraftUI() {
     });
 
     // El nombre es el ultimo valor a fijar: se resalta cuando ya estan las
-    // medidas y todavia falta confirmarlo.
+    // medidas (y los brazos de la L) y todavia falta confirmarlo.
     const nameIsNext = drafting
-        && draftState.confirmed.height
-        && draftState.confirmed.width
-        && !draftState.confirmed.name;
+        && !draftState.confirmed.name
+        && getNextDraftInput() === smNombre;
     const nameBox = smNombre.closest('.question-box');
     nameBox?.classList.toggle('draft-name-pending', nameIsNext);
     nameBox?.classList.toggle('draft-name-confirmed', drafting && draftState.confirmed.name);
@@ -417,11 +458,16 @@ smNombre.addEventListener('input', () => applySizeName());
 
 smNombre.addEventListener('change', () => applySizeName());
 
+// El nombre no es una medida: al enfocarlo se apaga cualquier cota visible sin
+// esperar al blur del campo anterior.
+smNombre.addEventListener('focus', () => setDimensionHighlight(null));
+
 smNombre.addEventListener('keydown', (event) => {
     if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault();
-        smAncho.focus();
-        smAncho.select();
+        const target = isDrafting() && isLShape(getSelectedObject()) ? smLArmY : smAncho;
+        target.focus();
+        target.select();
         return;
     }
 
@@ -454,13 +500,7 @@ smAlto.addEventListener('focus', () => {
     setDimensionHighlight('height');
 });
 
-smAlto.addEventListener('blur', () => {
-    setTimeout(() => {
-        if (document.activeElement !== smAncho && document.activeElement !== smAlto) {
-            setDimensionHighlight(null);
-        }
-    }, 50);
-});
+smAlto.addEventListener('blur', clearDimensionHighlightOnBlur);
 
 smAlto.addEventListener('keydown', (event) => {
     if (event.key === 'Tab') {
@@ -524,13 +564,7 @@ smAncho.addEventListener('focus', () => {
     setDimensionHighlight('width');
 });
 
-smAncho.addEventListener('blur', () => {
-    setTimeout(() => {
-        if (document.activeElement !== smAncho && document.activeElement !== smAlto) {
-            setDimensionHighlight(null);
-        }
-    }, 50);
-});
+smAncho.addEventListener('blur', clearDimensionHighlightOnBlur);
 
 smAncho.addEventListener('keydown', (event) => {
     if (event.key === 'Tab') {
@@ -548,7 +582,9 @@ smAncho.addEventListener('keydown', (event) => {
             }
         }
 
-        const target = event.shiftKey ? smAlto : smNombre;
+        const target = event.shiftKey
+            ? smAlto
+            : (isDrafting() ? (getNextDraftInput() || smNombre) : smNombre);
         target.focus();
         target.select();
         return;
@@ -591,6 +627,11 @@ function applyLArmDimension(input, unit, axis) {
     const item = getSelectedObject();
     if (!item || !isLShape(item)) return false;
 
+    // Igual que Alto/Ancho: el borrador vuelve a quedar pendiente al tocar el
+    // valor y la cota visible es siempre la del campo que se esta editando.
+    if (isDrafting()) markDimensionEdited(axis);
+    setDimensionHighlight(axis);
+
     const value = Number(input.value);
     if (!Number.isFinite(value) || value <= 0) return false;
 
@@ -605,25 +646,61 @@ function refreshLArmField(input, unit, axis) {
     input.value = smFromPx(getLShapeMetrics(item)[axis], unit).toFixed(2);
 }
 
+function commitLArmField(input, unit, axis) {
+    if (!applyLArmDimension(input, unit, axis)) {
+        if (isDrafting()) shakeDraftInput(input);
+        return false;
+    }
+    refreshLArmField(input, unit, axis);
+
+    if (isDrafting() && confirmDraftDimension(axis) === 'invalid') {
+        shakeDraftInput(input);
+        return false;
+    }
+    return true;
+}
+
+function focusNextFromArm(current) {
+    const next = getNextDraftInput();
+    if (next && next !== current) {
+        next.focus();
+        next.select();
+        return;
+    }
+    current.blur();
+}
+
 smLArmX.addEventListener('input', () => applyLArmDimension(smLArmX, smLArmXMetric, 'armX'));
 
 smLArmX.addEventListener('change', () => refreshLArmField(smLArmX, smLArmXMetric, 'armX'));
 
+smLArmX.addEventListener('focus', () => setDimensionHighlight('armX'));
+
+smLArmX.addEventListener('blur', clearDimensionHighlightOnBlur);
+
 smLArmX.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         event.preventDefault();
-        applyLArmDimension(smLArmX, smLArmXMetric, 'armX');
-        refreshLArmField(smLArmX, smLArmXMetric, 'armX');
-        smLArmX.blur();
+        if (!commitLArmField(smLArmX, smLArmXMetric, 'armX')) return;
+        if (isDrafting()) focusNextFromArm(smLArmX);
+        else smLArmX.blur();
         return;
     }
     if (event.key === 'Tab' && !event.shiftKey) {
         event.preventDefault();
-        if (applyLArmDimension(smLArmX, smLArmXMetric, 'armX')) {
-            refreshLArmField(smLArmX, smLArmXMetric, 'armX');
+        if (!commitLArmField(smLArmX, smLArmXMetric, 'armX')) return;
+        if (isDrafting()) {
+            focusNextFromArm(smLArmX);
+        } else {
+            smLArmY.focus();
+            smLArmY.select();
         }
-        smLArmY.focus();
-        smLArmY.select();
+        return;
+    }
+    if (event.key === 'Tab' && event.shiftKey) {
+        event.preventDefault();
+        smAncho.focus();
+        smAncho.select();
     }
 });
 
@@ -631,22 +708,28 @@ smLArmY.addEventListener('input', () => applyLArmDimension(smLArmY, smLArmYMetri
 
 smLArmY.addEventListener('change', () => refreshLArmField(smLArmY, smLArmYMetric, 'armY'));
 
+smLArmY.addEventListener('focus', () => setDimensionHighlight('armY'));
+
+smLArmY.addEventListener('blur', clearDimensionHighlightOnBlur);
+
 smLArmY.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
         event.preventDefault();
-        applyLArmDimension(smLArmY, smLArmYMetric, 'armY');
-        refreshLArmField(smLArmY, smLArmYMetric, 'armY');
-        smLArmY.blur();
+        if (!commitLArmField(smLArmY, smLArmYMetric, 'armY')) return;
+        if (isDrafting()) focusNextFromArm(smLArmY);
+        else smLArmY.blur();
         return;
     }
     if (event.key === 'Tab') {
         event.preventDefault();
         if (!event.shiftKey) {
-            if (applyLArmDimension(smLArmY, smLArmYMetric, 'armY')) {
-                refreshLArmField(smLArmY, smLArmYMetric, 'armY');
+            if (!commitLArmField(smLArmY, smLArmYMetric, 'armY')) return;
+            if (isDrafting()) {
+                focusNextFromArm(smLArmY);
+            } else {
+                smRotation.focus();
+                smRotation.select();
             }
-            smRotation.focus();
-            smRotation.select();
         } else {
             smLArmX.focus();
             smLArmX.select();

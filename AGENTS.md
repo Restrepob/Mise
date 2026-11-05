@@ -78,7 +78,13 @@ consulta por id/clase o mediante `core/dom.js`.
   el nombre y las cotas viven en la caja exterior. El radio no aplica a la L.
 - **Borrador:** un objeto creado desde el popup existe en la escena con
   `dataset.draft="true"` pero no se guarda ni entra al historial hasta fijar
-  alto, ancho y nombre (o hacer clic afuera).
+  alto, ancho y nombre (o hacer clic afuera). La ruta con teclado/Enter es
+  alto → ancho → (en la L) grosor izq. → grosor inf. → nombre; un brazo vacío o
+  inválido bloquea la creación igual que una medida en 0.
+- **Cotas de medida:** solo se muestra la cota del input que tiene el foco, no
+  dos a la vez. En la L, `.dim-i-highlight--arm-x` es una I horizontal sobre el
+  brazo izquierdo y `.dim-i-highlight--arm-y` una I vertical junto al brazo
+  inferior; ambas usan el valor crudo del input y su unidad, igual que Alto/Ancho.
 - **Historial:** snapshots completos con debounce (`HISTORY_COMMIT_DELAY`);
   la vista (zoom/scroll) no entra al historial.
 - **Snap:** X e Y se resuelven por separado. Paredes/bordes/centros mandan

@@ -1,16 +1,19 @@
 // Borrador de creacion: la figura existe en el canvas pero no en el documento.
 // Vive centrada en su room, se puede dimensionar en vivo y solo se guarda (y
 // entra al historial) cuando se fijan alto, ancho y nombre, o con clic afuera.
-import { smAlto, smAncho, smNombre } from '../core/dom.js';
+import { smAlto, smAncho, smLArmX, smLArmY, smNombre } from '../core/dom.js';
 import { setItemName } from '../core/model.js';
 import { state } from '../core/state.js';
+import { isLShape } from './l-shape.js';
 import { guardarCambios } from './persistence.js';
+
+const CONFIRMED_RESET = { height: false, width: false, armX: false, armY: false, name: false };
 
 export const draftState = {
     active: false,
     itemId: '',
     roomId: '',
-    confirmed: { height: false, width: false, name: false },
+    confirmed: { ...CONFIRMED_RESET },
 };
 
 export function isDrafting() {
@@ -38,12 +41,25 @@ function draftLayerRow(id) {
 }
 
 function dimensionInput(dimension) {
-    return dimension === 'height' ? smAlto : smAncho;
+    if (dimension === 'height') return smAlto;
+    if (dimension === 'width') return smAncho;
+    if (dimension === 'armX') return smLArmX;
+    return smLArmY;
 }
 
 function isDimensionValid(dimension) {
     const value = Number(dimensionInput(dimension).value);
     return Number.isFinite(value) && value > 0;
+}
+
+function hasArms() {
+    return isLShape(getDraftItem());
+}
+
+function draftDimensions() {
+    return hasArms()
+        ? ['height', 'width', 'armX', 'armY']
+        : ['height', 'width'];
 }
 
 function focusInput(input) {
@@ -63,19 +79,21 @@ export function shakeDraftInput(input) {
 }
 
 function focusInvalidDraftInput() {
-    const input = !isDimensionValid('height')
-        ? smAlto
-        : (!isDimensionValid('width') ? smAncho : null);
-    if (!input) return;
+    const invalid = draftDimensions().find((dimension) => !isDimensionValid(dimension));
+    if (!invalid) return;
+    const input = dimensionInput(invalid);
     focusInput(input);
     shakeInput(input);
 }
 
-// Orden de fijacion: alto, ancho y por ultimo el nombre.
+// Orden de fijacion: alto, ancho, (brazos en la L) y por ultimo el nombre.
 export function getNextDraftInput() {
     if (!draftState.active) return null;
-    if (!draftState.confirmed.height || !isDimensionValid('height')) return smAlto;
-    if (!draftState.confirmed.width || !isDimensionValid('width')) return smAncho;
+    for (const dimension of draftDimensions()) {
+        if (!draftState.confirmed[dimension] || !isDimensionValid(dimension)) {
+            return dimensionInput(dimension);
+        }
+    }
     return smNombre;
 }
 
@@ -104,7 +122,7 @@ export function beginDraft(item) {
     draftState.active = true;
     draftState.itemId = item.id;
     draftState.roomId = item.dataset.roomId || item.parentElement?.id || '';
-    draftState.confirmed = { height: false, width: false, name: false };
+    draftState.confirmed = { ...CONFIRMED_RESET };
 
     item.dataset.draft = 'true';
     item.classList.add('draft');
@@ -132,14 +150,17 @@ export function markDraftNameEdited() {
 
 // 'invalid'  -> el valor no sirve, no se confirma
 // 'pending'  -> quedo confirmada pero falta otra medida o el nombre
-// 'done'     -> ya se confirmaron alto, ancho y nombre y la figura se fijo
+// 'done'     -> ya se confirmaron todas las medidas (y los brazos de la L) y el
+//               nombre, y la figura se fijo
 export function confirmDraftDimension(dimension) {
     if (!draftState.active) return 'invalid';
     if (!isDimensionValid(dimension)) return 'invalid';
 
     draftState.confirmed[dimension] = true;
 
-    if (draftState.confirmed.height && draftState.confirmed.width && draftState.confirmed.name) {
+    const complete = draftDimensions().every((item) => draftState.confirmed[item])
+        && draftState.confirmed.name;
+    if (complete) {
         return finalizeDraft() ? 'done' : 'invalid';
     }
 
@@ -158,10 +179,11 @@ export function confirmDraftName() {
 }
 
 // Fija la figura con las medidas que tenga en ese momento. Devuelve false si
-// alguna medida es 0/invalida: en ese caso la creacion no se completa.
+// alguna medida (o algun brazo de la L) es 0/invalida: en ese caso la creacion
+// no se completa.
 export function tryFinalizeDraft() {
     if (!draftState.active) return false;
-    if (!isDimensionValid('height') || !isDimensionValid('width')) {
+    if (draftDimensions().some((dimension) => !isDimensionValid(dimension))) {
         focusInvalidDraftInput();
         return false;
     }
@@ -178,7 +200,7 @@ function finalizeDraft() {
     draftState.active = false;
     draftState.itemId = '';
     draftState.roomId = '';
-    draftState.confirmed = { height: false, width: false, name: false };
+    draftState.confirmed = { ...CONFIRMED_RESET };
 
     // El nombre puede quedar vacio si se borro: se usa el que ya tenia o el
     // nombre por defecto para no crear objetos sin identificar.
@@ -205,7 +227,7 @@ export function cancelDraft() {
     draftState.active = false;
     draftState.itemId = '';
     draftState.roomId = '';
-    draftState.confirmed = { height: false, width: false, name: false };
+    draftState.confirmed = { ...CONFIRMED_RESET };
 
     const layer = draftLayerRow(id);
     layer?.remove();
@@ -266,6 +288,9 @@ document.addEventListener('pointerdown', (event) => {
     if (!tryFinalizeDraft()) {
         event.preventDefault();
         event.stopPropagation();
+        // El manejador de pointerdown del sidebar quita el foco al hacer clic
+        // fuera; se vuelve a enfocar el campo invalido despues de este evento.
+        window.setTimeout(focusInvalidDraftInput, 0);
         swallowNextEvent('click');
         swallowNextEvent('contextmenu');
     }
