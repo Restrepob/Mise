@@ -13,10 +13,21 @@ const EDGE_SIDES = ['top', 'right', 'bottom', 'left'];
 const TOLERANCE_SIDE_DEG = { top: -90, right: 0, bottom: 90, left: 180 };
 
 const PREVIEWS = [
-    { key: 'dimensions', rotorId: 'shape-dims-rotor', figureId: 'shape-dims-figure', maxSize: 76 },
+    { key: 'dimensions', rotorId: 'shape-dims-rotor', figureId: 'shape-dims-figure' },
     { key: 'edges', rotorId: 'edge-rotor', figureId: 'edge-figure', maxSize: 66 },
     { key: 'tolerance', rotorId: 'tolerance-rotor', figureId: 'tolerance-figure', maxSize: 66 },
 ];
+let lastPreviewItem = null;
+let stageObserver = null;
+
+function observeDimensionStage() {
+    const stage = document.getElementById('shape-dims-stage');
+    if (!stage || stageObserver || typeof ResizeObserver === 'undefined') return;
+    stageObserver = new ResizeObserver(() => {
+        if (lastPreviewItem) syncShapePreviews(lastPreviewItem);
+    });
+    stageObserver.observe(stage);
+}
 
 function readItemSize(item) {
     if (!item) return { width: 0, height: 0 };
@@ -165,14 +176,28 @@ function createSvg(snapshot, activeEdges = null) {
 
 // La escala tiene en cuenta la rotacion: el contorno rotado debe caber dentro
 // del cuadrado de la previsualizacion, no solo su caja sin rotar.
-function fitScale(snapshot, maxSize) {
+function fitScale(snapshot, maxWidth, maxHeight) {
     const radians = (snapshot.rotation * Math.PI) / 180;
     const cos = Math.abs(Math.cos(radians));
     const sin = Math.abs(Math.sin(radians));
     const bboxWidth = snapshot.width * cos + snapshot.height * sin;
     const bboxHeight = snapshot.width * sin + snapshot.height * cos;
     if (!(bboxWidth > 0) || !(bboxHeight > 0)) return 1;
-    return Math.min(maxSize / bboxWidth, maxSize / bboxHeight);
+    return Math.min(maxWidth / bboxWidth, maxHeight / bboxHeight);
+}
+
+function getPreviewScale(preview, rotor, snapshot) {
+    const stage = document.getElementById('shape-dims-stage') || rotor.parentElement;
+    const widthBadge = document.querySelector('#sm-ancho-field .shape-dim__badge');
+    const heightBadge = document.querySelector('#sm-alto-field .shape-dim__badge');
+    const gap = 14;
+    // Reservamos solo el espacio que realmente necesita la etiqueta exterior;
+    // el resto del stage queda disponible para ampliar la forma.
+    const sideSpace = Math.max(widthBadge?.offsetWidth || 54, heightBadge?.offsetWidth || 54) + gap;
+    const endSpace = Math.max(widthBadge?.offsetHeight || 22, heightBadge?.offsetHeight || 22) + gap;
+    const maxWidth = Math.max(24, stage.clientWidth - sideSpace);
+    const maxHeight = Math.max(24, stage.clientHeight - endSpace);
+    return fitScale(snapshot, maxWidth, maxHeight);
 }
 
 function updateAnchors(rotor, snapshot, selector, attribute) {
@@ -195,6 +220,8 @@ function updateToleranceLabels(rotor, snapshot) {
 }
 
 export function syncShapePreviews(item) {
+    lastPreviewItem = item;
+    observeDimensionStage();
     const snapshot = getShapeSnapshot(item);
 
     PREVIEWS.forEach((preview) => {
@@ -207,7 +234,7 @@ export function syncShapePreviews(item) {
             return;
         }
 
-        const scale = fitScale(snapshot, preview.maxSize);
+        const scale = getPreviewScale(preview, rotor, snapshot);
         rotor.style.width = `${Math.max(1, snapshot.width * scale)}px`;
         rotor.style.height = `${Math.max(1, snapshot.height * scale)}px`;
         rotor.style.transform = `translate(-50%, -50%) rotate(${snapshot.rotation}deg)`;

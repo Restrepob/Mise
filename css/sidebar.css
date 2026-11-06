@@ -594,15 +594,9 @@
     position:relative;
     width:100%;
     max-width:230px;
-    height:164px;
+    height:144px;
     margin:2px auto 4px;
     overflow:visible;
-}
-
-.shape-stage--edges,
-.shape-stage--tolerance {
-    max-width:180px;
-    height:112px;
 }
 
 .shape-rotor {
@@ -614,7 +608,6 @@
     transform:translate(-50%, -50%);
     transform-origin:center;
     pointer-events:none;
-    will-change:transform;
 }
 
 .shape-figure {
@@ -666,7 +659,7 @@
 .shape-dim--height {
     top:0;
     bottom:0;
-    right:-38px;
+    right:-14px;
     width:13px;
     flex-direction:column;
 }
@@ -674,21 +667,21 @@
 .shape-dim--width {
     left:0;
     right:0;
-    bottom:-38px;
+    bottom:-14px;
     height:13px;
     flex-direction:row;
 }
 
 .shape-dim--arm-x {
     left:0;
-    top:-38px;
+    top:-14px;
     width:var(--arm-x, 50%);
     height:13px;
     flex-direction:row;
 }
 
 .shape-dim--arm-y {
-    left:-38px;
+    left:-14px;
     bottom:0;
     width:13px;
     height:var(--arm-y, 50%);
