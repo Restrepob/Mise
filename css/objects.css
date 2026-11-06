@@ -45,7 +45,9 @@
    objeto. El border tambien se pinta de azul para que no quede el color del
    objeto entre la linea de seleccion y el exterior. */
 .room.selected,
-.furniture.selected {
+.furniture.selected,
+.room.layer-hover-preview,
+.furniture.layer-hover-preview {
     border-color:#48a1ff !important;
     box-shadow:inset 0 0 0 2px #48a1ff;
     filter:none;
@@ -115,16 +117,19 @@
     transform:translate(-50%, -50%);
 }
 
-.furniture.l-shape.selected {
+.furniture.l-shape.selected,
+.furniture.l-shape.layer-hover-preview {
     border-width:0 !important;
     box-shadow:none;
 }
 
-.furniture.l-shape.selected::before {
+.furniture.l-shape.selected::before,
+.furniture.l-shape.layer-hover-preview::before {
     opacity:1;
 }
 
-.furniture.l-shape.selected .l-shape-fill {
+.furniture.l-shape.selected .l-shape-fill,
+.furniture.l-shape.layer-hover-preview .l-shape-fill {
     clip-path:var(--l-inner-clip, var(--l-clip));
 }
 
@@ -254,7 +259,8 @@
     border-left:2px solid var(--color-edge);
 }
 
-.opening.selected {
+.opening.selected,
+.opening.layer-hover-preview {
     box-shadow:0 0 0 2px #48a1ff;
 }
 

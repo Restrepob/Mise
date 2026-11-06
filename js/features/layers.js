@@ -14,6 +14,12 @@ export function getLayerElementForItem(item) {
     return document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
 }
 
+export function setLayerHoverPreview(layerElement, active) {
+    const item = document.getElementById(layerElement?.dataset.targetId);
+    if (!item) return;
+    item.classList.toggle('layer-hover-preview', active);
+}
+
 export function openLayerMenuForItem(item, point) {
     const layerDiv = getLayerElementForItem(item);
     if (!layerDiv) return;

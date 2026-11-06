@@ -1,6 +1,6 @@
 // Creacion de rooms, objetos y capas
 import { alto, ancho, nombre, objectLayers, popup, roomLayers, scene } from '../core/dom.js';
-import { getLayerContext, selectLayer, toggleLayerVisibility } from './layers.js';
+import { getLayerContext, selectLayer, setLayerHoverPreview, toggleLayerVisibility } from './layers.js';
 import { clampOpeningOffset, getActiveRoom, getParentInnerSize, getRooms, setItemName, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
 import { applyBorderRadius, guardarCambios } from './persistence.js';
@@ -517,6 +517,9 @@ export function createLayer(
         event.stopPropagation();
         toggleLayerVisibility(div);
     });
+
+    div.addEventListener('pointerenter', () => setLayerHoverPreview(div, true));
+    div.addEventListener('pointerleave', () => setLayerHoverPreview(div, false));
 
     div.addEventListener('click', () => {
         if (div.dataset.type === 'room') {
