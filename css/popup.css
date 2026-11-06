@@ -281,13 +281,7 @@ input[type="number"]::-webkit-outer-spin-button {
     height: auto;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.10);
-    /* Gradiente semitranslucido #212123 -> #0C0D0E -> #212123: el centro
-       oscuro se mantiene y los bordes quedan mas claros. */
-    background:
-        radial-gradient(ellipse 50% 50% at 50% 50%,
-            rgba(12, 13, 14, 0.97) 0%,
-            rgba(12, 13, 14, 0.95) 30%,
-            rgba(33, 33, 35, 0.94) 100%);
+    background: #0C0D0E;
     -webkit-backdrop-filter: blur(18px) saturate(0.85);
     backdrop-filter: blur(18px) saturate(0.85);
     border-radius: 30px;
@@ -354,20 +348,16 @@ input[type="number"]::-webkit-outer-spin-button {
     padding: 20px 20px 16px;
     border-radius: 24px;
     corner-shape: squircle;
-    background: rgba(255, 255, 255, 0.045);
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    background: #161718;
+    border: 2px solid rgba(255, 255, 255, 0.09);
     cursor: pointer;
     transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
 }
 
 .popup-add-object-item:hover {
-    background: rgba(255, 255, 255, 0.085);
+    background: #2d2f30ce;
     color: var(--color-text);
-}
-
-.popup-add-object-item.is-selected {
-    background: rgba(72, 161, 255, 0.10);
-    border-color: rgba(72, 161, 255, 0.65);
+    border:solid 2px #3472B2;
 }
 
 .popup-add-object-item:active {
