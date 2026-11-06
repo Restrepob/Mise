@@ -298,6 +298,7 @@ function buildDimensionHighlight(item, dimension, active) {
         unit = dimension === 'armX' ? smLArmXMetric : smLArmYMetric;
         orientation = dimension === 'armX' ? 'dim-i-highlight--h' : 'dim-i-highlight--v';
         extraClass = dimension === 'armX' ? ' dim-i-highlight--arm-x' : ' dim-i-highlight--arm-y';
+        if (dimension === 'armY') extraClass += ' dim-i-highlight--l-arm-y';
     } else {
         // La cota vive en el lado local del objeto: alto a la derecha, ancho
         // abajo. Al rotar, la linea gira con la figura y sigue midiendo lo mismo.
@@ -305,6 +306,7 @@ function buildDimensionHighlight(item, dimension, active) {
         pixels = getDimensionPixels(item, isHeight ? 'height' : 'width');
         unit = isHeight ? smAlMetric : smAnMetric;
         orientation = isHeight ? 'dim-i-highlight--v' : 'dim-i-highlight--h';
+        if (isHeight && isLShape(item)) extraClass = ' dim-i-highlight--l-height';
     }
 
     // Mientras se escribe, el campo del objeto es un espejo exacto del input

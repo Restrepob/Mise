@@ -676,6 +676,11 @@
     flex-direction:column;
 }
 
+.shape-rotor.is-l-shape > .shape-dim--height {
+    left:-14px;
+    right:auto;
+}
+
 .shape-dim--width {
     left:0;
     right:0;
@@ -693,7 +698,8 @@
 }
 
 .shape-dim--arm-y {
-    left:-14px;
+    left:auto;
+    right:-14px;
     bottom:0;
     width:13px;
     height:var(--arm-y, 50%);
@@ -753,7 +759,7 @@
     padding:1px 3px;
     border:1px solid transparent;
     border-radius:3px;
-    background:var(--color-card);
+    background-color:var(--color-card);
     box-shadow:none;
     transform:translate(-50%, -50%) rotate(var(--shape-badge-rotate, 0deg));
     pointer-events:auto;
@@ -803,7 +809,7 @@
     padding:0;
     border:0;
     border-radius:0;
-    background:transparent;
+    background-color:var(--color-card);
     color:var(--color-text);
     font-size:10px;
     font-variant-numeric:tabular-nums;
@@ -818,6 +824,7 @@
     position:static;
     width:34px;
     height:18px;
+    background-color:var(--color-card);
     opacity:1;
     pointer-events:auto;
 }

@@ -357,9 +357,14 @@
 .dim-i-highlight--arm-y {
     top: auto;
     bottom: 0;
-    left: -18px;
-    right: auto;
+    left: auto;
+    right: -18px;
 }
+
+/* En la L, la cota del tramo corto va al lado derecho y la altura total al
+   izquierdo para que cada etiqueta quede junto a la sección que representa. */
+.dim-i-highlight--l-arm-y { right:-18px; left:auto; }
+.dim-i-highlight--l-height { left:-18px; right:auto; }
 
 /* Ticks perpendiculares en los extremos (los topes de la I) */
 .dim-i-highlight--v .dim-i-cap {

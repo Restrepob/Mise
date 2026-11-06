@@ -239,6 +239,7 @@ export function syncShapePreviews(item) {
         rotor.style.height = `${Math.max(1, snapshot.height * scale)}px`;
         rotor.style.transform = `translate(-50%, -50%) rotate(${snapshot.rotation}deg)`;
         rotor.style.setProperty('--shape-badge-rotate', `${-snapshot.rotation}deg`);
+        rotor.classList.toggle('is-l-shape', Boolean(snapshot.arms));
 
         if (snapshot.arms) {
             rotor.style.setProperty('--arm-x', `${(snapshot.arms.x / snapshot.width) * 100}%`);
