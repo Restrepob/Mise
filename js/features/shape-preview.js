@@ -89,6 +89,69 @@ export function getShapeSnapshot(item) {
     return snapshot;
 }
 
+// Icono compacto con el contorno real del objeto para las filas de capas.
+export function createLayerShapeIcon(item) {
+    const snapshot = getShapeSnapshot(item);
+    if (!snapshot) return null;
+
+    const iconSize = 16;
+    const padding = 1.25;
+    const radians = (snapshot.rotation * Math.PI) / 180;
+    const cos = Math.abs(Math.cos(radians));
+    const sin = Math.abs(Math.sin(radians));
+    const boundsWidth = snapshot.width * cos + snapshot.height * sin;
+    const boundsHeight = snapshot.width * sin + snapshot.height * cos;
+    const scale = Math.min(
+        (iconSize - padding * 2) / boundsWidth,
+        (iconSize - padding * 2) / boundsHeight,
+    );
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('viewBox', `0 0 ${iconSize} ${iconSize}`);
+    svg.setAttribute('aria-hidden', 'true');
+    svg.classList.add('layer-shape-icon');
+
+    const group = document.createElementNS(SVG_NS, 'g');
+    group.setAttribute(
+        'transform',
+        `translate(${iconSize / 2} ${iconSize / 2}) rotate(${snapshot.rotation}) scale(${scale}) translate(${-snapshot.width / 2} ${-snapshot.height / 2})`,
+    );
+    let outline;
+    if (snapshot.ellipse) {
+        outline = document.createElementNS(SVG_NS, 'ellipse');
+        outline.setAttribute('cx', String(snapshot.width / 2));
+        outline.setAttribute('cy', String(snapshot.height / 2));
+        outline.setAttribute('rx', String(snapshot.width / 2));
+        outline.setAttribute('ry', String(snapshot.height / 2));
+    } else if (snapshot.arms) {
+        outline = document.createElementNS(SVG_NS, 'path');
+        outline.setAttribute('d', lShapePath(snapshot));
+    } else {
+        outline = document.createElementNS(SVG_NS, 'rect');
+        outline.setAttribute('width', String(snapshot.width));
+        outline.setAttribute('height', String(snapshot.height));
+        if (snapshot.rx > 0) outline.setAttribute('rx', String(snapshot.rx));
+        if (snapshot.ry > 0) outline.setAttribute('ry', String(snapshot.ry));
+    }
+    outline.setAttribute('fill', 'none');
+    outline.setAttribute('stroke', 'currentColor');
+    outline.setAttribute('stroke-width', '1');
+    outline.setAttribute('vector-effect', 'non-scaling-stroke');
+    group.appendChild(outline);
+    svg.appendChild(group);
+    return svg;
+}
+
+export function syncLayerShapeIcon(item) {
+    if (!item) return;
+    const layer = document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+    if (!layer) return;
+    const current = layer.querySelector('.layer-shape-icon');
+    const icon = createLayerShapeIcon(item);
+    if (current && icon) current.replaceWith(icon);
+    else if (icon) layer.insertBefore(icon, layer.firstChild);
+    else current?.remove();
+}
+
 function lShapePath(snapshot) {
     const { width, height, arms } = snapshot;
     return `M0 0 H${arms.x} V${height - arms.y} H${width} V${height} H0 Z`;
@@ -225,6 +288,7 @@ export function syncShapePreviews(item) {
     lastPreviewItem = item;
     observeDimensionStage();
     const snapshot = getShapeSnapshot(item);
+    syncLayerShapeIcon(item);
 
     PREVIEWS.forEach((preview) => {
         const rotor = document.getElementById(preview.rotorId);

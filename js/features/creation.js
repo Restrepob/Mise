@@ -9,6 +9,7 @@ import { cloneRoomContents, focusLayerRow, setActiveRoom, syncObjectLayers } fro
 import { applyRotation } from './rotation.js';
 import { beginDraft, cancelDraft, isDrafting } from './draft.js';
 import { setupLShape } from './l-shape.js';
+import { createLayerShapeIcon, syncLayerShapeIcon } from './shape-preview.js';
 import { focusSizeInputForEditing } from './size-manager.js';
 import { OPENING_DEFAULT, OPENING_DEPTH, OPENING_MIN, getNextColor, metro, objectMenuOptions, roomMenuOptions, state } from '../core/state.js';
 import { getRotation, smFromPx } from '../core/units.js';
@@ -216,6 +217,7 @@ function createShapeObject(options = {}) {
     } else if (options.borderRadius) {
         createdItem.style.borderRadius = options.borderRadius;
     }
+    syncLayerShapeIcon(createdItem);
 
     beginDraft(createdItem);
     const layer = document.querySelector(`.layer-div[data-target-id="${createdItem.id}"]`);
@@ -473,6 +475,7 @@ export function createLayer(
     const div =document.createElement('div');
     const eyeDiv =document.createElement('div');
     const layerDiv =document.createElement('div');
+    const shapeIcon = createLayerShapeIcon(document.getElementById(targetId));
     const options =document.createElement('div');
 
     div.classList.add('layer-div');
@@ -490,6 +493,7 @@ export function createLayer(
     const isRoomLayer = layerType === 'room';
 
     layerDiv.textContent=name;
+    if (shapeIcon) div.appendChild(shapeIcon);
     const eyeVisibleSvg = `
         <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#8a8a8a">
             <path d="M607.5-372.5Q660-425 660-500t-52.5-127.5Q555-680 480-680t-127.5 52.5Q300-575 300-500t52.5 127.5Q405-320 480-320t127.5-52.5Zm-204-51Q372-455 372-500t31.5-76.5Q435-608 480-608t76.5 31.5Q588-545 588-500t-31.5 76.5Q525-392 480-392t-76.5-31.5ZM214-281.5Q94-363 40-500q54-137 174-218.5T480-800q146 0 266 81.5T920-500q-54 137-174 218.5T480-200q-146 0-266-81.5ZM480-500Zm207.5 160.5Q782-399 832-500q-50-101-144.5-160.5T480-720q-113 0-207.5 59.5T128-500q50 101 144.5 160.5T480-280q113 0 207.5-59.5Z"/>

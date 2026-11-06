@@ -3,6 +3,7 @@ import { createRoom, rebuildOpening } from './creation.js';
 import { renderEdges, renderTolerance } from './door.js';
 import { resetHistory, scheduleHistoryCommit } from './history.js';
 import { setItemVisibility } from './layers.js';
+import { syncLayerShapeIcon } from './shape-preview.js';
 import { getActiveRoom, getOpeningWidth, isOpening } from '../core/model.js';
 import { ensureLShapeFill, getLShapeArmsInMeters, getLShapeFillColor, isLShape, setupLShape } from './l-shape.js';
 import { setActiveRoom } from './rooms.js';
@@ -109,6 +110,7 @@ export function applyItemStateDetails(rebuilt, elemento) {
     if (elemento.visible === false && rebuilt.dataset.type !== 'room') {
         setItemVisibility(rebuilt, false);
     }
+    syncLayerShapeIcon(rebuilt);
 }
 
 export function hidratar() {

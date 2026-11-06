@@ -1,6 +1,6 @@
 // Handle de rotacion
 import { isLShape } from './l-shape.js';
-import { syncShapePreviews } from './shape-preview.js';
+import { syncLayerShapeIcon, syncShapePreviews } from './shape-preview.js';
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { syncSizeManagerReadout } from './size-manager.js';
 import { toolState } from '../core/state.js';
@@ -19,6 +19,7 @@ export function applyRotation(item, deg) {
         const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
         nameEl.style.transform = `${translate}rotate(${snapNameRotation(rotation)}deg)`;
     }
+    syncLayerShapeIcon(item);
     if (getSelectedObject() === item) {
         syncSizeManagerReadout();
         syncShapePreviews(item);
