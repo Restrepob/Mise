@@ -120,6 +120,18 @@
     font-size:12px;
 }
 
+/* En el formulario de rooms, el foco se expresa en la caja exterior; los
+   rótulos y sus iconos conservan el color neutro. */
+#popup-getSize-window .field:has(input:focus) .field-label {
+    color:var(--color-caption);
+    font-weight:400;
+}
+
+#popup-getSize-window .field .question-box:focus-within .input-icon,
+#popup-getSize-window .field .question-box:focus-within .dim-mark {
+    color:var(--color-caption);
+}
+
 #popup-getSize-window .segmented .segmented-btn {
     height:26px;
     font-size:11px;
