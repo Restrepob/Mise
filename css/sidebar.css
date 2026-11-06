@@ -358,6 +358,13 @@
     font-weight:600;
 }
 
+/* El campo Nombre señala el foco solo en su caja; mantiene neutros el título
+   y el icono para no competir con el contenido que se está editando. */
+.field:has(#sm-nombre:focus, #sm-rotation:focus) .field-label {
+    color:var(--color-caption);
+    font-weight:400;
+}
+
 /* Icono a la izquierda que representa el valor del campo. */
 .input-icon {
     flex:none;
@@ -394,6 +401,11 @@
 .field .question-box:focus-within .input-icon,
 .field .question-box:focus-within .dim-mark {
     color:#48a1ff;
+}
+
+#sm-nombre-box:focus-within .input-icon,
+#sm-rotation-box:focus-within .input-icon {
+    color:var(--color-caption);
 }
 
 /* Engranaje que abre el menu de unidades: solo aparece al pasar el cursor. */
@@ -738,11 +750,11 @@
     max-width:54px;
     min-width:0;
     min-height:0;
-    padding:1px 4px;
-    border:1px solid rgba(72, 161, 255, 0.3);
-    border-radius:5px;
-    background:rgba(12, 13, 14, 0.96);
-    box-shadow:0 2px 7px rgba(0, 0, 0, 0.45);
+    padding:1px 3px;
+    border:1px solid transparent;
+    border-radius:3px;
+    background:var(--color-card);
+    box-shadow:none;
     transform:translate(-50%, -50%) rotate(var(--shape-badge-rotate, 0deg));
     pointer-events:auto;
     cursor:text;
