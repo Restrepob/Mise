@@ -302,7 +302,7 @@
     min-height:28px;
     padding:0 6px 0 6px;
     border:1px solid transparent;
-    border-radius:7px;
+    border-radius:4px;
     background:rgba(255, 255, 255, 0.045);
     transition:border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
@@ -1048,41 +1048,38 @@
     overflow-x:hidden;
     display:flex;
     flex-direction:column;
-    gap:2px;
-    padding:0 3px;
+    gap:var(--sp-1);
+    padding:var(--sp-1);
     margin:0 -3px;
 }
 
 .layer-div {
-    /* Borde degradado: la superficie se recorta al padding-box y deja ver
-       el degradado de la capa inferior solo en el borde. */
-    --layer-surface:var(--surface-col);
-    --layer-border:var(--border-light-glow);
     width:100%;
     min-height:var(--row-h);
     display:flex;
     flex-direction:row;
     align-items:center;
     border:1px solid transparent;
-    border-radius:6px;
-    background:
-        linear-gradient(var(--layer-surface), var(--layer-surface)) padding-box,
-        var(--layer-border) border-box;
+    border-radius:var(--br-m);
+    background:transparent;
     cursor:pointer;
     user-select:none;
+    transition:background-color 120ms ease, border-color 120ms ease;
 }
 
 .layer-div:hover {
-    --layer-surface:hsl(var(--h-base), 5%, 12%);
+    background:rgba(255, 255, 255, 0.045);
+    border-color:transparent;
 }
 
 .layer-div.selected-layer {
-    --layer-surface:hsl(210, 26%, 13%);
-    --layer-border:linear-gradient(180deg, rgba(72, 161, 255, 0.65), rgba(72, 161, 255, 0.10));
+    background:rgba(255, 255, 255, 0.075);
+    border-color:transparent;
 }
 
 #room-layer-box .layer-div.active-room {
-    --layer-border:linear-gradient(180deg, rgba(224, 227, 232, 0.42), rgba(224, 227, 232, 0.10));
+    background:rgba(255, 255, 255, 0.075);
+    border-color:transparent;
 }
 
 .layer-div.layer-opening {
@@ -1102,7 +1099,8 @@
 }
 
 .layer-div.layer-draft {
-    --layer-border:linear-gradient(180deg, rgba(72, 161, 255, 0.75), rgba(72, 161, 255, 0.12));
+    background:rgba(255, 255, 255, 0.055);
+    border-color:rgba(224, 227, 232, 0.16);
 }
 
 .layer-div.layer-draft .eye-div,
@@ -1121,10 +1119,19 @@
     align-self:stretch;
     display:grid;
     place-items:center;
+    order:2;
     padding:0;
     border:none;
     border-radius:5px;
     cursor:pointer;
+    opacity:0;
+    transition:opacity 120ms ease, background-color 120ms ease;
+}
+
+.layer-div:hover .eye-div,
+.layer-div:focus-within .eye-div,
+.eye-div.is-hidden {
+    opacity:1;
 }
 
 .eye-div.is-hidden {
@@ -1133,10 +1140,11 @@
 
 .layer-content {
     flex:1 1 auto;
+    order:1;
     min-width:0;
-    padding:0 6px;
+    padding:0 var(--sp-1);
     color:var(--color-text);
-    font-size:12px;
+    font-size:11px;
     overflow:hidden;
     white-space:nowrap;
     text-overflow:ellipsis;
@@ -1148,6 +1156,7 @@
     align-self:stretch;
     display:grid;
     place-items:center;
+    order:3;
     padding:0;
     border-radius:5px;
     cursor:pointer;
