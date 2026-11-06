@@ -107,6 +107,10 @@ consulta por id/clase o mediante `core/dom.js`.
   texto, y vuelve al texto al confirmar con Enter o perder el foco. Así se
   conservan el flujo de borrador y el foco programático por teclado.
   Los controles de borde/tolerancia se anclan a los tramos reales de cada lado.
+  La caja del rotor se redondea a píxeles enteros para que el contorno rotado no
+  caiga entre dos píxeles. El contorno se dibuja con 1.5px y gris claro
+  (`rgba(224, 224, 224, 0.3)`): con 1px y `#2D2E2E` el antialias de los ángulos
+  no rectos (90°/270° y rotación libre) se leía como un borrón.
 
 ## Convenciones
 

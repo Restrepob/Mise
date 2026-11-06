@@ -237,8 +237,13 @@ export function syncShapePreviews(item) {
         }
 
         const scale = getPreviewScale(preview, rotor, snapshot);
-        rotor.style.width = `${Math.max(1, snapshot.width * scale)}px`;
-        rotor.style.height = `${Math.max(1, snapshot.height * scale)}px`;
+        // Caja del rotor en pixeles enteros: con medidas fraccionarias el
+        // contorno rotado cae entre dos pixeles y el trazo de 1px se reparte
+        // (se ve borroso sobre todo a 90/270 grados y en rotacion libre).
+        const rotorWidth = Math.max(1, Math.round(snapshot.width * scale));
+        const rotorHeight = Math.max(1, Math.round(snapshot.height * scale));
+        rotor.style.width = `${rotorWidth}px`;
+        rotor.style.height = `${rotorHeight}px`;
         rotor.style.transform = `translate(-50%, -50%) rotate(${snapshot.rotation}deg)`;
         rotor.style.setProperty('--shape-badge-rotate', `${-snapshot.rotation}deg`);
         rotor.classList.toggle('is-l-shape', Boolean(snapshot.arms));

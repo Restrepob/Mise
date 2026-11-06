@@ -622,10 +622,13 @@
     overflow:visible;
 }
 
+/* Contorno de la figura: 1.5px y un gris medio para que siga leyendose como
+   linea al rotarse. Con 1px y #2D2E2E el antialias de los angulos no rectos
+   (90/270 y rotacion libre) se percibia como una mancha borrosa. */
 .shape-outline {
     fill:#0C0D0E;
-    stroke:#2D2E2E;
-    stroke-width:1;
+    stroke:rgba(224, 224, 224, 0.3);
+    stroke-width:1.5;
     vector-effect:non-scaling-stroke;
 }
 
