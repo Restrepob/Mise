@@ -31,6 +31,13 @@ const UNIT_IDS = {
     lArmY: ['sm-l-arm-y-m', 'sm-l-arm-y-cm', 'sm-l-arm-y-in', 'sm-l-arm-y-ft'],
 };
 
+const DIMENSION_FIELDS = [
+    { input: smAlto },
+    { input: smAncho },
+    { input: smLArmX },
+    { input: smLArmY },
+];
+
 function syncRadiusControls() {
     const item = getSelectedObject();
     const editable = !!item && !isOpening(item);
@@ -73,6 +80,7 @@ function setLengthUnit(buttonIds, input, metricState, nextUnit, unitLabelId, get
     if (Number.isFinite(currentPixels)) {
         input.value = smFromPx(currentPixels, nextUnit).toFixed(2);
     }
+    syncDimensionDisplay(input);
 }
 
 function setDimensionUnit(buttonIds, input, metricState, nextUnit) {
@@ -160,6 +168,56 @@ setupUnitMenu('sm-alto-config', 'sm-alto-unit-menu');
 setupUnitMenu('sm-ancho-config', 'sm-ancho-unit-menu');
 setupUnitMenu('sm-l-arm-x-config', 'sm-l-arm-x-unit-menu');
 setupUnitMenu('sm-l-arm-y-config', 'sm-l-arm-y-unit-menu');
+
+// Reglas del valor renderizado: como maximo tres digitos enteros (999) o dos
+// decimales (9.99), sin ceros finales. Si no cabe, el numero se recorta con
+// ellipsis y la unidad se conserva siempre visible.
+function formatDimensionDisplayValue(rawValue) {
+    const value = Number.parseFloat(rawValue);
+    if (!Number.isFinite(value)) return '';
+
+    const fixed = value.toFixed(2);
+    const rounded = Number(fixed);
+    if (Math.abs(rounded) >= 100) return String(Math.round(rounded));
+    return fixed.replace(/\.?0+$/, '') || '0';
+}
+
+function syncDimensionDisplay(input) {
+    const badge = input.closest('.shape-dim__badge');
+    const number = badge?.querySelector('.shape-dim__number');
+    if (!badge || !number) return;
+
+    number.textContent = formatDimensionDisplayValue(input.value);
+}
+
+function syncAllDimensionDisplays() {
+    DIMENSION_FIELDS.forEach(({ input }) => syncDimensionDisplay(input));
+}
+
+function setupDimensionDisplay(input) {
+    const badge = input.closest('.shape-dim__badge');
+    if (!badge) return;
+
+    input.addEventListener('focus', () => badge.classList.add('is-editing'));
+    input.addEventListener('blur', () => {
+        badge.classList.remove('is-editing');
+        syncDimensionDisplay(input);
+    });
+    input.addEventListener('input', () => syncDimensionDisplay(input));
+    input.addEventListener('change', () => syncDimensionDisplay(input));
+
+    // El texto visible es solo la puerta de entrada a la edicion: al hacer
+    // clic se enfoca el input real, que ya conserva toda la logica existente.
+    badge.addEventListener('click', (event) => {
+        if (event.target.closest('.field-config, .unit-menu')) return;
+        if (badge.classList.contains('is-editing') || badge.classList.contains('is-open')) return;
+        if (input.disabled) return;
+        input.focus();
+        input.select();
+    });
+}
+
+DIMENSION_FIELDS.forEach(({ input }) => setupDimensionDisplay(input));
 
 export function setSizeManagerDisabled(disabled, item = null) {
     document.querySelectorAll('.size-manager .panel-body input, .size-manager .panel-body button').forEach((control) => {
@@ -381,6 +439,7 @@ export function syncSizeManagerReadout() {
         smRotation.value = '';
         syncRadiusControls();
         syncRotationControls();
+        syncAllDimensionDisplays();
         return;
     }
 
@@ -402,6 +461,7 @@ export function syncSizeManagerReadout() {
     smRotation.value = isOpening(item) ? '' : Math.round(getRotation(item));
     syncRadiusControls();
     syncRotationControls();
+    syncAllDimensionDisplays();
 }
 
 export function applySizeDimension(input, unit, dimension) {
@@ -664,6 +724,7 @@ function refreshLArmField(input, unit, axis) {
     const item = getSelectedObject();
     if (!item || !isLShape(item)) return;
     input.value = smFromPx(getLShapeMetrics(item)[axis], unit).toFixed(2);
+    syncDimensionDisplay(input);
 }
 
 function commitLArmField(input, unit, axis) {

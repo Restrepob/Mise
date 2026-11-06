@@ -69,6 +69,12 @@ export function syncRotationHandle(item) {
 export function startRotationDrag(event) {
     if (event.button !== 0 && event.button !== 2) return;
 
+    // Con Alt, el clic sobre el handle sigue la misma regla que el resto del
+    // objeto (giro de 90 grados: horario con clic derecho, antihorario con
+    // clic izquierdo) y no inicia arrastre. El canvas se encarga del giro y de
+    // guardar el cambio.
+    if (event.altKey) return;
+
     event.stopPropagation();
     event.preventDefault();
     const item = event.currentTarget.parentElement;

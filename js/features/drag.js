@@ -6,7 +6,7 @@ import { handleMeasurePointerDown, stopMeasureDrag, updateMeasureCursor, updateM
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { dragOpeningAlongWall } from './openings.js';
 import { flushActiveView, guardarCambios } from './persistence.js';
-import { ROTATE_DRAG_THRESHOLD, applyRotation, syncRotationHandle } from './rotation.js';
+import { ROTATE_DRAG_THRESHOLD, applyRotation, rotateByClick, syncRotationHandle } from './rotation.js';
 import { syncSizeManager } from './size-manager.js';
 import { clearSnapGuides, snapObject } from './snapping.js';
 import { AUTO_SCROLL_EDGE, AUTO_SCROLL_IDLE, AUTO_SCROLL_SPEED, state, toolState, viewState } from '../core/state.js';
@@ -14,6 +14,7 @@ import { getRotation, snapRotation } from '../core/units.js';
 import { pointerToScene, sceneDeltaToLocal, sceneToLocal, setViewScroll, zoomAtPoint, zoomAtScreenPoint } from './view.js';
 
 export let autoscrollRaf = null;
+let lastModifierRotateTime = 0;
 
 export function positionDraggedObject(clientX, clientY) {
     const { item, parent, startPointer, startLocal, shiftKey } = toolState.dragObject;
@@ -133,6 +134,26 @@ canvas.addEventListener('pointerdown', (event) => {
     }
 
     const targetItem = event.target.closest('.object');
+    // Alt + clic (derecho o izquierdo) sobre el objeto: gira 90 grados sin
+    // moverlo. Clic derecho = sentido horario (+90), Clic izquierdo = sentido
+    // antihorario (-90). Tiene prioridad sobre el modo mover, sobre el handle
+    // de rotacion y sobre el menu contextual: con Alt el objeto gira, no se
+    // desplaza ni se abre el popup.
+    // Se usa Alt y no Shift porque Firefox/Zen reservan Shift + clic derecho
+    // para abrir su propio menu y no permiten cancelarlo desde la web.
+    if (event.altKey && targetItem && (event.button === 0 || event.button === 2)) {
+        event.preventDefault();
+        lastModifierRotateTime = Date.now();
+        clearSnapGuides();
+        selectVisibleObject(targetItem);
+        if (!isOpening(targetItem)) {
+            rotateByClick(targetItem, event.button);
+            guardarCambios(targetItem);
+            syncOpeningOverlay(getSelectedObject());
+        }
+        return;
+    }
+
     if (toolState.active === 'move') {
         toolState.pan = {
             x: event.clientX,
@@ -343,11 +364,14 @@ export function setDragShift(shiftKey) {
 // cubriendo todo el content-box, no solo el canvas.
 window.addEventListener('contextmenu', (event) => {
     const inEditor = event.target instanceof Element && event.target.closest('.content-box');
-    if (inEditor) event.preventDefault();
+    const rotating = event.altKey || Date.now() - lastModifierRotateTime < 500;
+    if (inEditor || rotating) event.preventDefault();
 }, true);
 
 canvas.addEventListener('contextmenu', (event) => {
-    // Dentro del lienzo el menu contextual siempre lo gestiona la app.
+    // Dentro del lienzo el menu contextual siempre lo gestiona la app. Evita
+    // que el navegador abra su menu nativo, incluso si el objeto se movio o
+    // giro entre pointerdown y contextmenu (Alt + clic derecho).
     event.preventDefault();
 
     if (toolState.active === 'measure') return;
@@ -355,6 +379,15 @@ canvas.addEventListener('contextmenu', (event) => {
     // Un objeto en borrador todavia no tiene menu de capa: duplicarlo o
     // eliminarlo antes de fijar sus medidas dejaria la creacion a medias.
     if (event.target.closest('.object.draft')) {
+        event.preventDefault();
+        document.querySelector('.popup-menu-box')?.remove();
+        return;
+    }
+
+    // Con Alt el clic derecho es un giro de 90 grados: no abrimos el menu, ni
+    // siquiera cuando el clic cae sobre el handle de rotacion o si se solto el
+    // modificador una fraccion de segundo antes de contextmenu.
+    if ((event.altKey || Date.now() - lastModifierRotateTime < 400) && event.target.closest('.object')) {
         event.preventDefault();
         document.querySelector('.popup-menu-box')?.remove();
         return;

@@ -100,6 +100,12 @@ consulta por id/clase o mediante `core/dom.js`.
   (rectángulo, elipse o L) en SVG para medidas, bordes y tolerancia. La cota
   usa las medidas locales del objeto (alto a la derecha, ancho abajo); al rotar,
   la figura y la cota giran juntas y el badge del input se contra-rota.
+  Las cotas se separan 38px del contorno para que el texto no invada el objeto.
+  El badge muestra un valor renderizado (máx. 3 dígitos enteros o 2 decimales,
+  sin ceros finales; si no cabe, ellipsis y la unidad queda fija). El input real
+  sigue en el DOM pero invisible: aparece solo al enfocarlo o hacer clic en el
+  texto, y vuelve al texto al confirmar con Enter o perder el foco. Así se
+  conservan el flujo de borrador y el foco programático por teclado.
   Los controles de borde/tolerancia se anclan a los tramos reales de cada lado.
 
 ## Convenciones
