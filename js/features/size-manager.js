@@ -416,17 +416,13 @@ export function syncDraftUI() {
     fields.forEach(([box, dimension]) => {
         if (!box) return;
         box.classList.toggle('dim-pending', drafting && !draftState.confirmed[dimension]);
-        box.classList.toggle('dim-confirmed', drafting && draftState.confirmed[dimension]);
     });
 
-    // El nombre es el ultimo valor a fijar: se resalta cuando ya estan las
-    // medidas (y los brazos de la L) y todavia falta confirmarlo.
-    const nameIsNext = drafting
-        && !draftState.confirmed.name
-        && getNextDraftInput() === smNombre;
+    // El nombre permanece resaltado durante todo el borrador, junto con la
+    // medida pendiente, para indicar que forma parte de la configuración.
+    const nameIsNext = drafting && !draftState.confirmed.name;
     const nameBox = smNombre.closest('.question-box');
     nameBox?.classList.toggle('draft-name-pending', nameIsNext);
-    nameBox?.classList.toggle('draft-name-confirmed', drafting && draftState.confirmed.name);
 }
 
 export function syncSizeManagerReadout() {

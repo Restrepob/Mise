@@ -555,15 +555,6 @@
     border-color:rgba(72, 161, 255, 0.7);
 }
 
-.size-manager.is-draft .question-box.dim-confirmed {
-    border-color:rgba(0, 255, 102, 0.3);
-    background:rgba(0, 255, 102, 0.05);
-}
-
-.size-manager.is-draft .question-box.dim-confirmed .dim-mark svg path {
-    fill:#6dffa9;
-}
-
 .size-manager.is-draft .question-box.draft-name-pending {
     border-color:rgba(72, 161, 255, 0.65);
     background:rgba(72, 161, 255, 0.08);
@@ -571,11 +562,6 @@
 
 .size-manager.is-draft .question-box.draft-name-pending:focus-within {
     border-color:rgba(72, 161, 255, 0.9);
-}
-
-.size-manager.is-draft .question-box.draft-name-confirmed {
-    border-color:rgba(0, 255, 102, 0.32);
-    background:rgba(0, 255, 102, 0.05);
 }
 
 .draft-shake {
