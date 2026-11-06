@@ -1,6 +1,6 @@
 // Handle de rotacion
-import { syncEdgeTogglerRotation, syncToleranceTogglerRotation } from './door.js';
 import { isLShape } from './l-shape.js';
+import { syncShapePreviews } from './shape-preview.js';
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { syncSizeManagerReadout } from './size-manager.js';
 import { toolState } from '../core/state.js';
@@ -20,13 +20,12 @@ export function applyRotation(item, deg) {
         nameEl.style.transform = `${translate}rotate(${snapNameRotation(rotation)}deg)`;
     }
     if (getSelectedObject() === item) {
-        syncEdgeTogglerRotation(rotation);
-        syncToleranceTogglerRotation(rotation);
         syncSizeManagerReadout();
+        syncShapePreviews(item);
     }
 }
 
-// Gira 90 grados según el clic:
+// Gira 90 grados según el clic en el handle:
 // - Clic derecho (button === 2): sentido horario (+90)
 // - Clic izquierdo (button === 0): sentido antihorario (-90)
 export function rotateByClick(item, button) {
@@ -56,7 +55,7 @@ export function syncRotationHandle(item) {
         handle = document.createElement('button');
         handle.type = 'button';
         handle.className = 'rotate-handle';
-        handle.setAttribute('aria-label', 'Girar objeto: arrastra para rotar libre, Alt + clic izquierdo/derecho para girar 90 grados');
+        handle.setAttribute('aria-label', 'Girar objeto: arrastra para rotar libre o haz clic para girar 90 grados');
         handle.innerHTML = ROTATE_HANDLE_SVG_FREE;
         handle.addEventListener('pointerdown', startRotationDrag);
         handle.addEventListener('pointerup', finishRotationClick);
@@ -69,12 +68,6 @@ export function syncRotationHandle(item) {
 
 export function startRotationDrag(event) {
     if (event.button !== 0 && event.button !== 2) return;
-
-    // Con Alt, el clic sobre el handle sigue la misma regla que el resto del
-    // objeto (giro de 90 grados: horario con clic derecho, antihorario con
-    // clic izquierdo) y no inicia arrastre. El canvas se encarga del giro y de
-    // guardar el cambio.
-    if (event.altKey) return;
 
     event.stopPropagation();
     event.preventDefault();
@@ -99,6 +92,5 @@ export function finishRotationClick(event) {
     const drag = toolState.rotateDrag;
     if (!drag || drag.pointerId !== event.pointerId || drag.dragging) return;
 
-    const turn = drag.button === 2 ? 90 : -90;
-    applyRotation(drag.item, getRotation(drag.item) + turn);
+    rotateByClick(drag.item, drag.button);
 }

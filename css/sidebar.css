@@ -584,27 +584,279 @@
     }
 }
 
-/* Edges y tolerancias */
+/* Previsualizacion a escala de la forma del objeto ----------------------- */
+.shape-panel {
+    padding-top:8px;
+    border-top:1px solid rgba(255, 255, 255, 0.045);
+}
+
+.shape-stage {
+    position:relative;
+    width:100%;
+    max-width:230px;
+    height:164px;
+    margin:2px auto 4px;
+    overflow:visible;
+}
+
+.shape-stage--edges,
+.shape-stage--tolerance {
+    max-width:180px;
+    height:112px;
+}
+
+.shape-rotor {
+    position:absolute;
+    left:50%;
+    top:50%;
+    width:70px;
+    height:70px;
+    transform:translate(-50%, -50%);
+    transform-origin:center;
+    pointer-events:none;
+    will-change:transform;
+}
+
+.shape-figure {
+    position:absolute;
+    inset:0;
+    pointer-events:none;
+}
+
+.shape-figure-svg {
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    overflow:visible;
+}
+
+.shape-outline {
+    fill:#0C0D0E;
+    stroke:#2D2E2E;
+    stroke-width:1;
+    vector-effect:non-scaling-stroke;
+}
+
+.shape-edge {
+    fill:none;
+    stroke:transparent;
+    stroke-width:2;
+    stroke-linecap:round;
+    vector-effect:non-scaling-stroke;
+    transition:stroke 0.15s ease;
+}
+
+.shape-edge.is-on {
+    stroke:var(--color-edge-ui);
+    filter:drop-shadow(0 0 3px color-mix(in srgb, var(--color-edge-ui) 60%, transparent));
+}
+
+/* Lineas de cota: la misma I que se dibuja sobre el objeto, pero con el
+   input editable en el centro. */
+.shape-dim {
+    position:absolute;
+    z-index:3;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    pointer-events:none;
+}
+
+.shape-dim--height {
+    top:0;
+    bottom:0;
+    right:-15px;
+    width:13px;
+    flex-direction:column;
+}
+
+.shape-dim--width {
+    left:0;
+    right:0;
+    bottom:-15px;
+    height:13px;
+    flex-direction:row;
+}
+
+.shape-dim--arm-x {
+    left:0;
+    top:-15px;
+    width:var(--arm-x, 50%);
+    height:13px;
+    flex-direction:row;
+}
+
+.shape-dim--arm-y {
+    left:-15px;
+    bottom:0;
+    width:13px;
+    height:var(--arm-y, 50%);
+    flex-direction:column;
+}
+
+.shape-dim__cap {
+    flex:0 0 auto;
+    background:rgba(224, 224, 224, 0.65);
+    border-radius:1px;
+}
+
+.shape-dim--height .shape-dim__cap,
+.shape-dim--arm-y .shape-dim__cap {
+    width:9px;
+    height:2px;
+}
+
+.shape-dim--width .shape-dim__cap,
+.shape-dim--arm-x .shape-dim__cap {
+    width:2px;
+    height:9px;
+}
+
+.shape-dim__line {
+    flex:1 1 0;
+    min-width:0;
+    min-height:0;
+    background:rgba(224, 224, 224, 0.65);
+}
+
+.shape-dim--height .shape-dim__line,
+.shape-dim--arm-y .shape-dim__line {
+    width:2px;
+}
+
+.shape-dim--width .shape-dim__line,
+.shape-dim--arm-x .shape-dim__line {
+    height:2px;
+}
+
+/* El badge flota sobre el centro de la cota: asi los remates siguen marcando
+   el lado real del objeto aunque la linea sea mas corta que el propio badge. */
+.shape-dim > .shape-dim__badge {
+    position:absolute;
+    left:50%;
+    top:50%;
+    z-index:1;
+    display:flex;
+    align-items:center;
+    gap:2px;
+    width:auto;
+    min-height:0;
+    padding:1px 4px;
+    border:1px solid rgba(72, 161, 255, 0.3);
+    border-radius:5px;
+    background:rgba(12, 13, 14, 0.96);
+    box-shadow:0 2px 7px rgba(0, 0, 0, 0.45);
+    transform:translate(-50%, -50%) rotate(var(--shape-badge-rotate, 0deg));
+    pointer-events:auto;
+}
+
+.shape-dim__badge:hover,
+.shape-dim__badge:focus-within,
+.shape-dim__badge.is-open {
+    border-color:rgba(72, 161, 255, 0.8);
+}
+
+.shape-dim__badge input[type="number"] {
+    flex:0 1 34px;
+    width:34px;
+    min-width:0;
+    height:18px;
+    min-height:0;
+    padding:0;
+    border:0;
+    border-radius:0;
+    background:transparent;
+    color:var(--color-text);
+    font-size:10px;
+    font-variant-numeric:tabular-nums;
+    text-align:right;
+    appearance:textfield;
+    -moz-appearance:textfield;
+}
+
+.shape-dim__badge input[type="number"]::-webkit-inner-spin-button,
+.shape-dim__badge input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance:none;
+    appearance:none;
+    margin:0;
+}
+
+.shape-dim__badge input:focus {
+    outline:none;
+    border:0;
+    box-shadow:none;
+}
+
+.shape-dim__unit {
+    color:var(--color-caption);
+    font-size:8px;
+    line-height:1;
+    pointer-events:none;
+}
+
+.shape-dim:has(input:focus) .shape-dim__line,
+.shape-dim:has(input:focus) .shape-dim__cap {
+    background:#9ecbff;
+}
+
+/* El engranaje de unidad no ocupa espacio: vive en la esquina del badge y solo
+   aparece al interactuar con el campo. */
+.shape-dim__badge .field-config {
+    position:absolute;
+    right:-8px;
+    top:-9px;
+    width:14px;
+    height:14px;
+    display:grid;
+    place-items:center;
+    padding:0;
+    border:1px solid rgba(255, 255, 255, 0.08);
+    border-radius:50%;
+    background:var(--color-elevated);
+    color:var(--color-caption);
+    opacity:0;
+    pointer-events:none;
+    cursor:pointer;
+    z-index:2;
+}
+
+.shape-dim__badge:hover .field-config,
+.shape-dim__badge:focus-within .field-config,
+.shape-dim__badge.is-open .field-config {
+    opacity:1;
+    pointer-events:auto;
+}
+
+.shape-dim__badge .field-config:hover {
+    color:var(--color-text);
+    background:rgba(255, 255, 255, 0.12);
+}
+
+.shape-dim__badge .field-config svg {
+    width:9px;
+    height:9px;
+    display:block;
+}
+
+/* El menu de unidades abre hacia arriba para no salir del panel. */
+.shape-dim__badge .unit-menu {
+    top:auto;
+    bottom:calc(100% + 5px);
+    right:0;
+}
+
+.shape-arm-fields {
+    display:contents;
+}
+
+/* Bordes y tolerancias */
 .edge-manager {
     display:none;
     flex-direction:column;
     gap:4px;
     padding-top:8px;
     border-top:1px solid rgba(255, 255, 255, 0.045);
-}
-
-.edge-toggler {
-    position:relative;
-    width:78px;
-    height:78px;
-    margin:4px auto 6px;
-}
-
-.edge-toggler-frame {
-    position:absolute;
-    inset:0;
-    border:1px solid rgba(255, 255, 255, 0.16);
-    border-radius:6px;
 }
 
 .edge-switch {
@@ -615,6 +867,8 @@
     border:1px solid rgba(255, 255, 255, 0.16);
     border-radius:999px;
     background:var(--color-overlay);
+    transform:translate(-50%, -50%);
+    pointer-events:auto;
     cursor:pointer;
 }
 
@@ -622,40 +876,11 @@
     background:var(--color-selected);
 }
 
-.edge-switch--top {
-    left:50%;
-    top:0;
-    transform:translate(-50%, -38%);
-}
-
-.edge-switch--right {
-    top:50%;
-    right:0;
-    transform:translate(38%, -50%);
-}
-
-.edge-switch--bottom {
-    left:50%;
-    bottom:0;
-    transform:translate(-50%, 38%);
-}
-
-.edge-switch--left {
-    top:50%;
-    left:0;
-    transform:translate(-38%, -50%);
-}
-
 .edge-switch.on {
     background:var(--color-edge-ui);
     border-color:var(--color-edge-ui);
     box-shadow:0 0 6px color-mix(in srgb, var(--color-edge-ui) 55%, transparent);
 }
-
-.edge-toggler.on-top .edge-toggler-frame { border-top-color:var(--color-edge-ui); }
-.edge-toggler.on-right .edge-toggler-frame { border-right-color:var(--color-edge-ui); }
-.edge-toggler.on-bottom .edge-toggler-frame { border-bottom-color:var(--color-edge-ui); }
-.edge-toggler.on-left .edge-toggler-frame { border-left-color:var(--color-edge-ui); }
 
 .tolerance-manager {
     display:none;
@@ -683,20 +908,6 @@
     font-size:11px;
 }
 
-.tolerance-toggler {
-    position:relative;
-    width:78px;
-    height:78px;
-    margin:4px auto 6px;
-}
-
-.tolerance-toggler-frame {
-    position:absolute;
-    inset:0;
-    border:1px dashed rgba(255, 255, 255, 0.16);
-    border-radius:6px;
-}
-
 .tol-label {
     position:absolute;
     min-width:22px;
@@ -712,6 +923,7 @@
     white-space:nowrap;
     cursor:pointer;
     user-select:none;
+    pointer-events:auto;
     --tol-label-rotate:0deg;
     transform:translate(-50%, -50%) rotate(var(--tol-label-rotate));
 }

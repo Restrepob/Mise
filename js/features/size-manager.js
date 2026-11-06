@@ -2,14 +2,15 @@
 import { smAlto, smAncho, smLArmX, smLArmY, smNombre, smRadius, smRotate90, smRotation } from '../core/dom.js';
 import { syncDoorPanel, syncEdgePanel, syncOpeningOverlay, syncTolerancePanel } from './door.js';
 import { getLShapeMetrics, isLShape, setLShapeArm, syncLShape } from './l-shape.js';
+import { syncShapePreviews } from './shape-preview.js';
 import { getActiveRoom, getOpeningWallLength, getSelectedObject, isOpening, setItemName } from '../core/model.js';
 import { confirmDraftDimension, confirmDraftName, draftState, getNextDraftInput, isDrafting, markDimensionEdited, markDraftNameEdited, shakeDraftInput } from './draft.js';
 import { placeOpening } from './openings.js';
 import { guardarCambios } from './persistence.js';
 import { syncRoomSwitcher } from './rooms.js';
 import { applyRotation, syncRotationHandle } from './rotation.js';
-import { MARGEN_ESQUINA, OPENING_MIN, viewState } from '../core/state.js';
-import { getItemLayout, getRotation, isAxesSwapped, smFromPx, smToPx, snapNameRotation } from '../core/units.js';
+import { MARGEN_ESQUINA, OPENING_DEPTH, OPENING_MIN, viewState } from '../core/state.js';
+import { getRotation, smFromPx, smToPx, snapNameRotation } from '../core/units.js';
 import { applySceneScale, clampScale, updateMinScaleForRoom, updateSceneSize } from './view.js';
 
 export let smAlMetric = 'm';
@@ -82,7 +83,7 @@ function setDimensionUnit(buttonIds, input, metricState, nextUnit) {
         metricState,
         nextUnit,
         input === smAlto ? 'sm-alto-unit' : 'sm-ancho-unit',
-        (item) => getItemLayout(item)[dimension],
+        (item) => getDimensionPixels(item, dimension),
     );
     if (currentDimHighlight) {
         setDimensionHighlight(currentDimHighlight);
@@ -195,6 +196,25 @@ function dimensionInput(dimension) {
     return smLArmY;
 }
 
+// Medidas locales del objeto (las que dibuja la previsualizacion en el
+// sidebar). No se intercambian al rotar: la cota sigue pegada al lado real
+// de la figura, y por eso la rotacion no cambia el valor que representa.
+function getDimensionPixels(item, dimension) {
+    if (!item) return 0;
+    if (isOpening(item)) {
+        if (dimension === 'width') return getOpeningWidthPx(item);
+        return OPENING_DEPTH;
+    }
+    if (dimension === 'height') {
+        return parseFloat(item.style.height) || item.offsetHeight || 0;
+    }
+    return parseFloat(item.style.width) || item.offsetWidth || 0;
+}
+
+function getOpeningWidthPx(item) {
+    return parseFloat(item.dataset.openingWidth) || OPENING_MIN;
+}
+
 function clearDimensionHighlightOnBlur() {
     setTimeout(() => {
         const inputs = [smAlto, smAncho, smLArmX, smLArmY];
@@ -207,7 +227,6 @@ function isArmDimension(dimension) {
 }
 
 function buildDimensionHighlight(item, dimension, active) {
-    const swapped = isAxesSwapped(item);
     const arm = isArmDimension(dimension);
     let pixels;
     let unit;
@@ -215,19 +234,19 @@ function buildDimensionHighlight(item, dimension, active) {
     let extraClass = '';
 
     if (arm) {
-        // Los brazos se miden en coordenadas locales de la L: no dependen del
-        // intercambio de ejes que usa el sidebar al rotar la caja.
+        // Los brazos se miden en coordenadas locales de la L.
         const metrics = getLShapeMetrics(item);
         pixels = dimension === 'armX' ? metrics.armX : metrics.armY;
         unit = dimension === 'armX' ? smLArmXMetric : smLArmYMetric;
         orientation = dimension === 'armX' ? 'dim-i-highlight--h' : 'dim-i-highlight--v';
         extraClass = dimension === 'armX' ? ' dim-i-highlight--arm-x' : ' dim-i-highlight--arm-y';
     } else {
-        const isLocalHeight = (dimension === 'height' && !swapped) || (dimension === 'width' && swapped);
-        const layout = getItemLayout(item);
-        pixels = isLocalHeight ? (swapped ? layout.width : layout.height) : (swapped ? layout.height : layout.width);
-        unit = dimension === 'height' ? smAlMetric : smAnMetric;
-        orientation = isLocalHeight ? 'dim-i-highlight--v' : 'dim-i-highlight--h';
+        // La cota vive en el lado local del objeto: alto a la derecha, ancho
+        // abajo. Al rotar, la linea gira con la figura y sigue midiendo lo mismo.
+        const isHeight = dimension === 'height';
+        pixels = getDimensionPixels(item, isHeight ? 'height' : 'width');
+        unit = isHeight ? smAlMetric : smAnMetric;
+        orientation = isHeight ? 'dim-i-highlight--v' : 'dim-i-highlight--h';
     }
 
     // Mientras se escribe, el campo del objeto es un espejo exacto del input
@@ -310,6 +329,7 @@ export function syncSizeManager() {
     syncEdgePanel(item);
     syncTolerancePanel(item);
     syncSizeManagerReadout();
+    syncShapePreviews(item);
     syncDraftUI();
     if (!item) {
         setDimensionHighlight(null);
@@ -364,7 +384,8 @@ export function syncSizeManagerReadout() {
         return;
     }
 
-    const { width, height } = getItemLayout(item);
+    const width = getDimensionPixels(item, 'width');
+    const height = getDimensionPixels(item, 'height');
     const layer = document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
     smNombre.value = item.dataset.name || layer?.querySelector('.layer-content')?.textContent.trim() || '';
     smAlto.value = smFromPx(height, smAlMetric).toFixed(2);
@@ -406,15 +427,12 @@ export function applySizeDimension(input, unit, dimension) {
         item.dataset.openingWidth = String(Math.min(Math.max(OPENING_MIN, smToPx(value, unit)), maxWidth));
         placeOpening(item);
         syncOpeningOverlay(item);
+        syncShapePreviews(item);
         guardarCambios(item);
         return true;
     }
 
-    const swapped = isAxesSwapped(item);
-    const localDimension = swapped
-        ? (dimension === 'width' ? 'height' : 'width')
-        : dimension;
-    item.style[localDimension] = `${smToPx(value, unit)}px`;
+    item.style[dimension] = `${smToPx(value, unit)}px`;
     if (isLShape(item)) {
         const arms = syncLShape(item);
         smLArmX.value = smFromPx(arms.armX, smLArmXMetric).toFixed(2);
@@ -431,6 +449,7 @@ export function applySizeDimension(input, unit, dimension) {
     // El campo de medida del objeto se actualiza al mismo tiempo que el input
     // del sidebar, como si se escribiera sobre el objeto.
     setDimensionHighlight(dimension);
+    syncShapePreviews(item);
     if (!isDrafting()) guardarCambios(item);
     return true;
 }
@@ -493,7 +512,7 @@ smAlto.addEventListener('input', () => applySizeDimension(smAlto, smAlMetric, 'h
 smAlto.addEventListener('change', () => {
     const item = getSelectedObject();
     if (!item) return;
-    smAlto.value = smFromPx(getItemLayout(item).height, smAlMetric).toFixed(2);
+    smAlto.value = smFromPx(getDimensionPixels(item, 'height'), smAlMetric).toFixed(2);
 });
 
 smAlto.addEventListener('focus', () => {
@@ -546,7 +565,7 @@ smAlto.addEventListener('keydown', (event) => {
     applySizeDimension(smAlto, smAlMetric, 'height');
     const item = getSelectedObject();
     if (item) {
-        smAlto.value = smFromPx(getItemLayout(item).height, smAlMetric).toFixed(2);
+        smAlto.value = smFromPx(getDimensionPixels(item, 'height'), smAlMetric).toFixed(2);
     }
     // Al editar un objeto ya creado, Enter solo fija la altura: no salta a Ancho.
     smAlto.blur();
@@ -557,7 +576,7 @@ smAncho.addEventListener('input', () => applySizeDimension(smAncho, smAnMetric, 
 smAncho.addEventListener('change', () => {
     const item = getSelectedObject();
     if (!item) return;
-    smAncho.value = smFromPx(getItemLayout(item).width, smAnMetric).toFixed(2);
+    smAncho.value = smFromPx(getDimensionPixels(item, 'width'), smAnMetric).toFixed(2);
 });
 
 smAncho.addEventListener('focus', () => {
@@ -618,7 +637,7 @@ smAncho.addEventListener('keydown', (event) => {
     applySizeDimension(smAncho, smAnMetric, 'width');
     const item = getSelectedObject();
     if (item) {
-        smAncho.value = smFromPx(getItemLayout(item).width, smAnMetric).toFixed(2);
+        smAncho.value = smFromPx(getDimensionPixels(item, 'width'), smAnMetric).toFixed(2);
     }
     smAncho.blur();
 });
@@ -636,6 +655,7 @@ function applyLArmDimension(input, unit, axis) {
     if (!Number.isFinite(value) || value <= 0) return false;
 
     setLShapeArm(item, axis, smToPx(value, unit));
+    syncShapePreviews(item);
     if (!isDrafting()) guardarCambios(item);
     return true;
 }
@@ -746,6 +766,7 @@ smRadius.addEventListener('input', () => {
     // relativo al redimensionar el objeto.
     const isRelative = (item.style.borderRadius || '').includes('%');
     item.style.borderRadius = value > 0 ? `${value}${isRelative ? '%' : 'px'}` : '';
+    syncShapePreviews(item);
     guardarCambios(item);
 });
 

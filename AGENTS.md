@@ -26,6 +26,7 @@ js/
     draft.js        Borrador de creación (existe en escena, aún no se guarda).
     l-shape.js      Forma L: brazos, clip-path, color y medidas propias.
     size-manager.js Panel de propiedades: nombre, medidas, radio, rotación.
+    shape-preview.js Previsualización SVG a escala de la forma en el sidebar.
     rotation.js     Handle de rotación y rotación por clic/teclado.
     drag.js         Arrastre, autoscroll, pan, pinch-zoom y menú contextual.
     snapping.js     Snap a grid, paredes y otros objetos; guías visuales.
@@ -95,6 +96,11 @@ consulta por id/clase o mediante `core/dom.js`.
 - **Sidebar:** tres paneles redimensionables (Rooms, Propiedades, Objetos).
   Las alturas se guardan como proporciones en `localStorage`. Los paneles se
   pueden colapsar y el estado se recuerda.
+- **Previsualización de forma:** `shape-preview.js` dibuja el contorno real
+  (rectángulo, elipse o L) en SVG para medidas, bordes y tolerancia. La cota
+  usa las medidas locales del objeto (alto a la derecha, ancho abajo); al rotar,
+  la figura y la cota giran juntas y el badge del input se contra-rota.
+  Los controles de borde/tolerancia se anclan a los tramos reales de cada lado.
 
 ## Convenciones
 

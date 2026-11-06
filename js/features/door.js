@@ -5,7 +5,7 @@ import { placeOpening } from './openings.js';
 import { guardarCambios } from './persistence.js';
 import { syncSizeManager } from './size-manager.js';
 import { EDGE_SIDES, TOLERANCE_MAX_M, TOLERANCE_SIDES, metro, viewState } from '../core/state.js';
-import { getRotation } from '../core/units.js';
+import { syncShapePreviews } from './shape-preview.js';
 
 export function drawDoorArc(item) {
     item.querySelector('.door-arc')?.remove();
@@ -177,12 +177,6 @@ export function renderEdges(item) {
     item.appendChild(layer);
 }
 
-export function syncEdgeTogglerRotation(rotation) {
-    const toggler = document.getElementById('edge-toggler');
-    if (!toggler) return;
-    toggler.style.transform = rotation > 0 ? `rotate(${rotation}deg)` : '';
-}
-
 export function getToleranceSide(item, side) {
     if (!item) return 0;
     const list = (item.dataset.tolerance || '').split(' ').map(Number);
@@ -222,28 +216,16 @@ export function renderTolerance(item) {
     item.appendChild(layer);
 }
 
-export function syncToleranceTogglerRotation(rotation) {
-    const toggler = document.getElementById('tolerance-toggler');
-    if (!toggler) return;
-    toggler.style.transform = rotation > 0 ? `rotate(${rotation}deg)` : '';
-    const sideDeg = { top: -90, right: 0, bottom: 90, left: 180 };
-    toggler.querySelectorAll('.tol-label').forEach((label) => {
-        const angle = sideDeg[label.dataset.tolSide] + rotation;
-        const onBottom = Math.sin((angle * Math.PI) / 180) > 0;
-        label.style.setProperty('--tol-label-rotate', `${onBottom ? -rotation : 0}deg`);
-    });
-}
-
 export function syncTolerancePanel(item) {
     const editable = !!item && !isOpening(item) && item.classList.contains('furniture');
     document.getElementById('tolerance-manager').style.display = editable ? 'flex' : 'none';
     if (!editable) return;
 
-    syncToleranceTogglerRotation(getRotation(item));
     TOLERANCE_SIDES.forEach((side) => {
         const label = document.querySelector(`.tol-label[data-tol-side="${side}"]`);
         if (label) label.textContent = getToleranceSide(item, side);
     });
+    syncShapePreviews(item);
 }
 
 TOLERANCE_SIDES.forEach((side) => {
@@ -325,7 +307,6 @@ export function syncEdgePanel(item) {
     if (!isEditable) return;
 
     const toggler = document.getElementById('edge-toggler');
-    syncEdgeTogglerRotation(getRotation(item));
     EDGE_SIDES.forEach((side) => {
         const on = hasEdge(item, side);
         toggler.classList.toggle(`on-${side}`, on);
@@ -333,6 +314,7 @@ export function syncEdgePanel(item) {
     document.querySelectorAll('.edge-switch').forEach((switchEl) => {
         switchEl.classList.toggle('on', hasEdge(item, switchEl.dataset.edge));
     });
+    syncShapePreviews(item);
 }
 
 EDGE_SIDES.forEach((side) => {
