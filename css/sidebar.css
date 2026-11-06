@@ -758,6 +758,13 @@
     border-color:rgba(72, 161, 255, 0.8);
 }
 
+/* El badge vive sobre la linea de cota: el tinte de borrador (`dim-pending`)
+   se mezcla con el color de tarjeta para que el fondo siga opaco y la I no se
+   transparente detras del numero. */
+.size-manager.is-draft .shape-dim__badge.dim-pending {
+    background-color:color-mix(in srgb, #48a1ff 10%, var(--color-card));
+}
+
 /* Texto visible por defecto. El input solo ocupa su lugar mientras se edita;
    el numero se recorta con ellipsis y la unidad nunca se corta. */
 .shape-dim__display {
