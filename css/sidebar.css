@@ -644,7 +644,9 @@
 }
 
 /* Lineas de cota: la misma I que se dibuja sobre el objeto. El badge queda
-   separado del contorno y muestra texto editable en su centro. */
+   separado del contorno y muestra texto editable en su centro. El offset (20px)
+   deja aire entre el contorno y la I; `shape-preview.js` reserva el mismo hueco
+   al escalar la figura para que el badge siga cabiendo en el stage. */
 .shape-dim {
     position:absolute;
     z-index:3;
@@ -657,27 +659,27 @@
 .shape-dim--height {
     top:0;
     bottom:0;
-    right:-14px;
+    right:-20px;
     width:13px;
     flex-direction:column;
 }
 
 .shape-rotor.is-l-shape > .shape-dim--height {
-    left:-14px;
+    left:-20px;
     right:auto;
 }
 
 .shape-dim--width {
     left:0;
     right:0;
-    bottom:-14px;
+    bottom:-20px;
     height:13px;
     flex-direction:row;
 }
 
 .shape-dim--arm-x {
     left:0;
-    top:-14px;
+    top:-20px;
     width:var(--arm-x, 50%);
     height:13px;
     flex-direction:row;
@@ -685,7 +687,7 @@
 
 .shape-dim--arm-y {
     left:auto;
-    right:-14px;
+    right:-20px;
     bottom:0;
     width:13px;
     height:var(--arm-y, 50%);

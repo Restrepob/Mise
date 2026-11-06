@@ -190,7 +190,9 @@ function getPreviewScale(preview, rotor, snapshot) {
     const stage = document.getElementById('shape-dims-stage') || rotor.parentElement;
     const widthBadge = document.querySelector('#sm-ancho-field .shape-dim__badge');
     const heightBadge = document.querySelector('#sm-alto-field .shape-dim__badge');
-    const gap = 14;
+    // El hueco coincide con la separacion de las cotas en css/sidebar.css: si
+    // alli crece, aqui debe crecer igual para que el badge no se recorte.
+    const gap = 20;
     // Reservamos solo el espacio que realmente necesita la etiqueta exterior;
     // el resto del stage queda disponible para ampliar la forma.
     const sideSpace = Math.max(widthBadge?.offsetWidth || 54, heightBadge?.offsetWidth || 54) + gap;
