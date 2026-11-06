@@ -20,6 +20,16 @@ const PREVIEWS = [
 let lastPreviewItem = null;
 let stageObserver = null;
 
+function getVisualRotation(item) {
+    let rotation = 0;
+    let current = item;
+    while (current && current.classList?.contains('object')) {
+        rotation += getRotation(current);
+        current = current.parentElement;
+    }
+    return rotation;
+}
+
 function observeDimensionStage() {
     const stage = document.getElementById('shape-dims-stage');
     if (!stage || stageObserver || typeof ResizeObserver === 'undefined') return;
@@ -72,7 +82,7 @@ export function getShapeSnapshot(item) {
     const snapshot = {
         width,
         height,
-        rotation: isOpening(item) ? 0 : getRotation(item),
+        rotation: getVisualRotation(item),
         arms: null,
         rx: 0,
         ry: 0,

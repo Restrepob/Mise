@@ -20,6 +20,13 @@ export function applyRotation(item, deg) {
         nameEl.style.transform = `${translate}rotate(${snapNameRotation(rotation)}deg)`;
     }
     syncLayerShapeIcon(item);
+    if (item.dataset.type === 'room') {
+        item.querySelectorAll('.object').forEach(syncLayerShapeIcon);
+        const selectedChild = getSelectedObject();
+        if (selectedChild && selectedChild !== item && item.contains(selectedChild)) {
+            syncShapePreviews(selectedChild);
+        }
+    }
     if (getSelectedObject() === item) {
         syncSizeManagerReadout();
         syncShapePreviews(item);
