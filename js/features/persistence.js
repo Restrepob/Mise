@@ -89,6 +89,9 @@ export function applyItemStateDetails(rebuilt, elemento) {
             armX: Number.isFinite(elemento.armX) ? elemento.armX * metro : undefined,
             armY: Number.isFinite(elemento.armY) ? elemento.armY * metro : undefined,
         });
+    } else if (elemento.shape === 'semicircle') {
+        rebuilt.dataset.shape = 'semicircle';
+        rebuilt.classList.add('semicircle');
     }
     applyItemColor(rebuilt, elemento);
     const opening = isOpening(rebuilt);

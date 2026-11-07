@@ -84,6 +84,7 @@ export function getShapeSnapshot(item) {
         height,
         rotation: getVisualRotation(item),
         arms: null,
+        semicircle: item.dataset.shape === 'semicircle',
         rx: 0,
         ry: 0,
         ellipse: false,
@@ -126,7 +127,10 @@ export function createLayerShapeIcon(item) {
         `translate(${iconSize / 2} ${iconSize / 2}) rotate(${snapshot.rotation}) scale(${scale}) translate(${-snapshot.width / 2} ${-snapshot.height / 2})`,
     );
     let outline;
-    if (snapshot.ellipse) {
+    if (snapshot.semicircle) {
+        outline = document.createElementNS(SVG_NS, 'path');
+        outline.setAttribute('d', semicirclePath(snapshot));
+    } else if (snapshot.ellipse) {
         outline = document.createElementNS(SVG_NS, 'ellipse');
         outline.setAttribute('cx', String(snapshot.width / 2));
         outline.setAttribute('cy', String(snapshot.height / 2));
@@ -165,6 +169,10 @@ export function syncLayerShapeIcon(item) {
 function lShapePath(snapshot) {
     const { width, height, arms } = snapshot;
     return `M0 0 H${arms.x} V${height - arms.y} H${width} V${height} H0 Z`;
+}
+
+function semicirclePath(snapshot) {
+    return `M0 ${snapshot.height} A${snapshot.width / 2} ${snapshot.height} 0 0 1 ${snapshot.width} ${snapshot.height} Z`;
 }
 
 function edgeSegment(snapshot, side) {
@@ -209,7 +217,10 @@ function createSvg(snapshot, activeEdges = null) {
     svg.setAttribute('aria-hidden', 'true');
 
     let outline;
-    if (snapshot.ellipse) {
+    if (snapshot.semicircle) {
+        outline = document.createElementNS(SVG_NS, 'path');
+        outline.setAttribute('d', semicirclePath(snapshot));
+    } else if (snapshot.ellipse) {
         outline = document.createElementNS(SVG_NS, 'ellipse');
         outline.setAttribute('cx', String(snapshot.width / 2));
         outline.setAttribute('cy', String(snapshot.height / 2));

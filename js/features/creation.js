@@ -183,7 +183,8 @@ export function closeAddObjectPopup() {
 function createSelectedShape(key) {
     closeAddObjectPopup();
     if (key === '2') createCircleObject();
-    else if (key === '3') createLShapeObject();
+    else if (key === '3') createSemicircleObject();
+    else if (key === '4') createLShapeObject();
     else createSquareObject();
 }
 
@@ -198,8 +199,8 @@ function createShapeObject(options = {}) {
     const name = 'Objeto';
     currentBtnId = 'add-object-btn';
     const createdItem = createRoom(
-        defaultSize,
-        defaultSize,
+        options.width ?? defaultSize,
+        options.height ?? defaultSize,
         'm',
         'm',
         name,
@@ -214,6 +215,9 @@ function createShapeObject(options = {}) {
         // Los brazos iniciales ocupan el 40% de la caja de 1m x 1m. Despues
         // se ajustan con los campos Grosor izq./inf. del sidebar.
         setupLShape(createdItem, { armX: metro * 0.4, armY: metro * 0.4 });
+    } else if (options.shape === 'semicircle') {
+        createdItem.dataset.shape = 'semicircle';
+        createdItem.classList.add('semicircle');
     } else if (options.borderRadius) {
         createdItem.style.borderRadius = options.borderRadius;
     }
@@ -236,6 +240,10 @@ export function createCircleObject() {
     // El rojo es solo del preview del modal: el objeto creado usa la paleta
     // como cualquier otro mueble.
     return createShapeObject({ borderRadius: '100%' });
+}
+
+export function createSemicircleObject() {
+    return createShapeObject({ shape: 'semicircle', width: 1, height: 0.5 });
 }
 
 export function createLShapeObject() {

@@ -40,6 +40,8 @@ export function exportPlanText() {
                 const armX = (parseFloat(child.dataset.armX) || 0) / metro;
                 const armY = (parseFloat(child.dataset.armY) || 0) / metro;
                 parts.push('shape l', `arms ${formatMeters(armX)} ${formatMeters(armY)}`);
+            } else if (child.dataset.shape === 'semicircle') {
+                parts.push('shape semicircle');
             }
             lines.push(parts.join(' '));
         });

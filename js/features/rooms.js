@@ -161,6 +161,10 @@ export function cloneFurnitureItem(sourceItem, targetRoom, options = {}) {
             color: getLShapeFillColor(sourceItem) || sourceItem.style.backgroundColor,
         });
     } else {
+        if (sourceItem.dataset.shape === 'semicircle') {
+            item.dataset.shape = 'semicircle';
+            item.classList.add('semicircle');
+        }
         item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
         item.style.borderRadius = sourceItem.style.borderRadius || '';
     }
