@@ -9,6 +9,7 @@ import { cloneRoomContents, focusLayerRow, setActiveRoom, syncObjectLayers } fro
 import { applyRotation } from './rotation.js';
 import { beginDraft, cancelDraft, isDrafting } from './draft.js';
 import { setupLShape } from './l-shape.js';
+import { setupSemicircle } from './semicircle.js';
 import { createLayerShapeIcon, syncLayerShapeIcon } from './shape-preview.js';
 import { focusSizeInputForEditing } from './size-manager.js';
 import { OPENING_DEFAULT, OPENING_DEPTH, OPENING_MIN, getNextColor, metro, objectMenuOptions, roomMenuOptions, state } from '../core/state.js';
@@ -216,8 +217,7 @@ function createShapeObject(options = {}) {
         // se ajustan con los campos Grosor izq./inf. del sidebar.
         setupLShape(createdItem, { armX: metro * 0.4, armY: metro * 0.4 });
     } else if (options.shape === 'semicircle') {
-        createdItem.dataset.shape = 'semicircle';
-        createdItem.classList.add('semicircle');
+        setupSemicircle(createdItem);
     } else if (options.borderRadius) {
         createdItem.style.borderRadius = options.borderRadius;
     }

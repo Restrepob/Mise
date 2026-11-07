@@ -5,6 +5,7 @@ import { cancelDraft, getDraftRoomId, isDrafting } from './draft.js';
 import { clearOpeningOverlay, renderEdges, renderTolerance } from './door.js';
 import { getLayerContext, selectLayer } from './layers.js';
 import { getLShapeFillColor, isLShape, setupLShape } from './l-shape.js';
+import { getSemicircleFillColor, setupSemicircle } from './semicircle.js';
 import { endMeasurement } from './measure.js';
 import { clampOpeningOffset, getActiveRoom, getItemBoxSize, getOpeningWidth, getParentInnerSize, getRooms, isOpening, setItemName } from '../core/model.js';
 import { placeOpening } from './openings.js';
@@ -162,10 +163,10 @@ export function cloneFurnitureItem(sourceItem, targetRoom, options = {}) {
         });
     } else {
         if (sourceItem.dataset.shape === 'semicircle') {
-            item.dataset.shape = 'semicircle';
-            item.classList.add('semicircle');
+            setupSemicircle(item, getSemicircleFillColor(sourceItem) || sourceItem.style.backgroundColor);
+        } else {
+            item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
         }
-        item.style.backgroundColor = sourceItem.style.backgroundColor || 'transparent';
         item.style.borderRadius = sourceItem.style.borderRadius || '';
     }
     setItemName(item, name);

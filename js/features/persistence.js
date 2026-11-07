@@ -6,6 +6,7 @@ import { setItemVisibility } from './layers.js';
 import { syncLayerShapeIcon } from './shape-preview.js';
 import { getActiveRoom, getOpeningWidth, isOpening } from '../core/model.js';
 import { ensureLShapeFill, getLShapeArmsInMeters, getLShapeFillColor, isLShape, setupLShape } from './l-shape.js';
+import { getSemicircleFillColor, setupSemicircle } from './semicircle.js';
 import { setActiveRoom } from './rooms.js';
 import { applyRotation } from './rotation.js';
 import { syncSizeManager } from './size-manager.js';
@@ -31,6 +32,7 @@ function getItemColor(item) {
     if (isOpening(item)) return '';
     if (item.dataset.type === 'room') return item.style.borderColor || '';
     if (isLShape(item)) return getLShapeFillColor(item);
+    if (item.dataset.shape === 'semicircle') return getSemicircleFillColor(item);
     if (item.classList.contains('furniture')) return item.style.backgroundColor || '';
     return '';
 }
@@ -47,6 +49,11 @@ function applyItemColor(rebuilt, elemento) {
         const fill = ensureLShapeFill(rebuilt);
         if (fill && elemento.color) fill.style.backgroundColor = elemento.color;
         rebuilt.style.backgroundColor = '';
+        return;
+    }
+    if (rebuilt.dataset.shape === 'semicircle') {
+        const fill = setupSemicircle(rebuilt, elemento.color);
+        if (fill && elemento.color) fill.style.backgroundColor = elemento.color;
         return;
     }
     if (!elemento.color) return;
@@ -90,8 +97,7 @@ export function applyItemStateDetails(rebuilt, elemento) {
             armY: Number.isFinite(elemento.armY) ? elemento.armY * metro : undefined,
         });
     } else if (elemento.shape === 'semicircle') {
-        rebuilt.dataset.shape = 'semicircle';
-        rebuilt.classList.add('semicircle');
+        setupSemicircle(rebuilt);
     }
     applyItemColor(rebuilt, elemento);
     const opening = isOpening(rebuilt);
