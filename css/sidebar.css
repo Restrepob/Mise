@@ -592,9 +592,13 @@
     position:relative;
     width:100%;
     max-width:230px;
-    height:144px;
+    height:156px;
     margin:2px auto 4px;
     overflow:visible;
+}
+
+.shape-stage--dims {
+    margin-top:24px;
 }
 
 .shape-rotor {
