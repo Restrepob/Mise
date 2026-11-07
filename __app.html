@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mise</title>
+        <meta name="theme-color" content="#060709">
+
+        <link rel="icon" type="image/x-icon" href="favicon_io/favicon.ico">
+        <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
+        <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
+        <link rel="manifest" href="favicon_io/site.webmanifest">
+
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,100..900&display=swap" rel="stylesheet">
+
+        <link rel="stylesheet" href="css/layout.css">
+        <link rel="stylesheet" href="css/sidebar.css">
+        <link rel="stylesheet" href="css/popup.css">
+        <link rel="stylesheet" href="css/objects.css">
+
+
+
+    </head>
+
+    <body>
+        <div class="main">
+            <div class="content-box" id="content">
+                <div class="canvas" id="canvas">
+                    <div class="scene" id="scene">
+                    </div>
+                </div>
+                <div class="snap-guides" id="snap-guides"></div>
+                <div class="opening-measure" id="opening-measure"></div>
+                <div class="options-box">
+                    <div class="tool-group">
+                        <button class="tool-btn active" data-tool="select" data-shortcut="V" data-tooltip="Seleccionar (V)" aria-label="Seleccionar">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--color-text)">
+                                <path d="m320-410 79-110h170L320-716v306ZM551-80 406-392 240-160v-720l560 440H516l144 309-109 51ZM399-520Z"/>
+                            </svg>
+                            <span class="tool-label">V</span>
+                        </button>
+                        <button class="tool-btn" data-tool="move" data-shortcut="H" data-tooltip="Mover (H)" aria-label="Mover">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="var(--color-text)">
+                                <path d="M402-40q-30 0-56-13.5T303-92L48-465l24-23q19-19 45-22t47 12l116 81v-383q0-17 11.5-28.5T320-840q17 0 28.5 11.5T360-800v537L212-367l157 229q5 8 14 13t19 5h278q33 0 56.5-23.5T760-200v-560q0-17 11.5-28.5T800-800q17 0 28.5 11.5T840-760v560q0 66-47 113T680-40H402Zm38-440v-400q0-17 11.5-28.5T480-920q17 0 28.5 11.5T520-880v400h-80Zm160 0v-360q0-17 11.5-28.5T640-880q17 0 28.5 11.5T680-840v360h-80ZM486-300Z"/>
+                            </svg>
+                            <span class="tool-label">H</span>
+                        </button>
+                        <button class="tool-btn" data-tool="measure" data-shortcut="R" data-tooltip="Medir distancias (R)" aria-label="Medir distancias">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" height="24px" width="24px" fill="#e3e3e3" aria-hidden="true">
+                                <path d="M4,18q-0.82,0-1.41-0.59T2,16V8Q2,7.18 2.59,6.59T4,6H20q0.83,0 1.41,0.59Q22,7.18 22,8v8q0,0.82-0.59,1.41T20,18H4Zm0-2H20V8H17v4H15V8H13v4H11V8H9v4H7V8H4v8Zm3-4H9H7Zm4,0h2H11Zm4,0h2H15Zm-3,0Z"/>
+                            </svg>
+                            <span class="tool-label">R</span>
+                        </button>
+                    </div>
+                    <div class="room-switcher">
+                        <svg class="room-switcher-icon" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" aria-hidden="true">
+                            <path d="M200-160v-366L88-440l-48-64 440-336 160 122v-82h120v174l160 122-48 64-112-86v366H520v-240h-80v240H200Zm80-80h80v-240h240v240h80v-347L480-739 280-587v347Zm120-319h160q0-32-24-52.5T480-632q-32 0-56 20.5T400-559Zm-40 319v-240h240v240-240H360v240Z"/>
+                        </svg>
+                        <button id="room-prev" type="button" data-tooltip="Room anterior ( [ )" aria-label="Room anterior">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3" aria-hidden="true">
+                                <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
+                            </svg>
+                        </button>
+                        <div class="room-switcher-name">
+                            <span id="room-switcher-name">—</span>
+                        </div>
+                        <button id="room-next" type="button" data-tooltip="Room siguiente ( ] )" aria-label="Room siguiente">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3" aria-hidden="true">
+                                <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="measure-notch" id="measure-notch" role="status" aria-live="polite">
+                    <div class="measure-notch-group">
+                        <span class="measure-notch-label">Distancia</span>
+                        <span class="measure-notch-value" id="measure-distance-value">—</span>
+                    </div>
+                    <span class="measure-notch-divider" aria-hidden="true"></span>
+                    <div class="measure-notch-group">
+                        <span class="measure-notch-label">Área</span>
+                        <span class="measure-notch-value" id="measure-area-value">—</span>
+                    </div>
+                </div>
+
+                <div class="hidden popup-add-object-on" id="popupAddObject">
+                    <div class="popup-add-object-window" id="popup-add-object-window" role="dialog" aria-modal="true" aria-label="Crear objeto" tabindex="-1">
+                        <div class="popup-add-object-header">
+                            <span class="popup-add-object-title">Seleccione una forma</span>
+                            <span class="popup-add-object-hint">Enter para crear</span>
+                        </div>
+                        <div class="popup-add-object-list">
+                            <button class="popup-add-object-item" id="btn-create-square" type="button" data-key="1" aria-label="Crear objeto cuadrado">
+                                <div class="popup-square-preview" aria-hidden="true"></div>
+                                <span class="popup-object-label">Cuadrado</span>
+                                <span class="popup-object-shortcut">1</span>
+                            </button>
+                            <button class="popup-add-object-item" id="btn-create-circle" type="button" data-key="2" aria-label="Crear objeto circular">
+                                <div class="popup-circle-preview" aria-hidden="true"></div>
+                                <span class="popup-object-label">Círculo</span>
+                                <span class="popup-object-shortcut">2</span>
+                            </button>
+                            <button class="popup-add-object-item" id="btn-create-semicircle" type="button" data-key="3" aria-label="Crear objeto semicircular">
+                                <div class="popup-semicircle-preview" aria-hidden="true"></div>
+                                <span class="popup-object-label">Semicírculo</span>
+                                <span class="popup-object-shortcut">3</span>
+                            </button>
+                            <button class="popup-add-object-item" id="btn-create-l" type="button" data-key="4" aria-label="Crear objeto con forma de L">
+                                <div class="popup-l-preview" aria-hidden="true"></div>
+                                <span class="popup-object-label">Forma L</span>
+                                <span class="popup-object-shortcut">4</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <aside class="sidebar-box" aria-label="Panel de edición">
+                <section class="panel room-manager" data-panel="rooms">
+                    <header class="panel-header">
+                        <span class="panel-title">Rooms</span>
+                        <span class="panel-count" id="room-count">0</span>
+                        <button class="panel-collapse" type="button" data-collapse="rooms" aria-expanded="true" aria-controls="room-panel-body" data-tooltip="Contraer rooms" aria-label="Contraer rooms">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M480-560 280-360h400L480-560Z"/></svg>
+                        </button>
+                    </header>
+                    <div class="panel-body" id="room-panel-body">
+                        <button class="add-object-btn" id="create-room-btn" type="button" data-tooltip="Crear room: copiar la actual o empezar vacía">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+                            <span>Nueva room</span>
+                        </button>
+                        <div class="layer-box" id="room-layer-box"></div>
+                    </div>
+                </section>
+
+                <div class="sidebar-resizer" data-before="room-manager" data-after="size-manager" data-before-size="rooms" data-after-size="size" role="separator" aria-orientation="horizontal" aria-label="Redimensionar capas de rooms" tabindex="0"></div>
+
+                <section class="panel size-manager" data-panel="size">
+                    <header class="panel-header">
+                        <span class="panel-title">Propiedades</span>
+                        <div class="unit-system" role="group" aria-label="Sistema de unidades">
+                            <button class="segmented-btn selected" type="button" id="unit-metric" data-system="metric" data-tooltip="Sistema métrico (m)">m</button>
+                            <button class="segmented-btn" type="button" id="unit-imperial" data-system="imperial" data-tooltip="Sistema imperial (ft)">ft</button>
+                        </div>
+                        <button class="panel-collapse" type="button" data-collapse="size" aria-expanded="true" aria-controls="size-panel-body" data-tooltip="Contraer propiedades" aria-label="Contraer propiedades">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M480-560 280-360h400L480-560Z"/></svg>
+                        </button>
+                    </header>
+                    <div class="panel-body" id="size-panel-body">
+                        <div class="shape-panel" id="shape-dims-panel">
+                            <div class="shape-stage shape-stage--dims" id="shape-dims-stage">
+                                <div class="shape-figure" id="shape-dims-figure" aria-hidden="true"></div>
+                                <div class="shape-rotor" id="shape-dims-rotor">
+                                    <div class="shape-dim shape-dim--height" id="sm-alto-field">
+                                        <div class="shape-dim__badge question-box row">
+                                            <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
+                                            <input type="number" id="sm-alto" min="0.1" step="0.01" inputmode="decimal" aria-label="Altura">
+                                            <span class="shape-dim__unit" id="sm-alto-unit">m</span>
+                                            <button class="field-config" type="button" id="sm-alto-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-alto-unit-menu" aria-label="Cambiar unidad de altura">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                            </button>
+                                            <div class="unit-menu" id="sm-alto-unit-menu" role="group" aria-label="Unidad de altura">
+                                                <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-alto-m" data-tooltip="Metros">m</button>
+                                                <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-alto-cm" data-tooltip="Centímetros">cm</button>
+                                                <button class="sm-unit-btn" type="button" data-unit="in" id="sm-alto-in" data-tooltip="Pulgadas">in</button>
+                                                <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-alto-ft" data-tooltip="Pies">ft</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="shape-dim shape-dim--width" id="sm-ancho-field">
+                                        <div class="shape-dim__badge question-box row">
+                                            <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
+                                            <input type="number" id="sm-ancho" min="0.1" step="0.01" inputmode="decimal" aria-label="Ancho">
+                                            <span class="shape-dim__unit" id="sm-ancho-unit">m</span>
+                                            <button class="field-config" type="button" id="sm-ancho-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-ancho-unit-menu" aria-label="Cambiar unidad de ancho">
+                                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                            </button>
+                                            <div class="unit-menu" id="sm-ancho-unit-menu" role="group" aria-label="Unidad de ancho">
+                                                <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-ancho-m" data-tooltip="Metros">m</button>
+                                                <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-ancho-cm" data-tooltip="Centímetros">cm</button>
+                                                <button class="sm-unit-btn" type="button" data-unit="in" id="sm-ancho-in" data-tooltip="Pulgadas">in</button>
+                                                <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-ancho-ft" data-tooltip="Pies">ft</button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="shape-arm-fields" id="l-shape-fields">
+                                        <div class="shape-dim shape-dim--arm-x" id="sm-l-arm-x-field">
+                                            <div class="shape-dim__badge question-box row">
+                                                <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
+                                                <input type="number" id="sm-l-arm-x" min="0.01" step="0.01" inputmode="decimal" aria-label="Grosor del brazo izquierdo">
+                                                <span class="shape-dim__unit" id="sm-l-arm-x-unit">m</span>
+                                                <button class="field-config" type="button" id="sm-l-arm-x-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-l-arm-x-unit-menu" aria-label="Cambiar unidad de grosor izquierdo">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                                </button>
+                                                <div class="unit-menu" id="sm-l-arm-x-unit-menu" role="group" aria-label="Unidad de grosor izquierdo">
+                                                    <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-l-arm-x-m" data-tooltip="Metros">m</button>
+                                                    <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-l-arm-x-cm" data-tooltip="Centímetros">cm</button>
+                                                    <button class="sm-unit-btn" type="button" data-unit="in" id="sm-l-arm-x-in" data-tooltip="Pulgadas">in</button>
+                                                    <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-l-arm-x-ft" data-tooltip="Pies">ft</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="shape-dim shape-dim--arm-y" id="sm-l-arm-y-field">
+                                            <div class="shape-dim__badge question-box row">
+                                                <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
+                                                <input type="number" id="sm-l-arm-y" min="0.01" step="0.01" inputmode="decimal" aria-label="Grosor del brazo inferior">
+                                                <span class="shape-dim__unit" id="sm-l-arm-y-unit">m</span>
+                                                <button class="field-config" type="button" id="sm-l-arm-y-config" aria-haspopup="true" aria-expanded="false" aria-controls="sm-l-arm-y-unit-menu" aria-label="Cambiar unidad de grosor inferior">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                                </button>
+                                                <div class="unit-menu" id="sm-l-arm-y-unit-menu" role="group" aria-label="Unidad de grosor inferior">
+                                                    <button class="sm-unit-btn selected" type="button" data-unit="m" id="sm-l-arm-y-m" data-tooltip="Metros">m</button>
+                                                    <button class="sm-unit-btn" type="button" data-unit="cm" id="sm-l-arm-y-cm" data-tooltip="Centímetros">cm</button>
+                                                    <button class="sm-unit-btn" type="button" data-unit="in" id="sm-l-arm-y-in" data-tooltip="Pulgadas">in</button>
+                                                    <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-l-arm-y-ft" data-tooltip="Pies">ft</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <label class="field-label" for="sm-nombre" id="sm-nombre-caption">Nombre</label>
+                            <div class="field-row">
+                                <div class="question-box row" id="sm-nombre-box">
+                                    <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg></span>
+                                    <input type="text" id="sm-nombre" autocomplete="off" spellcheck="false">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field" id="sm-rotation-field">
+                            <div class="field-head">
+                                <span class="field-label" id="sm-rotation-caption">Rotación</span>
+                                <span class="field-value" id="sm-rotation-value">0°</span>
+                            </div>
+                            <div class="field-row">
+                                <div class="question-box row" id="sm-rotation-box">
+                                    <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M480-80q-75 0-140.5-28.5t-114-77q-48.5-48.5-77-114T120-440q0-75 28.5-140.5t77-114q48.5-48.5 114-77T480-800h6l-62-62 56-58 160 160-160 160-56-58 62-62h-6q-117 0-198.5 81.5T200-440q0 117 81.5 198.5T480-160q89 0 158-51t94-129h84q-27 115-119.5 187.5T480-80Z"/></svg></span>
+                                    <input type="number" id="sm-rotation" min="0" max="359" step="1">
+                                </div>
+                                <div class="field-actions" id="sm-rotation-actions">
+                                    <button class="sm-icon-btn" type="button" id="sm-rotate--90" data-tooltip="Girar a la izquierda 90°" aria-label="Girar a la izquierda 90 grados">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
+                                            <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="sm-icon-btn" type="button" id="sm-rotate-90" data-tooltip="Girar a la derecha 90°" aria-label="Girar a la derecha 90 grados">
+                                        <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" aria-hidden="true">
+                                            <path d="M480-160q-134 0-227-93t-93-227q0-134 93-227t227-93q69 0 129.5 27T716-696v-104h80v240H556v-80h104q-43-43-80.5-61.5T480-720q-100 0-170 70t-70 170q0 100 70 170t170 70q77 0 139-47t81-123h84q-20 111-105 180.5T480-160Z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field" id="sm-radius-field">
+                            <div class="field-head">
+                                <span class="field-label" id="sm-radius-caption">Radio</span>
+                                <span class="field-value" id="sm-radius-value">0</span>
+                            </div>
+                            <div class="field-row">
+                                <div class="question-box row">
+                                    <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h240v80H200v560h560v-240h80v240q0 33-23.5 56.5T760-120Z"/></svg></span>
+                                    <input type="number" id="sm-radius" min="0" step="1">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="edge-manager" id="edge-manager">
+                            <div class="text-popup caption">Bordes</div>
+                            <div class="edge-toggler shape-stage shape-stage--edges" id="edge-toggler">
+                                <div class="shape-figure" id="edge-figure" aria-hidden="true"></div>
+                                <div class="shape-rotor" id="edge-rotor">
+                                    <button class="edge-switch edge-switch--top" data-edge="top" type="button" aria-label="Borde superior"></button>
+                                    <button class="edge-switch edge-switch--right" data-edge="right" type="button" aria-label="Borde derecho"></button>
+                                    <button class="edge-switch edge-switch--bottom" data-edge="bottom" type="button" aria-label="Borde inferior"></button>
+                                    <button class="edge-switch edge-switch--left" data-edge="left" type="button" aria-label="Borde izquierdo"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tolerance-manager" id="tolerance-manager">
+                            <div class="text-popup caption">Tolerancia (m)</div>
+                            <div class="tolerance-toggler shape-stage shape-stage--tolerance" id="tolerance-toggler">
+                                <div class="shape-figure" id="tolerance-figure" aria-hidden="true"></div>
+                                <div class="shape-rotor" id="tolerance-rotor">
+                                    <span class="tol-label tol-label--top" data-tol-side="top">0</span>
+                                    <span class="tol-label tol-label--right" data-tol-side="right">0</span>
+                                    <span class="tol-label tol-label--bottom" data-tol-side="bottom">0</span>
+                                    <span class="tol-label tol-label--left" data-tol-side="left">0</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="door-props">
+                            <div class="text-popup caption">Dirección de apertura</div>
+                            <div class="question-box row">
+                                <button class="sm-unit-btn selected" type="button" id="door-dir-in">Adentro</button>
+                                <button class="sm-unit-btn" type="button" id="door-dir-out">Afuera</button>
+                            </div>
+                            <div class="text-popup caption">Eje de apertura</div>
+                            <div class="question-box row">
+                                <button class="sm-unit-btn selected" type="button" id="door-axis-sup">Superior</button>
+                                <button class="sm-unit-btn" type="button" id="door-axis-inf">Inferior</button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="sidebar-resizer" data-before="size-manager" data-after="object-manager" data-before-size="size" data-after-size="objects" role="separator" aria-orientation="horizontal" aria-label="Redimensionar configuración de objetos" tabindex="0"></div>
+
+                <section class="panel object-manager" data-panel="objects">
+                    <header class="panel-header">
+                        <span class="panel-title">Objetos</span>
+                        <span class="panel-count" id="object-count">0</span>
+                        <button class="panel-collapse" type="button" data-collapse="objects" aria-expanded="true" aria-controls="object-panel-body" data-tooltip="Contraer objetos" aria-label="Contraer objetos">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M480-560 280-360h400L480-560Z"/></svg>
+                        </button>
+                    </header>
+                    <div class="panel-body" id="object-panel-body">
+                        <button class="add-object-btn" id="add-object-btn" type="button" data-tooltip="Crear un objeto (Ctrl+Cmd+K)">
+                            <svg xmlns="http://www.w3.org/2000/svg" height="18px" viewBox="0 -960 960 960" width="18px" fill="currentColor" aria-hidden="true"><path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z"/></svg>
+                            <span>Nuevo objeto</span>
+                            <span class="shortcut-hint">Ctrl K</span>
+                        </button>
+                        <div class="layer-box" id="object-layer-box"></div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <!-- popup getSize-->
+        <div class="hidden popup-ask-size-on" id="popupGetSize">
+            <div class="popup-content" id="popup-getSize-window" role="dialog" aria-modal="true" aria-labelledby="popup-getSize-title">
+                <header class="popup-head">
+                    <span class="popup-title" id="popup-getSize-title">Nueva room</span>
+                    <span class="popup-hint">Enter para crear</span>
+                </header>
+
+                <div class="popup-question column">
+                    <div class="field">
+                        <div class="field-head">
+                            <label class="field-label" for="nombre" id="popup-nombre-caption">Nombre</label>
+                        </div>
+                        <div class="question-box row" id="popup-nombre-box">
+                            <span class="input-icon" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg></span>
+                            <input type="text" id="nombre" autocomplete="off" spellcheck="false" required>
+                        </div>
+                    </div>
+
+                    <div class="field-pair">
+                        <div class="field">
+                            <div class="field-head">
+                                <span class="field-label" id="popup-altura-caption">Altura</span>
+                                <span class="field-unit" id="popup-altura-unit">m</span>
+                            </div>
+                            <div class="question-box row" id="popup-altura-box">
+                                <span class="dim-mark dim-mark--v" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                <input type="number" id="altura" min="0" max="1000" inputmode="decimal" required>
+                                <button class="field-config" type="button" id="popup-altura-config" aria-haspopup="true" aria-expanded="false" aria-controls="popup-altura-unit-menu" aria-label="Cambiar unidad de altura">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                </button>
+                                <div class="unit-menu" id="popup-altura-unit-menu" role="group" aria-label="Unidad de altura">
+                                    <button class="sm-unit-btn al-popup-btn selected" type="button" data-unit="m" id="btn-altura-m" data-tooltip="Metros">m</button>
+                                    <button class="sm-unit-btn al-popup-btn" type="button" data-unit="cm" id="btn-altura-cm" data-tooltip="Centímetros">cm</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="field">
+                            <div class="field-head">
+                                <span class="field-label" id="popup-ancho-caption">Ancho</span>
+                                <span class="field-unit" id="popup-ancho-unit">m</span>
+                            </div>
+                            <div class="question-box row" id="popup-ancho-box">
+                                <span class="dim-mark dim-mark--h" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#e3e3e3"><path d="M480-120 320-280l56-56 64 63v-414l-64 63-56-56 160-160 160 160-56 57-64-64v414l64-63 56 56-160 160Z"/></svg></span>
+                                <input type="number" id="ancho" min="0" max="1000" inputmode="decimal" required>
+                                <button class="field-config" type="button" id="popup-ancho-config" aria-haspopup="true" aria-expanded="false" aria-controls="popup-ancho-unit-menu" aria-label="Cambiar unidad de ancho">
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M370-80l-16-128q-13-5-24.5-12T307-235l-119 50L78-375l103-78q-1-7-1-13.5v-27q0-6.5 1-13.5L78-585l110-190 119 50q11-8 23-15t24-12l16-128h220l16 128q13 5 24.5 12t22.5 15l119-50 110 190-103 78q1 7 1 13.5v27q0 6.5-2 13.5l103 78-110 190-118-50q-11 8-23 15t-24 12L590-80H370Zm112-260q58 0 99-41t41-99q0-58-41-99t-99-41q-59 0-99.5 41T342-480q0 58 40.5 99t99.5 41Z"/></svg>
+                                </button>
+                                <div class="unit-menu" id="popup-ancho-unit-menu" role="group" aria-label="Unidad de ancho">
+                                    <button class="sm-unit-btn an-popup-btn selected" type="button" data-unit="m" id="btn-anchura-m" data-tooltip="Metros">m</button>
+                                    <button class="sm-unit-btn an-popup-btn" type="button" data-unit="cm" id="btn-anchura-cm" data-tooltip="Centímetros">cm</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="field">
+                        <div class="field-head">
+                            <span class="field-label" id="popup-mode-caption">Contenido de la nueva room</span>
+                        </div>
+                        <div class="segmented" id="room-create-mode" role="group" aria-labelledby="popup-mode-caption">
+                            <button class="segmented-btn selected" type="button" data-mode="copy" id="room-mode-copy">Copiar actual</button>
+                            <button class="segmented-btn" type="button" data-mode="new" id="room-mode-new">Vacía</button>
+                        </div>
+                    </div>
+                </div>
+
+                <footer class="popup-controls">
+                    <button class="popup-btn-cancelar" type="button">Cancelar</button>
+                    <button class="popup-btn-aceptar" type="button">Crear room</button>
+                </footer>
+            </div>
+        </div>
+
+        <!-- popup alerta -->
+         <div class="hidden popup-alerta-on" id="popupAlerta">
+            <div class="popup-content">
+                <h3>Error</h3>
+                <h4 id="message"></h4>
+                <button id="cerrarAlerta">Cerrar</button>
+            </div>
+         </div>
+
+         <!-- popup menu-->
+        <script>
+            const qs = new URLSearchParams(location.search);
+            const shape = qs.get('shape') || 'rect';
+            const rot = Number(qs.get('rot') || 0);
+            const armX = Number(qs.get('armx') || 0.3);
+            const armY = Number(qs.get('army') || 0.2);
+            const item = {
+                id:'f1', nombre:'Mesa', ancho:1.2, alto:0.6,
+                unidadAncho:'m', unidadAlto:'m', type:'furniture', roomId:'room1',
+                rotacion: rot, left:300, top:260, color:'#62DBFF',
+                borderRadius: shape === 'ellipse' ? '50%' : '',
+                shape: shape === 'l' ? 'l' : (shape === 'semicircle' ? 'semicircle' : ''),
+                edges: qs.get('edges') || '',
+                tolerance: qs.get('tol') || '',
+                visible:true
+            };
+            if (shape === 'l') { item.armX = armX; item.armY = armY; }
+            localStorage.setItem('mise-active', 'room1');
+            localStorage.setItem('mise', JSON.stringify([
+              { id:'room1', nombre:'Room', ancho:4, alto:3, unidadAncho:'m', unidadAlto:'m',
+                type:'room', rotacion:0, currentBtnId:'create-room-btn', visible:true },
+              item
+            ]));
+        </script>
+        <script type="module" src="js/main.js"></script>
+        <script type="module">
+            import { selectVisibleObject } from './js/features/layers.js';
+            import { syncSizeManager } from './js/features/size-manager.js';
+            document.addEventListener('DOMContentLoaded', () => {
+                requestAnimationFrame(() => {
+                    const f = document.querySelector('.object.furniture');
+                    if (f) selectVisibleObject(f);
+                    syncSizeManager();
+                    const stage = document.getElementById('shape-dims-stage');
+                    if (stage) { stage.style.outline = '1px solid #ff00ff'; stage.style.outlineOffset = '0px'; }
+                    window.__ready = true;
+                });
+            });
+        </script>
+
+    </body>
+</html>

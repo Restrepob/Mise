@@ -153,12 +153,9 @@
                     <div class="panel-body" id="size-panel-body">
                         <div class="shape-panel" id="shape-dims-panel">
                             <div class="shape-stage shape-stage--dims" id="shape-dims-stage">
+                                <div class="shape-figure" id="shape-dims-figure" aria-hidden="true"></div>
                                 <div class="shape-rotor" id="shape-dims-rotor">
-                                    <div class="shape-figure" id="shape-dims-figure" aria-hidden="true"></div>
-
                                     <div class="shape-dim shape-dim--height" id="sm-alto-field">
-                                        <span class="shape-dim__cap" aria-hidden="true"></span>
-                                        <span class="shape-dim__line" aria-hidden="true"></span>
                                         <div class="shape-dim__badge question-box row">
                                             <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
                                             <input type="number" id="sm-alto" min="0.1" step="0.01" inputmode="decimal" aria-label="Altura">
@@ -173,13 +170,9 @@
                                                 <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-alto-ft" data-tooltip="Pies">ft</button>
                                             </div>
                                         </div>
-                                        <span class="shape-dim__line" aria-hidden="true"></span>
-                                        <span class="shape-dim__cap" aria-hidden="true"></span>
                                     </div>
 
                                     <div class="shape-dim shape-dim--width" id="sm-ancho-field">
-                                        <span class="shape-dim__cap" aria-hidden="true"></span>
-                                        <span class="shape-dim__line" aria-hidden="true"></span>
                                         <div class="shape-dim__badge question-box row">
                                             <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
                                             <input type="number" id="sm-ancho" min="0.1" step="0.01" inputmode="decimal" aria-label="Ancho">
@@ -194,14 +187,10 @@
                                                 <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-ancho-ft" data-tooltip="Pies">ft</button>
                                             </div>
                                         </div>
-                                        <span class="shape-dim__line" aria-hidden="true"></span>
-                                        <span class="shape-dim__cap" aria-hidden="true"></span>
                                     </div>
 
                                     <div class="shape-arm-fields" id="l-shape-fields">
                                         <div class="shape-dim shape-dim--arm-x" id="sm-l-arm-x-field">
-                                            <span class="shape-dim__cap" aria-hidden="true"></span>
-                                            <span class="shape-dim__line" aria-hidden="true"></span>
                                             <div class="shape-dim__badge question-box row">
                                                 <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
                                                 <input type="number" id="sm-l-arm-x" min="0.01" step="0.01" inputmode="decimal" aria-label="Grosor del brazo izquierdo">
@@ -216,13 +205,9 @@
                                                     <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-l-arm-x-ft" data-tooltip="Pies">ft</button>
                                                 </div>
                                             </div>
-                                            <span class="shape-dim__line" aria-hidden="true"></span>
-                                            <span class="shape-dim__cap" aria-hidden="true"></span>
                                         </div>
 
                                         <div class="shape-dim shape-dim--arm-y" id="sm-l-arm-y-field">
-                                            <span class="shape-dim__cap" aria-hidden="true"></span>
-                                            <span class="shape-dim__line" aria-hidden="true"></span>
                                             <div class="shape-dim__badge question-box row">
                                                 <span class="shape-dim__display" aria-hidden="true"><span class="shape-dim__number">0.00</span></span>
                                                 <input type="number" id="sm-l-arm-y" min="0.01" step="0.01" inputmode="decimal" aria-label="Grosor del brazo inferior">
@@ -237,8 +222,6 @@
                                                     <button class="sm-unit-btn" type="button" data-unit="ft" id="sm-l-arm-y-ft" data-tooltip="Pies">ft</button>
                                                 </div>
                                             </div>
-                                            <span class="shape-dim__line" aria-hidden="true"></span>
-                                            <span class="shape-dim__cap" aria-hidden="true"></span>
                                         </div>
                                     </div>
                                 </div>
@@ -296,8 +279,8 @@
                         <div class="edge-manager" id="edge-manager">
                             <div class="text-popup caption">Bordes</div>
                             <div class="edge-toggler shape-stage shape-stage--edges" id="edge-toggler">
+                                <div class="shape-figure" id="edge-figure" aria-hidden="true"></div>
                                 <div class="shape-rotor" id="edge-rotor">
-                                    <div class="shape-figure" id="edge-figure" aria-hidden="true"></div>
                                     <button class="edge-switch edge-switch--top" data-edge="top" type="button" aria-label="Borde superior"></button>
                                     <button class="edge-switch edge-switch--right" data-edge="right" type="button" aria-label="Borde derecho"></button>
                                     <button class="edge-switch edge-switch--bottom" data-edge="bottom" type="button" aria-label="Borde inferior"></button>
@@ -309,8 +292,8 @@
                         <div class="tolerance-manager" id="tolerance-manager">
                             <div class="text-popup caption">Tolerancia (m)</div>
                             <div class="tolerance-toggler shape-stage shape-stage--tolerance" id="tolerance-toggler">
+                                <div class="shape-figure" id="tolerance-figure" aria-hidden="true"></div>
                                 <div class="shape-rotor" id="tolerance-rotor">
-                                    <div class="shape-figure" id="tolerance-figure" aria-hidden="true"></div>
                                     <span class="tol-label tol-label--top" data-tol-side="top">0</span>
                                     <span class="tol-label tol-label--right" data-tol-side="right">0</span>
                                     <span class="tol-label tol-label--bottom" data-tol-side="bottom">0</span>

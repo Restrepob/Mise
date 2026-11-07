@@ -603,33 +603,31 @@
     top:50%;
     width:70px;
     height:70px;
-    transform:translate(-50%, -50%);
-    transform-origin:center;
     pointer-events:none;
 }
 
 .shape-figure {
     position:absolute;
-    inset:0;
     pointer-events:none;
 }
 
 .shape-figure-svg {
     position:absolute;
-    inset:0;
-    width:100%;
-    height:100%;
+    left:50%;
+    top:50%;
     overflow:visible;
 }
 
 /* Contorno de la figura: 1.5px y un gris medio para que siga leyendose como
    linea al rotarse. Con 1px y #2D2E2E el antialias de los angulos no rectos
-   (90/270 y rotacion libre) se percibia como una mancha borrosa. */
+   (90/270 y rotacion libre) se percibia como una mancha borrosa.
+   La figura se dibuja 1:1 en unidades de pantalla y la rotacion se aplica
+   dentro del propio SVG: Firefox 152-158 rasteriza mal los SVG que reciben
+   una rotacion por CSS y los deja con bordes duros o borrosos. */
 .shape-outline {
     fill:#0C0D0E;
     stroke:rgba(224, 224, 224, 0.3);
     stroke-width:1.5;
-    vector-effect:non-scaling-stroke;
 }
 
 .shape-edge {
@@ -637,7 +635,6 @@
     stroke:transparent;
     stroke-width:2;
     stroke-linecap:round;
-    vector-effect:non-scaling-stroke;
     transition:stroke 0.15s ease;
 }
 
@@ -647,97 +644,34 @@
 }
 
 /* Lineas de cota: la misma I que se dibuja sobre el objeto. El badge queda
-   separado del contorno y muestra texto editable en su centro. El offset (20px)
-   deja aire entre el contorno y la I; `shape-preview.js` reserva el mismo hueco
-   al escalar la figura para que el badge siga cabiendo en el stage. */
+   separado del contorno y muestra texto editable en su centro. La separacion
+   (MEASURE_OFFSET en shape-preview.js) deja aire entre el contorno y la I;
+   `shape-preview.js` reserva el mismo hueco al escalar la figura para que el
+   badge siga cabiendo en el stage. */
 .shape-dim {
     position:absolute;
     z-index:3;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
+    width:0;
+    height:0;
     pointer-events:none;
 }
 
-.shape-dim--height {
-    top:0;
-    bottom:0;
-    right:-20px;
-    width:13px;
-    flex-direction:column;
-}
-
-.shape-rotor.is-l-shape > .shape-dim--height {
-    left:-20px;
-    right:auto;
-}
-
-.shape-dim--width {
-    left:0;
-    right:0;
-    bottom:-20px;
-    height:13px;
-    flex-direction:row;
-}
-
-.shape-dim--arm-x {
-    left:0;
-    top:-20px;
-    width:var(--arm-x, 50%);
-    height:13px;
-    flex-direction:row;
-}
-
-.shape-dim--arm-y {
-    left:auto;
-    right:-20px;
-    bottom:0;
-    width:13px;
-    height:var(--arm-y, 50%);
-    flex-direction:column;
-}
-
-.shape-dim__cap {
-    flex:0 0 auto;
-    background:rgba(224, 224, 224, 0.65);
-    border-radius:1px;
-}
-
-.shape-dim--height .shape-dim__cap,
-.shape-dim--arm-y .shape-dim__cap {
-    width:9px;
-    height:2px;
-}
-
-.shape-dim--width .shape-dim__cap,
-.shape-dim--arm-x .shape-dim__cap {
-    width:2px;
-    height:9px;
-}
-
-.shape-dim__line {
-    flex:1 1 0;
-    min-width:0;
-    min-height:0;
-    background:rgba(224, 224, 224, 0.65);
-}
-
-.shape-dim--height .shape-dim__line,
-.shape-dim--arm-y .shape-dim__line {
-    width:2px;
-}
-
-.shape-dim--width .shape-dim__line,
-.shape-dim--arm-x .shape-dim__line {
-    height:2px;
+/* Lineas y remates de cota: viven dentro del SVG para compartir la rotacion
+   interna de la figura. Un contenedor con transform CSS haria que Firefox
+   rasterizara el trazo desde una capa rotada (se veia borroso). */
+.shape-measure,
+.shape-measure-cap {
+    fill:none;
+    stroke:rgba(224, 224, 224, 0.65);
+    stroke-width:2;
 }
 
 /* El badge flota sobre el centro de la cota: asi los remates siguen marcando
    el lado real del objeto aunque la linea sea mas corta que el propio badge. */
 .shape-dim > .shape-dim__badge {
     position:absolute;
-    left:50%;
-    top:50%;
+    left:0;
+    top:0;
     z-index:1;
     display:flex;
     align-items:center;
@@ -752,7 +686,6 @@
     border-radius:3px;
     background-color:var(--color-card);
     box-shadow:none;
-    transform:translate(-50%, -50%) rotate(var(--shape-badge-rotate, 0deg));
     pointer-events:auto;
     cursor:text;
 }
@@ -848,9 +781,15 @@
     pointer-events:none;
 }
 
-.shape-dim:has(input:focus) .shape-dim__line,
-.shape-dim:has(input:focus) .shape-dim__cap {
-    background:#9ecbff;
+.shape-stage--dims:has(#sm-alto:focus) .shape-measure--height,
+.shape-stage--dims:has(#sm-alto:focus) .shape-measure-cap--height,
+.shape-stage--dims:has(#sm-ancho:focus) .shape-measure--width,
+.shape-stage--dims:has(#sm-ancho:focus) .shape-measure-cap--width,
+.shape-stage--dims:has(#sm-l-arm-x:focus) .shape-measure--arm-x,
+.shape-stage--dims:has(#sm-l-arm-x:focus) .shape-measure-cap--arm-x,
+.shape-stage--dims:has(#sm-l-arm-y:focus) .shape-measure--arm-y,
+.shape-stage--dims:has(#sm-l-arm-y:focus) .shape-measure-cap--arm-y {
+    stroke:#9ecbff;
 }
 
 /* El engranaje de unidad no ocupa espacio: vive en la esquina del badge y solo
@@ -977,8 +916,6 @@
     cursor:pointer;
     user-select:none;
     pointer-events:auto;
-    --tol-label-rotate:0deg;
-    transform:translate(-50%, -50%) rotate(var(--tol-label-rotate));
 }
 
 .tol-label:hover {

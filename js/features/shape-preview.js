@@ -10,7 +10,12 @@ import { getLShapeMetrics, isLShape } from './l-shape.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const EDGE_SIDES = ['top', 'right', 'bottom', 'left'];
-const TOLERANCE_SIDE_DEG = { top: -90, right: 0, bottom: 90, left: 180 };
+// Distancia del centro de la linea de cota al borde de la caja y largo de los
+// remates. Son enteros para que el trazo de 2px caiga en pixeles completos en
+// las rotaciones rectas (0/90/180/270) y no se reparta entre dos columnas.
+// 26px reproduce la separacion que tenia la tira de cotas en CSS (20px + 13/2).
+const MEASURE_OFFSET = 26;
+const MEASURE_CAP = 10;
 
 const PREVIEWS = [
     { key: 'dimensions', rotorId: 'shape-dims-rotor', figureId: 'shape-dims-figure' },
@@ -18,7 +23,10 @@ const PREVIEWS = [
     { key: 'tolerance', rotorId: 'tolerance-rotor', figureId: 'tolerance-figure', maxSize: 66 },
 ];
 let lastPreviewItem = null;
+let lastDimsSnapshot = null;
+let lastToleranceSnapshot = null;
 let stageObserver = null;
+let controlObserver = null;
 
 function getVisualRotation(item) {
     let rotation = 0;
@@ -37,6 +45,26 @@ function observeDimensionStage() {
         if (lastPreviewItem) syncShapePreviews(lastPreviewItem);
     });
     stageObserver.observe(stage);
+}
+
+// El texto del badge cambia de ancho al editar o al cargar la tipografia. Si
+// solo se centrara al sincronizar, quedaria corrido respecto de la cota; este
+// observador lo vuelve a centrar cuando cambia su tamano.
+function observeControlSizes() {
+    if (controlObserver || typeof ResizeObserver === 'undefined') return;
+    controlObserver = new ResizeObserver(() => {
+        const dimsRotor = document.getElementById('shape-dims-rotor');
+        if (dimsRotor && lastDimsSnapshot) {
+            positionDimensionFields(dimsRotor, lastDimsSnapshot);
+        }
+        const toleranceRotor = document.getElementById('tolerance-rotor');
+        if (toleranceRotor && lastToleranceSnapshot) {
+            updateToleranceLabels(toleranceRotor, lastToleranceSnapshot);
+        }
+    });
+    document.querySelectorAll('.shape-dim__badge, .tol-label').forEach((element) => {
+        controlObserver.observe(element);
+    });
 }
 
 function readItemSize(item) {
@@ -209,12 +237,67 @@ function getSideAnchors(snapshot) {
     };
 }
 
-function createSvg(snapshot, activeEdges = null) {
+function dimensionSegments(snapshot) {
+    const { width, height, arms } = snapshot;
+    const segments = [];
+    // En la L la altura se acota por la izquierda para no chocar con el brazo.
+    const heightX = arms ? -MEASURE_OFFSET : width + MEASURE_OFFSET;
+    segments.push({ key: 'height', vertical: true, x1: heightX, y1: 0, x2: heightX, y2: height });
+    segments.push({ key: 'width', vertical: false, x1: 0, y1: height + MEASURE_OFFSET, x2: width, y2: height + MEASURE_OFFSET });
+    if (arms) {
+        segments.push({ key: 'arm-x', vertical: false, x1: 0, y1: -MEASURE_OFFSET, x2: arms.x, y2: -MEASURE_OFFSET });
+        segments.push({ key: 'arm-y', vertical: true, x1: width + MEASURE_OFFSET, y1: height - arms.y, x2: width + MEASURE_OFFSET, y2: height });
+    }
+    return segments;
+}
+
+function appendDimensionLines(group, snapshot) {
+    dimensionSegments(snapshot).forEach((segment) => {
+        const line = document.createElementNS(SVG_NS, 'line');
+        line.setAttribute('x1', String(segment.x1));
+        line.setAttribute('y1', String(segment.y1));
+        line.setAttribute('x2', String(segment.x2));
+        line.setAttribute('y2', String(segment.y2));
+        line.classList.add('shape-measure', `shape-measure--${segment.key}`);
+        group.appendChild(line);
+
+        // Remates perpendiculares en los dos extremos de la cota.
+        [[segment.x1, segment.y1], [segment.x2, segment.y2]].forEach(([x, y]) => {
+            const cap = document.createElementNS(SVG_NS, 'line');
+            if (segment.vertical) {
+                cap.setAttribute('x1', String(x - MEASURE_CAP / 2));
+                cap.setAttribute('y1', String(y));
+                cap.setAttribute('x2', String(x + MEASURE_CAP / 2));
+                cap.setAttribute('y2', String(y));
+            } else {
+                cap.setAttribute('x1', String(x));
+                cap.setAttribute('y1', String(y - MEASURE_CAP / 2));
+                cap.setAttribute('x2', String(x));
+                cap.setAttribute('y2', String(y + MEASURE_CAP / 2));
+            }
+            cap.classList.add('shape-measure-cap', `shape-measure-cap--${segment.key}`);
+            group.appendChild(cap);
+        });
+    });
+}
+
+function createSvg(snapshot, activeEdges = null, showDimensions = false) {
+    // El SVG tiene el tamano justo de la caja del rotor y se centra en el stage
+    // con margenes negativos (sin transform CSS sobre el SVG). La rotacion se
+    // aplica como transform del grupo interno: Firefox 152-158 rasteriza mal
+    // los SVG que reciben una rotacion por CSS y los deja duros o borrosos.
     const svg = document.createElementNS(SVG_NS, 'svg');
     svg.setAttribute('viewBox', `0 0 ${snapshot.width} ${snapshot.height}`);
     svg.setAttribute('preserveAspectRatio', 'none');
     svg.classList.add('shape-figure-svg');
     svg.setAttribute('aria-hidden', 'true');
+    svg.style.width = `${snapshot.width}px`;
+    svg.style.height = `${snapshot.height}px`;
+    svg.style.marginLeft = `${-snapshot.width / 2}px`;
+    svg.style.marginTop = `${-snapshot.height / 2}px`;
+
+    const group = document.createElementNS(SVG_NS, 'g');
+    group.setAttribute('transform', `rotate(${snapshot.rotation} ${snapshot.width / 2} ${snapshot.height / 2})`);
 
     let outline;
     if (snapshot.semicircle) {
@@ -239,7 +322,7 @@ function createSvg(snapshot, activeEdges = null) {
         if (snapshot.ry > 0) outline.setAttribute('ry', String(snapshot.ry));
     }
     outline.classList.add('shape-outline');
-    svg.appendChild(outline);
+    group.appendChild(outline);
 
     if (activeEdges) {
         EDGE_SIDES.forEach((side) => {
@@ -251,10 +334,13 @@ function createSvg(snapshot, activeEdges = null) {
             line.setAttribute('y2', String(y2));
             line.classList.add('shape-edge', `shape-edge--${side}`);
             if (activeEdges.has(side)) line.classList.add('is-on');
-            svg.appendChild(line);
+            group.appendChild(line);
         });
     }
 
+    if (showDimensions) appendDimensionLines(group, snapshot);
+
+    svg.appendChild(group);
     return svg;
 }
 
@@ -274,8 +360,8 @@ function getPreviewScale(preview, rotor, snapshot) {
     const stage = document.getElementById('shape-dims-stage') || rotor.parentElement;
     const widthBadge = document.querySelector('#sm-ancho-field .shape-dim__badge');
     const heightBadge = document.querySelector('#sm-alto-field .shape-dim__badge');
-    // El hueco coincide con la separacion de las cotas en css/sidebar.css: si
-    // alli crece, aqui debe crecer igual para que el badge no se recorte.
+    // Reservamos el ancho del badge mas un margen extra a cada lado: el badge
+    // de alto se centra a MEASURE_OFFSET del contorno y no debe recortarse.
     const gap = 20;
     // Reservamos solo el espacio que realmente necesita la etiqueta exterior;
     // el resto del stage queda disponible para ampliar la forma.
@@ -286,30 +372,105 @@ function getPreviewScale(preview, rotor, snapshot) {
     return fitScale(snapshot, maxWidth, maxHeight);
 }
 
-function updateAnchors(rotor, snapshot, selector, attribute) {
+// Rotor y figura comparten caja y origen entero dentro del stage. Asi el SVG y
+// los controles quedan centrados en el mismo punto y ninguno necesita un
+// transform CSS para centrarse.
+function placePreviewBox(rotor, figure, width, height) {
+    const stage = rotor.parentElement;
+    if (!stage) return;
+    const left = Math.round((stage.clientWidth - width) / 2);
+    const top = Math.round((stage.clientHeight - height) / 2);
+    [rotor, figure].forEach((element) => {
+        element.style.left = `${left}px`;
+        element.style.top = `${top}px`;
+        element.style.width = `${width}px`;
+        element.style.height = `${height}px`;
+    });
+}
+
+function rotatePoint(x, y, width, height, rotation) {
+    const radians = (rotation * Math.PI) / 180;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const dx = x - width / 2;
+    const dy = y - height / 2;
+    return {
+        x: width / 2 + dx * cos - dy * sin,
+        y: height / 2 + dx * sin + dy * cos,
+    };
+}
+
+// El rotor ya no rota ni se traslada por CSS: cada control se coloca en la
+// posicion rotada y queda recto en pantalla, de modo que el texto no pasa por
+// una capa transformada.
+function centerBadge(field) {
+    const badge = field?.querySelector('.shape-dim__badge');
+    if (!badge) return;
+    // Desplazamiento entero: un medio pixel hace que Firefox rasterice el texto
+    // en una capa desplazada y los numeros se vean borrosos.
+    badge.style.left = `${-Math.round(badge.offsetWidth / 2)}px`;
+    badge.style.top = `${-Math.round(badge.offsetHeight / 2)}px`;
+}
+
+function placeField(field, x, y, snapshot) {
+    if (!field) return;
+    const point = rotatePoint(x, y, snapshot.width, snapshot.height, snapshot.rotation);
+    field.style.left = `${point.x}px`;
+    field.style.top = `${point.y}px`;
+    centerBadge(field);
+}
+
+function positionDimensionFields(rotor, snapshot) {
+    const { width, height, arms } = snapshot;
+    const heightX = arms ? -MEASURE_OFFSET : width + MEASURE_OFFSET;
+    placeField(rotor.querySelector('#sm-alto-field'), heightX, height / 2, snapshot);
+    placeField(rotor.querySelector('#sm-ancho-field'), width / 2, height + MEASURE_OFFSET, snapshot);
+    if (arms) {
+        placeField(rotor.querySelector('#sm-l-arm-x-field'), arms.x / 2, -MEASURE_OFFSET, snapshot);
+        placeField(rotor.querySelector('#sm-l-arm-y-field'), width + MEASURE_OFFSET, height - arms.y / 2, snapshot);
+    }
+}
+
+function updateAnchors(rotor, snapshot, selector, attribute, rotateElement = false) {
     const anchors = getSideAnchors(snapshot);
     rotor.querySelectorAll(selector).forEach((element) => {
         const side = element.dataset[attribute];
         const [x, y] = anchors[side] || anchors.top;
-        element.style.left = `${(x / snapshot.width) * 100}%`;
-        element.style.top = `${(y / snapshot.height) * 100}%`;
+        const point = rotatePoint(x, y, snapshot.width, snapshot.height, snapshot.rotation);
+        element.style.left = `${(point.x / snapshot.width) * 100}%`;
+        element.style.top = `${(point.y / snapshot.height) * 100}%`;
+        if (rotateElement) {
+            element.style.transform = `translate(-50%, -50%) rotate(${snapshot.rotation}deg)`;
+        }
     });
 }
 
 function updateToleranceLabels(rotor, snapshot) {
-    updateAnchors(rotor, snapshot, '.tol-label', 'tolSide');
+    const anchors = getSideAnchors(snapshot);
+    const rotorWidth = parseFloat(rotor.style.width) || rotor.clientWidth || 1;
+    const rotorHeight = parseFloat(rotor.style.height) || rotor.clientHeight || 1;
     rotor.querySelectorAll('.tol-label').forEach((label) => {
-        const angle = TOLERANCE_SIDE_DEG[label.dataset.tolSide] + snapshot.rotation;
-        const onBottom = Math.sin((angle * Math.PI) / 180) > 0;
-        label.style.setProperty('--tol-label-rotate', `${onBottom ? -snapshot.rotation : 0}deg`);
+        const [x, y] = anchors[label.dataset.tolSide] || anchors.top;
+        const point = rotatePoint(x, y, snapshot.width, snapshot.height, snapshot.rotation);
+        const left = (point.x / snapshot.width) * rotorWidth;
+        const top = (point.y / snapshot.height) * rotorHeight;
+        // Centrado por medida y redondeado, sin transform: mismo motivo que en
+        // los badges (evitar capas con desplazamientos fraccionarios).
+        label.style.left = `${Math.round(left - label.offsetWidth / 2)}px`;
+        label.style.top = `${Math.round(top - label.offsetHeight / 2)}px`;
     });
 }
 
 export function syncShapePreviews(item) {
     lastPreviewItem = item;
     observeDimensionStage();
+    observeControlSizes();
     const snapshot = getShapeSnapshot(item);
     syncLayerShapeIcon(item);
+    if (!snapshot) {
+        lastDimsSnapshot = null;
+        lastToleranceSnapshot = null;
+    }
 
     PREVIEWS.forEach((preview) => {
         const rotor = document.getElementById(preview.rotorId);
@@ -323,33 +484,45 @@ export function syncShapePreviews(item) {
 
         const scale = getPreviewScale(preview, rotor, snapshot);
         // Caja del rotor en pixeles enteros: con medidas fraccionarias el
-        // contorno rotado cae entre dos pixeles y el trazo de 1px se reparte
+        // contorno rotado cae entre dos pixeles y el trazo de 1.5px se reparte
         // (se ve borroso sobre todo a 90/270 grados y en rotacion libre).
         const rotorWidth = Math.max(1, Math.round(snapshot.width * scale));
         const rotorHeight = Math.max(1, Math.round(snapshot.height * scale));
-        rotor.style.width = `${rotorWidth}px`;
-        rotor.style.height = `${rotorHeight}px`;
-        rotor.style.transform = `translate(-50%, -50%) rotate(${snapshot.rotation}deg)`;
-        rotor.style.setProperty('--shape-badge-rotate', `${-snapshot.rotation}deg`);
-        rotor.classList.toggle('is-l-shape', Boolean(snapshot.arms));
+        placePreviewBox(rotor, figure, rotorWidth, rotorHeight);
 
-        if (snapshot.arms) {
-            rotor.style.setProperty('--arm-x', `${(snapshot.arms.x / snapshot.width) * 100}%`);
-            rotor.style.setProperty('--arm-y', `${(snapshot.arms.y / snapshot.height) * 100}%`);
-        } else {
-            rotor.style.removeProperty('--arm-x');
-            rotor.style.removeProperty('--arm-y');
-        }
+        // La figura se dibuja con las medidas ya escaladas a la caja del rotor,
+        // en un SVG del mismo tamano. Asi la rotacion puede vivir dentro del
+        // SVG y no en un transform CSS del contenedor.
+        const scaleX = rotorWidth / (snapshot.width || 1);
+        const scaleY = rotorHeight / (snapshot.height || 1);
+        const figureSnapshot = {
+            ...snapshot,
+            width: rotorWidth,
+            height: rotorHeight,
+            rx: snapshot.rx * scaleX,
+            ry: snapshot.ry * scaleY,
+            arms: snapshot.arms
+                ? { x: snapshot.arms.x * scaleX, y: snapshot.arms.y * scaleY }
+                : null,
+        };
 
         if (preview.key === 'edges') {
             const active = new Set((item.dataset.edges || '').split(' ').filter(Boolean));
-            figure.replaceChildren(createSvg(snapshot, active));
-            updateAnchors(rotor, snapshot, '.edge-switch', 'edge');
+            figure.replaceChildren(createSvg(figureSnapshot, active));
+            updateAnchors(rotor, snapshot, '.edge-switch', 'edge', true);
             return;
         }
 
-        figure.replaceChildren(createSvg(snapshot));
+        if (preview.key === 'dimensions') {
+            figure.replaceChildren(createSvg(figureSnapshot, null, true));
+            lastDimsSnapshot = figureSnapshot;
+            positionDimensionFields(rotor, figureSnapshot);
+            return;
+        }
+
+        figure.replaceChildren(createSvg(figureSnapshot));
         if (preview.key === 'tolerance') {
+            lastToleranceSnapshot = snapshot;
             updateToleranceLabels(rotor, snapshot);
         }
     });

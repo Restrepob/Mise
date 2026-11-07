@@ -98,9 +98,10 @@ consulta por id/clase o mediante `core/dom.js`.
   pueden colapsar y el estado se recuerda.
 - **Previsualización de forma:** `shape-preview.js` dibuja el contorno real
   (rectángulo, elipse o L) en SVG para medidas, bordes y tolerancia. La cota
-  usa las medidas locales del objeto (alto a la derecha, ancho abajo); al rotar,
-  la figura y la cota giran juntas y el badge del input se contra-rota.
-  Las cotas se separan 38px del contorno para que el texto no invada el objeto.
+  usa las medidas locales del objeto (alto a la derecha, ancho abajo).
+  Las cotas se separan 26px del contorno para que el texto no invada el objeto;
+  línea y remates (10px) son trazos SVG de 2px, y el offset entero mantiene el
+  trazo nítido en las rotaciones rectas (0/90/180/270).
   El badge muestra un valor renderizado (máx. 3 dígitos enteros o 2 decimales,
   sin ceros finales; si no cabe, ellipsis y la unidad queda fija). El input real
   sigue en el DOM pero invisible: aparece solo al enfocarlo o hacer clic en el
@@ -111,6 +112,19 @@ consulta por id/clase o mediante `core/dom.js`.
   caiga entre dos píxeles. El contorno se dibuja con 1.5px y gris claro
   (`rgba(224, 224, 224, 0.3)`): con 1px y `#2D2E2E` el antialias de los ángulos
   no rectos (90°/270° y rotación libre) se leía como un borrón.
+  El SVG de la figura es hermano del rotor (no hijo) y se dibuja 1:1 en píxeles
+  de pantalla: rotor y figura comparten una caja entera calculada por JS dentro
+  del stage, sin transforms CSS para centrar. El contorno, las líneas de cota y
+  los remates viven en un `<g transform="rotate(...)">` dentro del SVG. Los
+  badges, etiquetas de tolerancia y switches se colocan por JS en la coordenada
+  ya rotada; los textos quedan rectos en pantalla (los switches sí giran con su
+  lado). Badges y etiquetas se centran midiendo su tamaño y redondeando a
+  píxeles enteros; un `ResizeObserver` los recentra cuando cambia el texto o
+  carga la tipografía. Firefox 152–158 (bug 2050211) rasteriza mal el contenido
+  de SVG/capas que reciben una rotación por CSS, y los desplazamientos de medio
+  píxel por transform también emborronan el texto; por eso ningún control de
+  texto usa transform para centrarse y el trazo ya no usa
+  `vector-effect: non-scaling-stroke`.
 
 ## Convenciones
 
