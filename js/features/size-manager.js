@@ -237,12 +237,13 @@ export function setSizeManagerDisabled(disabled, item = null) {
 export function setOpeningPanelFields(item) {
     const opening = isOpening(item);
     const lShape = !opening && isLShape(item);
+    const semicircle = !opening && item?.dataset.shape === 'semicircle';
 
     ['sm-alto-field', 'sm-rotation-field'].forEach((id) => {
         document.getElementById(id).style.display = opening ? 'none' : '';
     });
     // La L no admite radio: su contorno lo define el clip-path de los brazos.
-    document.getElementById('sm-radius-field').style.display = opening || lShape ? 'none' : '';
+    document.getElementById('sm-radius-field').style.display = opening || lShape || semicircle ? 'none' : '';
     document.getElementById('l-shape-fields').style.display = lShape ? '' : 'none';
 }
 
