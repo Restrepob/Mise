@@ -9,6 +9,7 @@ import './features/creation.js';
 import './features/draft.js';
 import './features/l-shape.js';
 import './features/size-manager.js';
+import './features/numeric-scrubber.js';
 import './features/shortcuts.js';
 import './features/nudge.js';
 import './features/tooltips.js';

@@ -376,6 +376,19 @@
     transition:color 0.15s ease;
 }
 
+.input-icon.is-numeric-scrubber,
+.field .dim-mark.is-numeric-scrubber {
+    cursor:ns-resize;
+    touch-action:none;
+    user-select:none;
+}
+
+.input-icon.is-numeric-scrubbing,
+.field .dim-mark.is-numeric-scrubbing {
+    color:#48a1ff;
+    cursor:ns-resize;
+}
+
 .input-icon svg {
     width:16px;
     height:16px;
