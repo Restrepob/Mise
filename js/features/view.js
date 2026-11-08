@@ -70,6 +70,7 @@ export function setViewScroll(x, y) {
     viewState.scrollX = x;
     viewState.scrollY = y;
     applySceneScale();
+    syncOpeningOverlay(getSelectedObject());
     scheduleViewPersist();
 }
 
@@ -179,7 +180,6 @@ export function zoomAtScreenPoint(screenX, screenY, nextScale) {
 
     viewState.scale = clamped;
     setViewScroll(nextScrollX, nextScrollY);
-    syncOpeningOverlay(getSelectedObject());
 }
 
 export function zoomAtPoint(event, nextScale) {
@@ -193,6 +193,7 @@ window.addEventListener('resize', () => {
     updateMinScaleForRoom(room);
     viewState.scale = clampScale(viewState.scale);
     applySceneScale();
+    syncOpeningOverlay(getSelectedObject());
 });
 
 applySceneScale();

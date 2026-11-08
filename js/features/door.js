@@ -398,6 +398,7 @@ export function clearOpeningOverlay() {
 export function createOpeningMeasureInput(item, side) {
     const wrapper = document.createElement('div');
     wrapper.className = 'opening-label opening-measure-input';
+    wrapper.style.zIndex = '1';
     wrapper.dataset.targetId = item.id;
     wrapper.dataset.side = side;
 
@@ -474,14 +475,58 @@ export function syncOpeningOverlay(item) {
     const startPoint = horizontal
         ? (edge === 'top' ? [0, 0] : [0, roomHeight])
         : (edge === 'left' ? [0, 0] : [roomWidth, 0]);
-    const wallPoint = (distance) => {
+    const wallPoint = (distance, normalOffset = 0) => {
         const localX = startPoint[0] + (horizontal ? distance : 0);
         const localY = startPoint[1] + (horizontal ? 0 : distance);
         const screen = localToCanvas(room, localX, localY);
-        return { x: screen.x + screenNormal.x * 16, y: screen.y + screenNormal.y * 16 };
+        return {
+            x: screen.x + screenNormal.x * normalOffset,
+            y: screen.y + screenNormal.y * normalOffset,
+        };
     };
+
+    const guides = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    guides.classList.add('opening-distance-guides');
+    guides.setAttribute('aria-hidden', 'true');
+    guides.style.position = 'absolute';
+    guides.style.inset = '0';
+    guides.style.width = '100%';
+    guides.style.height = '100%';
+    guides.style.overflow = 'visible';
+    guides.style.pointerEvents = 'none';
+    guides.style.zIndex = '0';
+
+    const wallLength = horizontal ? roomWidth : roomHeight;
+    const ranges = [[0, offset], [offset + width, wallLength]];
+    ranges.forEach(([start, end]) => {
+        if (end - start <= 0) return;
+        const first = wallPoint(start, 16);
+        const second = wallPoint(end, 16);
+        const tangentX = second.x - first.x;
+        const tangentY = second.y - first.y;
+        const length = Math.hypot(tangentX, tangentY) || 1;
+        const capX = (-tangentY / length) * 4;
+        const capY = (tangentX / length) * 4;
+
+        [[first, second],
+            [{ x: first.x - capX, y: first.y - capY }, { x: first.x + capX, y: first.y + capY }],
+            [{ x: second.x - capX, y: second.y - capY }, { x: second.x + capX, y: second.y + capY }],
+        ].forEach(([from, to]) => {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', String(from.x));
+            line.setAttribute('y1', String(from.y));
+            line.setAttribute('x2', String(to.x));
+            line.setAttribute('y2', String(to.y));
+            line.setAttribute('stroke', 'rgba(224, 224, 224, 0.7)');
+            line.setAttribute('stroke-width', '1');
+            line.setAttribute('stroke-dasharray', '3 3');
+            guides.appendChild(line);
+        });
+    });
+    openingLayer.appendChild(guides);
+
     const placeLabel = (label, distance) => {
-        const point = wallPoint(distance);
+        const point = wallPoint(distance, 16);
         label.style.left = `${point.x}px`;
         label.style.top = `${point.y}px`;
     };
