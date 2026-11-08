@@ -2,7 +2,7 @@
 import { canvas, scene } from '../core/dom.js';
 import { clearOpeningOverlay, syncOpeningOverlay } from './door.js';
 import { openLayerMenuForItem, selectVisibleObject, toggleMultiSelection } from './layers.js';
-import { getGroupSelection, syncGroupSelectionOverlay } from './group-selection.js';
+import { getGroupSelection, isPointInsideGroupSelection, rotateSelectionGroupBy, syncGroupSelectionOverlay } from './group-selection.js';
 import { handleMeasurePointerDown, stopMeasureDrag, updateMeasureCursor, updateMeasureDrag } from './measure.js';
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { dragOpeningAlongWall } from './openings.js';
@@ -161,17 +161,30 @@ canvas.addEventListener('pointerdown', (event) => {
     // desplaza ni se abre el popup.
     // Se usa Alt y no Shift porque Firefox/Zen reservan Shift + clic derecho
     // para abrir su propio menu y no permiten cancelarlo desde la web.
-    if (event.altKey && targetItem && (event.button === 0 || event.button === 2)) {
-        event.preventDefault();
-        lastModifierRotateTime = Date.now();
-        clearSnapGuides();
-        selectVisibleObject(targetItem);
-        if (!isOpening(targetItem)) {
-            rotateByClick(targetItem, event.button);
-            guardarCambios(targetItem);
+    if (event.altKey && (event.button === 0 || event.button === 2)) {
+        const selectedGroup = getGroupSelection();
+        const rotatesGroup = selectedGroup.length > 1
+            && isPointInsideGroupSelection(event.clientX, event.clientY);
+        if (rotatesGroup) {
+            event.preventDefault();
+            lastModifierRotateTime = Date.now();
+            clearSnapGuides();
+            rotateSelectionGroupBy(event.button === 2 ? 90 : -90);
             syncOpeningOverlay(getSelectedObject());
+            return;
         }
-        return;
+        if (targetItem) {
+            event.preventDefault();
+            lastModifierRotateTime = Date.now();
+            clearSnapGuides();
+            selectVisibleObject(targetItem);
+            if (!isOpening(targetItem)) {
+                rotateByClick(targetItem, event.button);
+                guardarCambios(targetItem);
+            }
+            syncOpeningOverlay(getSelectedObject());
+            return;
+        }
     }
 
     if (event.button === 0 && (event.ctrlKey || event.metaKey) && targetItem && toggleMultiSelection(targetItem)) {

@@ -3,6 +3,7 @@ import { guardarCambios } from './persistence.js';
 import { applyRotation, ROTATE_HANDLE_SVG_FREE } from './rotation.js';
 import { state } from '../core/state.js';
 import { getRotation, snapRotation } from '../core/units.js';
+import { pointerToScene, sceneToLocal } from './view.js';
 
 let overlay = null;
 let rotatePointer = null;
@@ -15,6 +16,20 @@ export function getGroupSelection() {
 
 export function isGroupSelectionActive() {
     return getGroupSelection().length > 1;
+}
+
+export function isPointInsideGroupSelection(clientX, clientY) {
+    if (!overlay || !isGroupSelectionActive()) return false;
+    const parent = overlay.parentElement;
+    const point = sceneToLocal(parent, pointerToScene({ clientX, clientY }));
+    const width = Number.parseFloat(overlay.style.width) || 0;
+    const height = Number.parseFloat(overlay.style.height) || 0;
+    const centerX = Number.parseFloat(overlay.style.left) || 0;
+    const centerY = Number.parseFloat(overlay.style.top) || 0;
+    return point.x >= centerX - width / 2
+        && point.x <= centerX + width / 2
+        && point.y >= centerY - height / 2
+        && point.y <= centerY + height / 2;
 }
 
 function getBounds(items) {
