@@ -234,6 +234,19 @@ function createShapeObject(options = {}) {
     return createdItem;
 }
 
+function getTopVisibleRoomEdge(room) {
+    const rotation = (getRotation(room) * Math.PI) / 180;
+    const cos = Math.cos(rotation);
+    const sin = Math.sin(rotation);
+    const { width, height } = getParentInnerSize(room);
+    return [
+        { edge: 'top', y: -height * cos },
+        { edge: 'right', y: width * sin },
+        { edge: 'bottom', y: height * cos },
+        { edge: 'left', y: -width * sin },
+    ].reduce((top, candidate) => candidate.y < top.y ? candidate : top).edge;
+}
+
 export function createSquareObject() {
     return createShapeObject();
 }
@@ -422,7 +435,7 @@ export function addOpeningFromRoom(type, targetElement) {
     if (room.id !== state.activeRoomId) setActiveRoom(room);
     const width = OPENING_DEFAULT[type];
     const item = document.createElement('div');
-    const roomWidth = getParentInnerSize(room).width;
+    const roomSize = getParentInnerSize(room);
     const name = type === 'window' ? 'Ventana' : 'Puerta';
 
     item.id = `${type}${++state.openingCounter}`;
@@ -430,13 +443,19 @@ export function addOpeningFromRoom(type, targetElement) {
     item.dataset.type = type;
     item.dataset.name = name;
     item.dataset.roomId = room.id;
-    item.dataset.edge = 'top';
+    item.dataset.edge = getTopVisibleRoomEdge(room);
     item.dataset.direction = 'in';
     item.dataset.axis = 'sup';
-    item.dataset.offset = String(snapOpeningOffset((roomWidth - width) / 2, roomWidth));
     item.dataset.openingWidth = String(width);
     room.appendChild(item);
-    item.dataset.offset = String(clampOpeningOffset(item, Number(item.dataset.offset), width));
+    const wallLength = item.dataset.edge === 'left' || item.dataset.edge === 'right'
+        ? roomSize.height
+        : roomSize.width;
+    item.dataset.offset = String(clampOpeningOffset(
+        item,
+        snapOpeningOffset((wallLength - width) / 2, wallLength),
+        width,
+    ));
     placeOpening(item);
     createLayer(width, OPENING_DEPTH, 'm', 'm', name, 'add-object-btn', item.id, room.id, objectMenuOptions, type);
     guardarCambios(item);

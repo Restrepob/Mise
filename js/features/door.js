@@ -1,11 +1,13 @@
 // Puertas, edges, tolerancias y overlay de aperturas
-import { canvas, openingLayer } from '../core/dom.js';
+import { openingLayer } from '../core/dom.js';
 import { clampOpeningOffset, getOpeningWallLength, getOpeningWidth, getParentInnerSize, getSelectedObject, isOpening, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
 import { guardarCambios } from './persistence.js';
 import { syncSizeManager } from './size-manager.js';
-import { EDGE_SIDES, TOLERANCE_MAX_M, TOLERANCE_SIDES, metro, viewState } from '../core/state.js';
+import { EDGE_SIDES, TOLERANCE_MAX_M, TOLERANCE_SIDES, metro } from '../core/state.js';
 import { syncShapePreviews } from './shape-preview.js';
+import { getRotation } from '../core/units.js';
+import { localToCanvas } from './view.js';
 
 export function drawDoorArc(item) {
     item.querySelector('.door-arc')?.remove();
@@ -441,46 +443,48 @@ export function syncOpeningOverlay(item) {
     if (!isOpening(item) || !item.isConnected) return;
 
     const room = item.parentElement;
-    const roomRect = room.getBoundingClientRect();
-    const canvasRect = canvas.getBoundingClientRect();
     const roomSize = getParentInnerSize(room);
     const roomWidth = roomSize.width;
     const roomHeight = roomSize.height;
     const width = getOpeningWidth(item);
     const offset = parseFloat(item.dataset.offset) || 0;
     const edge = item.dataset.edge || 'top';
-    const scale = viewState.scale;
     const horizontal = edge === 'top' || edge === 'bottom';
-    const wallBaseX = roomRect.left - canvasRect.left + room.clientLeft * scale;
-    const wallBaseY = roomRect.top - canvasRect.top + room.clientTop * scale;
-    const wallPosition = horizontal
-        ? (edge === 'bottom' ? wallBaseY + roomHeight * scale : wallBaseY)
-        : (edge === 'right' ? wallBaseX + roomWidth * scale : wallBaseX);
-    const first = horizontal
-        ? wallBaseX + offset * scale
-        : wallBaseY + offset * scale;
-    const second = horizontal
-        ? wallBaseX + (offset + width) * scale
-        : wallBaseY + (offset + width) * scale;
     const leftDistance = (offset / metro).toFixed(1);
     const rightDistance = ((horizontal ? roomWidth : roomHeight) - offset - width) / metro;
     const rightLabel = Number(rightDistance).toFixed(1);
-    const outside = edge === 'top' ? -16 : edge === 'bottom' ? 16 : edge === 'left' ? -16 : 16;
+    const normals = {
+        top: [0, -1],
+        right: [1, 0],
+        bottom: [0, 1],
+        left: [-1, 0],
+    };
+    const [normalX, normalY] = normals[edge] || normals.top;
+    const radians = getRotation(room) * Math.PI / 180;
+    const screenNormal = {
+        x: normalX * Math.cos(radians) - normalY * Math.sin(radians),
+        y: normalX * Math.sin(radians) + normalY * Math.cos(radians),
+    };
 
     const firstLabel = createOpeningMeasureInput(item, 'left');
     const secondLabel = createOpeningMeasureInput(item, 'right');
     firstLabel.querySelector('input').value = leftDistance;
     secondLabel.querySelector('input').value = rightLabel;
 
-    if (horizontal) {
-        firstLabel.style.left = `${(first + wallBaseX) / 2}px`;
-        secondLabel.style.left = `${(second + wallBaseX + roomWidth * scale) / 2}px`;
-        firstLabel.style.top = `${wallPosition + outside}px`;
-        secondLabel.style.top = `${wallPosition + outside}px`;
-    } else {
-        firstLabel.style.left = `${wallPosition + outside}px`;
-        secondLabel.style.left = `${wallPosition + outside}px`;
-        firstLabel.style.top = `${(first + wallBaseY) / 2}px`;
-        secondLabel.style.top = `${(second + wallBaseY + roomHeight * scale) / 2}px`;
-    }
+    const startPoint = horizontal
+        ? (edge === 'top' ? [0, 0] : [0, roomHeight])
+        : (edge === 'left' ? [0, 0] : [roomWidth, 0]);
+    const wallPoint = (distance) => {
+        const localX = startPoint[0] + (horizontal ? distance : 0);
+        const localY = startPoint[1] + (horizontal ? 0 : distance);
+        const screen = localToCanvas(room, localX, localY);
+        return { x: screen.x + screenNormal.x * 16, y: screen.y + screenNormal.y * 16 };
+    };
+    const placeLabel = (label, distance) => {
+        const point = wallPoint(distance);
+        label.style.left = `${point.x}px`;
+        label.style.top = `${point.y}px`;
+    };
+    placeLabel(firstLabel, offset / 2);
+    placeLabel(secondLabel, offset + width + (rightDistance * metro) / 2);
 }
