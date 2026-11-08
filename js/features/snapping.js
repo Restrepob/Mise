@@ -1,12 +1,24 @@
 // Snap a grid, paredes y objetos (X e Y independientes)
 import { canvas, guidesLayer } from '../core/dom.js';
-import { getItemBoxSize, getParentInnerSize, isOpening } from '../core/model.js';
+import { getItemHitboxEdges, getParentInnerSize, isOpening } from '../core/model.js';
 import { GRID_STEP, SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX, SNAP_SENS, SNAP_WORLD_MAX, viewState } from '../core/state.js';
 import { getParentRotation, localToCanvas } from './view.js';
 
-export function uniqueSnapTargets(values) {
-    return [...new Set(values.map((value) => Math.round(value * 1000) / 1000))]
-        .sort((a, b) => a - b);
+function edgeKey(edge) {
+    const round = (value) => (Number.isFinite(value) ? Math.round(value * 1000) / 1000 : value);
+    return `${round(edge.pos)}|${round(edge.min)}|${round(edge.max)}`;
+}
+
+export function uniqueSnapTargets(edges) {
+    const seen = new Set();
+    return edges
+        .filter((edge) => {
+            const key = edgeKey(edge);
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        })
+        .sort((a, b) => a.pos - b.pos);
 }
 
 // La grid se reparte en un número entero de divisiones entre las dos paredes.
@@ -34,55 +46,65 @@ export function getSnapThreshold(screenSens = SNAP_SENS, worldMax = SNAP_WORLD_M
 
 export function collectSnapTargets(parent, item) {
     const parentSize = getParentInnerSize(parent);
-    // Las paredes son los bordes del área interior de la room.
-    const alignXs = [0, parentSize.width];
-    const alignYs = [0, parentSize.height];
+    // Las paredes son los bordes del área interior de la room y abarcan todo
+    // el alto/ancho interior.
+    const alignXs = [
+        { axis: 'x', pos: 0, min: 0, max: parentSize.height },
+        { axis: 'x', pos: parentSize.width, min: 0, max: parentSize.height },
+    ];
+    const alignYs = [
+        { axis: 'y', pos: 0, min: 0, max: parentSize.width },
+        { axis: 'y', pos: parentSize.height, min: 0, max: parentSize.width },
+    ];
 
     parent.querySelectorAll(':scope > .object').forEach((sibling) => {
         // Las puertas/ventanas viven sobre la pared: no deben competir como
         // objetivo de snap. El objeto debe alinearse con la pared real.
         if (sibling === item || isOpening(sibling) || sibling.getClientRects().length === 0) return;
 
-        const { width, height } = getItemBoxSize(sibling);
-        // Bordes izquierdo/derecho y centro del hermano: el arrastrado puede
-        // alinear cualquiera de sus tres anclas contra cualquiera de estas.
-        alignXs.push(
-            sibling.offsetLeft - width / 2,
-            sibling.offsetLeft,
-            sibling.offsetLeft + width / 2,
-        );
-        alignYs.push(
-            sibling.offsetTop - height / 2,
-            sibling.offsetTop,
-            sibling.offsetTop + height / 2,
-        );
+        // Cada hermano aporta los lados de su silueta real (no solo la caja
+        // cuadrada). El tramo de cada lado evita que el snap enganche contra
+        // zonas vacías, como el hueco de una L o las esquinas del semicírculo.
+        getItemHitboxEdges(sibling).forEach((edge) => {
+            if (edge.axis === 'x') alignXs.push(edge);
+            else alignYs.push(edge);
+        });
     });
 
     return {
         x: {
             align: uniqueSnapTargets(alignXs),
-            grid: uniqueSnapTargets(buildGridTargets(parentSize.width)),
+            grid: buildGridTargets(parentSize.width).map((pos) => (
+                { axis: 'x', pos, min: 0, max: parentSize.height }
+            )),
         },
         y: {
             align: uniqueSnapTargets(alignYs),
-            grid: uniqueSnapTargets(buildGridTargets(parentSize.height)),
+            grid: buildGridTargets(parentSize.height).map((pos) => (
+                { axis: 'y', pos, min: 0, max: parentSize.width }
+            )),
         },
     };
 }
 
-export function findNearestSnap(center, size, candidates, threshold) {
-    // Las tres anclas del objeto arrastrado en este eje: sus dos bordes y su
-    // centro. Cada eje se resuelve por separado, así el objeto puede quedar
-    // enganchado en X y libre en Y (o al revés).
-    const anchors = [center - size / 2, center, center + size / 2];
+function spansOverlap(a, b) {
+    return Math.max(a.min, b.min) <= Math.min(a.max, b.max) + 0.01;
+}
+
+export function findNearestSnap(anchors, candidates, threshold) {
+    // Cada ancla y cada objetivo traen el tramo visible del lado. Solo se
+    // enganchan si ambos tramos se solapan en el eje perpendicular: así una
+    // pared corta o el hueco de una L no atraen al objeto desde cualquier
+    // posición.
     let winner = null;
 
     candidates.forEach((candidate) => {
         anchors.forEach((anchor) => {
-            const delta = candidate - anchor;
+            if (!spansOverlap(anchor, candidate)) return;
+            const delta = candidate.pos - anchor.pos;
             if (Math.abs(delta) > threshold) return;
             if (!winner || Math.abs(delta) < Math.abs(winner.delta)) {
-                winner = { delta, pos: candidate };
+                winner = { delta, pos: candidate.pos };
             }
         });
     });
@@ -90,19 +112,19 @@ export function findNearestSnap(center, size, candidates, threshold) {
     return winner;
 }
 
-export function pickSnap(center, size, targets, alignThreshold, gridThreshold) {
+export function pickSnap(anchors, targets, alignThreshold, gridThreshold) {
     // Los bordes/centros de otros objetos y las paredes mandan sobre la grid:
     // así el snap nunca mete un objeto unos pocos píxeles dentro de otro.
-    const alignSnap = findNearestSnap(center, size, targets.align, alignThreshold);
+    const alignSnap = findNearestSnap(anchors, targets.align, alignThreshold);
     if (alignSnap) return alignSnap;
 
     // Descartamos las líneas de grid que quedan pegadas a una pared o a un
     // borde de objeto. Sin esto, al salir del rango del borde, la grid vuelve
     // a atrapar el objeto y se produce un salto de ida y vuelta.
-    const gridTargets = targets.grid.filter((position) => (
-        targets.align.every((align) => Math.abs(position - align) > alignThreshold)
+    const gridTargets = targets.grid.filter((edge) => (
+        targets.align.every((align) => Math.abs(edge.pos - align.pos) > alignThreshold)
     ));
-    return findNearestSnap(center, size, gridTargets, gridThreshold);
+    return findNearestSnap(anchors, gridTargets, gridThreshold);
 }
 
 export function ensureGuidesLayer() {
@@ -164,11 +186,15 @@ export function snapObject(item, left, top, parent) {
     const alignThreshold = getSnapThreshold();
     const gridThreshold = getSnapThreshold(SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX);
     const targets = collectSnapTargets(parent, item);
-    const { width, height } = getItemBoxSize(item);
+    // El arrastrado usa su propio hitbox en la posición propuesta, no la caja
+    // cuadrada: sus lados interiores también pueden engancharse.
+    const edges = getItemHitboxEdges(item, { x: left, y: top });
+    const xAnchors = edges.filter((edge) => edge.axis === 'x');
+    const yAnchors = edges.filter((edge) => edge.axis === 'y');
     // Cada eje busca su propio enganche: puede quedar pegado en X (por ejemplo
     // a una pared) y seguir libre en Y para deslizarse a lo largo de ella.
-    const xSnap = pickSnap(left, width, targets.x, alignThreshold, gridThreshold);
-    const ySnap = pickSnap(top, height, targets.y, alignThreshold, gridThreshold);
+    const xSnap = pickSnap(xAnchors, targets.x, alignThreshold, gridThreshold);
+    const ySnap = pickSnap(yAnchors, targets.y, alignThreshold, gridThreshold);
 
     clearSnapGuides();
     if (xSnap) drawSnapGuide('x', xSnap.pos, parent);

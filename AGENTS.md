@@ -19,7 +19,8 @@ js/
   core/
     dom.js          Referencias cacheadas al DOM (una sola fuente de ids).
     state.js        Constantes de dominio, estado mutable compartido y paleta.
-    model.js        Helpers de items: rooms, aperturas, tamaño, nombres, offsets.
+    model.js        Helpers de items: rooms, aperturas, tamaño, nombres, offsets
+                    y hitbox de la forma para el snap.
     units.js        Conversión de unidades, rotación y geometría básica.
   features/
     creation.js     Crear rooms/muebles/capas y popup de creación.
@@ -89,7 +90,12 @@ consulta por id/clase o mediante `core/dom.js`.
 - **Historial:** snapshots completos con debounce (`HISTORY_COMMIT_DELAY`);
   la vista (zoom/scroll) no entra al historial.
 - **Snap:** X e Y se resuelven por separado. Paredes/bordes/centros mandan
-  sobre la grid; `Shift` durante el arrastre desactiva el imán.
+  sobre la grid; `Shift` durante el arrastre desactiva el imán. Cada objeto
+  aporta su hitbox real (`getItemHitboxEdges()` en `core/model.js`): la L suma
+  sus bordes interiores y el semicírculo solo expone la base y las tangentes
+  del arco. Cada lado lleva su tramo visible, así el snap no engancha contra
+  zonas vacías de la forma. En rotaciones libres se usa la caja envolvente real
+  de la silueta.
 - **Rotación del padre:** los desplazamientos de pantalla se convierten a
   coordenadas locales con `sceneDeltaToLocal()` para que el arrastre siga
   funcionando con rooms rotadas.
