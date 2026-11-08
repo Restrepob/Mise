@@ -45,13 +45,27 @@
 .furniture.semicircle {
     background:transparent !important;
     border:0;
+    pointer-events:none;
 }
 
 .semicircle-fill {
     position:absolute;
     inset:0;
-    pointer-events:none;
+    pointer-events:auto;
     clip-path:ellipse(50% 100% at 50% 100%);
+}
+
+.furniture.semicircle > .rotate-handle {
+    pointer-events:auto;
+}
+
+.furniture.semicircle::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    background:transparent;
+    clip-path:ellipse(50% 100% at 50% 100%);
+    pointer-events:auto;
 }
 
 .furniture.semicircle::before {
