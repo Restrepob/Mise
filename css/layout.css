@@ -228,6 +228,12 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
     overflow:visible;
     position:relative;
     transform-origin:0 0;
+    /* La escena se escala con transform. Si el navegador rasteriza cada objeto
+       por separado, el antialias de dos bordes contiguos deja ver el fondo
+       entre ellos y aparece una linea clara/oscura al hacer zoom. Al promover
+       la escena a su propia capa, los objetos se pintan en el mismo buffer y
+       el borde del segundo se mezcla con el del primero: quedan pegados. */
+    will-change:transform;
 }
 
 .options-box {
