@@ -1,5 +1,5 @@
 // Creacion de rooms, objetos y capas
-import { alto, ancho, nombre, objectLayers, popup, roomLayers, scene } from '../core/dom.js';
+import { alto, ancho, canvas, nombre, objectLayers, popup, roomLayers, scene } from '../core/dom.js';
 import { getLayerContext, selectLayer, setLayerHoverPreview, toggleLayerVisibility } from './layers.js';
 import { clampOpeningOffset, getActiveRoom, getParentInnerSize, getRooms, setItemName, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
@@ -12,8 +12,9 @@ import { setupLShape } from './l-shape.js';
 import { setupSemicircle } from './semicircle.js';
 import { createLayerShapeIcon, syncLayerShapeIcon } from './shape-preview.js';
 import { focusSizeInputForEditing } from './size-manager.js';
-import { OPENING_DEFAULT, OPENING_DEPTH, OPENING_MIN, getNextColor, metro, objectMenuOptions, roomMenuOptions, state } from '../core/state.js';
+import { OPENING_DEFAULT, OPENING_DEPTH, OPENING_MIN, getNextColor, metro, objectMenuOptions, roomMenuOptions, state, viewState } from '../core/state.js';
 import { getRotation, smFromPx } from '../core/units.js';
+import { sceneToLocal } from './view.js';
 
 export let btnAlMetric = 'm';
 
@@ -380,6 +381,18 @@ export function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, 
         roomOwnerId = createdRoom.id;
         room.dataset.roomId = createdRoom.id;
         room.dataset.type = 'furniture';
+        // Centrar en el viewport: convertir el centro visible del canvas a
+        // coordenadas de escena y luego a coordenadas locales de la room (respeta
+        // la rotación/posición de la room). Rotación siempre 0°.
+        const scale = viewState.scale || 1;
+        const viewportCenterScene = {
+            x: (viewState.scrollX + (canvas.clientWidth || 0) / 2) / scale,
+            y: (viewState.scrollY + (canvas.clientHeight || 0) / 2) / scale,
+        };
+        const localCenter = sceneToLocal(createdRoom, viewportCenterScene);
+        room.style.left = `${localCenter.x}px`;
+        room.style.top = `${localCenter.y}px`;
+        applyRotation(room, 0);
         createdRoom.appendChild(room);
     }
 
