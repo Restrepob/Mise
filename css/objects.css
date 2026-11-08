@@ -336,6 +336,58 @@
     border-left:2px solid var(--color-edge);
 }
 
+.furniture.l-shape .edge-strip--top,
+.furniture.l-shape .tol-tab--top {
+    right:auto;
+    width:calc(var(--l-arm-x) - 4px);
+}
+
+.furniture.l-shape .edge-strip--right,
+.furniture.l-shape .tol-tab--right {
+    top:auto;
+    bottom:4px;
+    height:calc(var(--l-arm-y) - 4px);
+}
+
+.furniture.l-shape .edge-strip--inner-vertical {
+    left:calc(var(--l-arm-x) - 14px);
+    top:4px;
+    bottom:calc(var(--l-arm-y) + 4px);
+    width:14px;
+    border-right:2px solid var(--color-edge);
+}
+
+.furniture.l-shape .edge-strip--inner-horizontal {
+    left:calc(var(--l-arm-x) + 4px);
+    right:4px;
+    top:calc(100% - var(--l-arm-y));
+    height:14px;
+    border-top:2px solid var(--color-edge);
+}
+
+.furniture.l-shape .tol-tab--inner-vertical {
+    left:var(--l-arm-x);
+    top:4px;
+    bottom:calc(var(--l-arm-y) + 4px);
+    width:var(--tol-depth, 0px);
+}
+
+.furniture.l-shape .tol-tab--inner-vertical.has-depth {
+    border-left:1px dotted var(--color-edge);
+}
+
+.furniture.l-shape .tol-tab--inner-horizontal {
+    left:calc(var(--l-arm-x) + 4px);
+    right:4px;
+    top:auto;
+    bottom:var(--l-arm-y);
+    height:var(--tol-depth, 0px);
+}
+
+.furniture.l-shape .tol-tab--inner-horizontal.has-depth {
+    border-bottom:1px dotted var(--color-edge);
+}
+
 .opening.selected,
 .opening.layer-hover-preview {
     box-shadow:0 0 0 calc(2px * var(--ui-inv-scale, 1)) #48a1ff;

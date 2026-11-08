@@ -152,19 +152,72 @@ export function hasEdge(item, side) {
     return (item?.dataset.edges || '').split(' ').includes(side);
 }
 
+const L_EDGE_SIDES = ['top', 'inner-vertical', 'inner-horizontal', 'right', 'bottom', 'left'];
+const L_TOLERANCE_SIDES = L_EDGE_SIDES;
+const L_SIDE_LABELS = {
+    top: 'superior',
+    'inner-vertical': 'interior vertical',
+    'inner-horizontal': 'interior horizontal',
+    right: 'derecho',
+    bottom: 'inferior',
+    left: 'izquierdo',
+};
+
+function getEdgeSides(item) {
+    return item?.dataset.shape === 'l' ? L_EDGE_SIDES : EDGE_SIDES;
+}
+
+function getToleranceSides(item) {
+    return item?.dataset.shape === 'l' ? L_TOLERANCE_SIDES : TOLERANCE_SIDES;
+}
+
+function ensureLSideControls(item) {
+    const edgeRotor = document.getElementById('edge-rotor');
+    const toleranceRotor = document.getElementById('tolerance-rotor');
+    const isL = item?.dataset.shape === 'l';
+
+    edgeRotor.querySelectorAll('.edge-switch[data-l-side="true"]').forEach((control) => {
+        if (!isL) control.remove();
+    });
+    toleranceRotor.querySelectorAll('.tol-label[data-l-side="true"]').forEach((control) => {
+        if (!isL) control.remove();
+    });
+    if (!isL) return;
+
+    L_EDGE_SIDES.slice(1, 3).forEach((side) => {
+        if (edgeRotor.querySelector(`.edge-switch[data-edge="${side}"]`)) return;
+        const control = document.createElement('button');
+        control.type = 'button';
+        control.className = `edge-switch edge-switch--${side}`;
+        control.dataset.edge = side;
+        control.dataset.lSide = 'true';
+        control.setAttribute('aria-label', `Borde ${L_SIDE_LABELS[side]}`);
+        edgeRotor.appendChild(control);
+    });
+    L_TOLERANCE_SIDES.slice(1, 3).forEach((side) => {
+        if (toleranceRotor.querySelector(`.tol-label[data-tol-side="${side}"]`)) return;
+        const control = document.createElement('span');
+        control.className = `tol-label tol-label--${side}`;
+        control.dataset.tolSide = side;
+        control.dataset.lSide = 'true';
+        control.textContent = '0';
+        toleranceRotor.appendChild(control);
+    });
+}
+
 export function setObjectEdge(item, side, on) {
     if (!item || isOpening(item)) return;
     let list = (item.dataset.edges || '').split(' ').filter(Boolean);
     if (on && !list.includes(side)) list.push(side);
     if (!on) list = list.filter((item) => item !== side);
-    item.dataset.edges = list.filter((item) => EDGE_SIDES.includes(item)).join(' ');
+    item.dataset.edges = list.filter((edge) => getEdgeSides(item).includes(edge)).join(' ');
     renderEdges(item);
 }
 
 export function renderEdges(item) {
     item.querySelector('.edges-layer')?.remove();
     if (!item || !item.classList.contains('furniture')) return;
-    const sides = (item.dataset.edges || '').split(' ').filter((side) => EDGE_SIDES.includes(side));
+    const sides = (item.dataset.edges || '').split(' ').filter((side) => getEdgeSides(item).includes(side));
     if (!sides.length) return;
 
     const layer = document.createElement('div');
@@ -180,15 +233,20 @@ export function renderEdges(item) {
 export function getToleranceSide(item, side) {
     if (!item) return 0;
     const list = (item.dataset.tolerance || '').split(' ').map(Number);
-    const index = TOLERANCE_SIDES.indexOf(side);
+    const sides = getToleranceSides(item);
+    let index = sides.indexOf(side);
+    if (item.dataset.shape === 'l' && list.length < L_TOLERANCE_SIDES.length) {
+        index = TOLERANCE_SIDES.indexOf(side);
+    }
     return Number.isFinite(list[index]) ? Math.max(0, list[index] || 0) : 0;
 }
 
 export function setToleranceSide(item, side, metros) {
     if (!item || isOpening(item)) return;
-    const list = TOLERANCE_SIDES.map((s) => getToleranceSide(item, s));
+    const sides = getToleranceSides(item);
+    const list = sides.map((s) => getToleranceSide(item, s));
     const value = Math.min(Math.max(0, Number(metros) || 0), TOLERANCE_MAX_M);
-    list[TOLERANCE_SIDES.indexOf(side)] = Number(value.toFixed(2));
+    list[sides.indexOf(side)] = Number(value.toFixed(2));
     item.dataset.tolerance = list.map((v) => v || 0).join(' ');
     renderTolerance(item);
 }
@@ -204,7 +262,7 @@ export function renderTolerance(item) {
     if (/^rgb|^hsl|^#/.test(fill) && fill !== 'rgba(0, 0, 0, 0)') {
         layer.style.setProperty('--color-el', fill);
     }
-    TOLERANCE_SIDES.forEach((side) => {
+    getToleranceSides(item).forEach((side) => {
         const depth = getToleranceSide(item, side) * metro;
         const tab = document.createElement('div');
         tab.className = `tol-tab tol-tab--${side}`;
@@ -222,20 +280,21 @@ export function syncTolerancePanel(item) {
     document.getElementById('tolerance-manager').style.display = editable ? 'flex' : 'none';
     if (!editable) return;
 
-    TOLERANCE_SIDES.forEach((side) => {
+    ensureLSideControls(item);
+    getToleranceSides(item).forEach((side) => {
         const label = document.querySelector(`.tol-label[data-tol-side="${side}"]`);
         if (label) label.textContent = getToleranceSide(item, side);
     });
     syncShapePreviews(item);
 }
 
-TOLERANCE_SIDES.forEach((side) => {
-    document.querySelector(`.tol-label[data-tol-side="${side}"]`).addEventListener('click', (event) => {
-        event.stopPropagation();
-        const item = getSelectedObject();
-        if (!item || !item.classList.contains('furniture')) return;
-        openToleranceInput(item, side, event.currentTarget);
-    });
+document.getElementById('tolerance-rotor').addEventListener('click', (event) => {
+    const label = event.target.closest('.tol-label');
+    if (!label) return;
+    event.stopPropagation();
+    const item = getSelectedObject();
+    if (!item || !item.classList.contains('furniture')) return;
+    openToleranceInput(item, label.dataset.tolSide, label);
 });
 
 export function openToleranceInput(item, side, labelEl) {
@@ -246,7 +305,7 @@ export function openToleranceInput(item, side, labelEl) {
 
     const caption = document.createElement('span');
     caption.className = 'tol-input-caption';
-    caption.textContent = `Tolerancia ${side} (m)`;
+    caption.textContent = `Tolerancia ${L_SIDE_LABELS[side] || side} (m)`;
 
     const row = document.createElement('div');
     row.className = 'tol-input-row';
@@ -308,7 +367,8 @@ export function syncEdgePanel(item) {
     if (!isEditable) return;
 
     const toggler = document.getElementById('edge-toggler');
-    EDGE_SIDES.forEach((side) => {
+    ensureLSideControls(item);
+    getEdgeSides(item).forEach((side) => {
         const on = hasEdge(item, side);
         toggler.classList.toggle(`on-${side}`, on);
     });
@@ -318,14 +378,15 @@ export function syncEdgePanel(item) {
     syncShapePreviews(item);
 }
 
-EDGE_SIDES.forEach((side) => {
-    document.querySelector(`.edge-switch[data-edge="${side}"]`).addEventListener('click', () => {
-        const item = getSelectedObject();
-        if (!item || isOpening(item)) return;
-        setObjectEdge(item, side, !hasEdge(item, side));
-        syncEdgePanel(item);
-        guardarCambios(item);
-    });
+document.getElementById('edge-rotor').addEventListener('click', (event) => {
+    const control = event.target.closest('.edge-switch');
+    if (!control) return;
+    const item = getSelectedObject();
+    if (!item || isOpening(item)) return;
+    const side = control.dataset.edge;
+    setObjectEdge(item, side, !hasEdge(item, side));
+    syncEdgePanel(item);
+    guardarCambios(item);
 });
 
 export function clearOpeningOverlay() {

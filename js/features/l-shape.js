@@ -80,6 +80,8 @@ export function syncLShape(item) {
     item.style.setProperty('--l-name-y', `${height - armY / 2}px`);
     item.style.setProperty('--l-clip', outerClip);
     item.style.setProperty('--l-inner-clip', innerClip);
+    item.style.setProperty('--l-arm-x', `${armX}px`);
+    item.style.setProperty('--l-arm-y', `${armY}px`);
 
     const fill = ensureLShapeFill(item);
     if (fill) fill.style.clipPath = '';

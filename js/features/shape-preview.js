@@ -10,6 +10,7 @@ import { getLShapeMetrics, isLShape } from './l-shape.js';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const EDGE_SIDES = ['top', 'right', 'bottom', 'left'];
+const L_EDGE_SIDES = ['top', 'inner-vertical', 'inner-horizontal', 'right', 'bottom', 'left'];
 // Distancia del centro de la linea de cota al borde de la caja y largo de los
 // remates. Son enteros para que el trazo de 2px caiga en pixeles completos en
 // las rotaciones rectas (0/90/180/270) y no se reparta entre dos columnas.
@@ -207,6 +208,8 @@ function edgeSegment(snapshot, side) {
     const { width, height, arms } = snapshot;
     if (arms) {
         if (side === 'top') return [0, 0, arms.x, 0];
+        if (side === 'inner-vertical') return [arms.x, 0, arms.x, height - arms.y];
+        if (side === 'inner-horizontal') return [arms.x, height - arms.y, width, height - arms.y];
         if (side === 'right') return [width, height - arms.y, width, height];
         if (side === 'bottom') return [0, height, width, height];
         return [0, 0, 0, height];
@@ -224,6 +227,8 @@ function getSideAnchors(snapshot) {
     if (arms) {
         return {
             top: [arms.x / 2, 0],
+            'inner-vertical': [arms.x, (height - arms.y) / 2],
+            'inner-horizontal': [(arms.x + width) / 2, height - arms.y],
             right: [width, height - arms.y / 2],
             bottom: [width / 2, height],
             left: [0, height / 2],
@@ -325,7 +330,7 @@ function createSvg(snapshot, activeEdges = null, showDimensions = false) {
     group.appendChild(outline);
 
     if (activeEdges) {
-        EDGE_SIDES.forEach((side) => {
+        (snapshot.arms ? L_EDGE_SIDES : EDGE_SIDES).forEach((side) => {
             const [x1, y1, x2, y2] = edgeSegment(snapshot, side);
             const line = document.createElementNS(SVG_NS, 'line');
             line.setAttribute('x1', String(x1));
