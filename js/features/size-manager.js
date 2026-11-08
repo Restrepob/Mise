@@ -10,8 +10,8 @@ import { guardarCambios } from './persistence.js';
 import { syncRoomSwitcher } from './rooms.js';
 import { applyRotation, syncRotationHandle } from './rotation.js';
 import { MARGEN_ESQUINA, OPENING_DEPTH, OPENING_MIN, viewState } from '../core/state.js';
-import { getRotation, smFromPx, smToPx, snapNameRotation } from '../core/units.js';
-import { applySceneScale, clampScale, updateMinScaleForRoom, updateSceneSize } from './view.js';
+import { getRotation, smFromPx, smToPx } from '../core/units.js';
+import { applySceneScale, clampScale, getParentRotation, updateMinScaleForRoom, updateSceneSize } from './view.js';
 
 export let smAlMetric = 'm';
 
@@ -332,11 +332,12 @@ function buildDimensionHighlight(item, dimension, active) {
 
     const badge = document.createElement('div');
     badge.className = 'dim-i-badge';
-    // El badge es hijo de un objeto ya rotado. Compensamos esa rotación para
-    // dejar el texto legible (0/180° en pantalla), en vez de sumar otra vez
-    // la orientación del objeto. También conservamos la escala inversa del UI.
-    const rotation = getRotation(item);
-    badge.style.transform = `rotate(${snapNameRotation(rotation) - rotation}deg) scale(var(--ui-inv-scale, 1))`;
+    // El badge hereda el giro del objeto y de su room. Lo compensamos por
+    // completo para que el texto quede siempre horizontal y derecho en pantalla.
+    const itemRotation = getRotation(item);
+    const parentRotation = getParentRotation(item.parentElement);
+    const totalRotation = itemRotation + parentRotation;
+    badge.style.transform = `rotate(${-totalRotation}deg) scale(var(--ui-inv-scale, 1))`;
 
     if (valueText) {
         const valueSpan = document.createElement('span');

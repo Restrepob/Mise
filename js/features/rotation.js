@@ -2,7 +2,7 @@
 import { isLShape } from './l-shape.js';
 import { syncLayerShapeIcon, syncShapePreviews } from './shape-preview.js';
 import { getSelectedObject, isOpening } from '../core/model.js';
-import { syncSizeManagerReadout } from './size-manager.js';
+import { currentDimHighlight, setDimensionHighlight, syncSizeManagerReadout } from './size-manager.js';
 import { toolState } from '../core/state.js';
 import { getRotation, normalizeDeg, snapNameRotation } from '../core/units.js';
 
@@ -25,6 +25,7 @@ export function applyRotation(item, deg) {
         const selectedChild = getSelectedObject();
         if (selectedChild && selectedChild !== item && item.contains(selectedChild)) {
             syncShapePreviews(selectedChild);
+            if (currentDimHighlight) setDimensionHighlight(currentDimHighlight);
         }
     }
     if (getSelectedObject() === item) {
