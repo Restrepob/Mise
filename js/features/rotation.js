@@ -1,10 +1,9 @@
 // Handle de rotacion
-import { isLShape } from './l-shape.js';
 import { syncLayerShapeIcon, syncShapePreviews } from './shape-preview.js';
-import { getSelectedObject, isOpening } from '../core/model.js';
+import { getSelectedObject, isOpening, syncItemNameRotation } from '../core/model.js';
 import { currentDimHighlight, setDimensionHighlight, syncSizeManagerReadout } from './size-manager.js';
 import { toolState } from '../core/state.js';
-import { getRotation, normalizeDeg, snapNameRotation } from '../core/units.js';
+import { getRotation, normalizeDeg } from '../core/units.js';
 
 export function applyRotation(item, deg) {
     if (!item || isOpening(item)) return;
@@ -14,14 +13,11 @@ export function applyRotation(item, deg) {
     item.querySelectorAll(':scope > .rotate-handle').forEach((handle) => {
         handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg) scale(var(--ui-inv-scale, 1))`;
     });
-    const nameEl = item.querySelector(':scope > .balance-name');
-    if (nameEl) {
-        const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
-        nameEl.style.transform = `${translate}rotate(${snapNameRotation(rotation)}deg) scale(var(--inv-scene-scale, 1))`;
-    }
+    syncItemNameRotation(item);
     syncLayerShapeIcon(item);
     if (item.dataset.type === 'room') {
         item.querySelectorAll('.object').forEach(syncLayerShapeIcon);
+        item.querySelectorAll('.object').forEach(syncItemNameRotation);
         const selectedChild = getSelectedObject();
         if (selectedChild && selectedChild !== item && item.contains(selectedChild)) {
             syncShapePreviews(selectedChild);

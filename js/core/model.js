@@ -3,7 +3,19 @@ import { scene } from './dom.js';
 import { getGridStep } from '../features/snapping.js';
 import { getLShapeMetrics, isLShape } from '../features/l-shape.js';
 import { MARGEN_ESQUINA, OPENING_MIN, state } from './state.js';
-import { getRotation, normalizeDeg, snapNameRotation } from './units.js';
+import { getRotation, normalizeDeg } from './units.js';
+
+export function syncItemNameRotation(item) {
+    const nameEl = item?.querySelector(':scope > .balance-name');
+    if (!nameEl) return;
+
+    const parentRotation = item.parentElement?.classList.contains('room')
+        ? getRotation(item.parentElement)
+        : 0;
+    const totalRotation = getRotation(item) + parentRotation;
+    const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
+    nameEl.style.transform = `${translate}rotate(${-totalRotation}deg) scale(var(--inv-scene-scale, 1))`;
+}
 
 export function getSelectedObject() {
     return state.selectedLayerId ? document.getElementById(state.selectedLayerId) : null;
@@ -22,9 +34,8 @@ export function setItemName(item, value) {
             if (node.nodeType === Node.TEXT_NODE) node.remove();
         });
         item.appendChild(nameEl);
-        const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
-        nameEl.style.transform = `${translate}rotate(${snapNameRotation(getRotation(item))}deg) scale(var(--inv-scene-scale, 1))`;
     }
+    syncItemNameRotation(item);
     let textEl = nameEl.querySelector('.balance-text');
     if (!textEl) {
         textEl = document.createElement('span');

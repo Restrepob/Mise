@@ -222,6 +222,7 @@ function createShapeObject(options = {}) {
     } else if (options.borderRadius) {
         createdItem.style.borderRadius = options.borderRadius;
     }
+    setItemName(createdItem, createdItem.dataset.name || name);
     syncLayerShapeIcon(createdItem);
 
     beginDraft(createdItem);
@@ -383,7 +384,8 @@ export function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, 
         room.dataset.type = 'furniture';
         // Centrar en el viewport: convertir el centro visible del canvas a
         // coordenadas de escena y luego a coordenadas locales de la room (respeta
-        // la rotación/posición de la room). Rotación siempre 0°.
+        // la rotación/posición de la room). Se compensa la rotación heredada para
+        // que el mueble nuevo quede orientado como la pantalla.
         const scale = viewState.scale || 1;
         const viewportCenterScene = {
             x: (viewState.scrollX + (canvas.clientWidth || 0) / 2) / scale,
@@ -392,8 +394,8 @@ export function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, 
         const localCenter = sceneToLocal(createdRoom, viewportCenterScene);
         room.style.left = `${localCenter.x}px`;
         room.style.top = `${localCenter.y}px`;
-        applyRotation(room, 0);
         createdRoom.appendChild(room);
+        applyRotation(room, -getRotation(createdRoom));
     }
 
     setItemName(room, name);

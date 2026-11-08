@@ -103,9 +103,6 @@ export function setupLShape(item, options = {}) {
     item.style.borderRadius = '';
     syncLShape(item);
 
-    const nameEl = item.querySelector(':scope > .balance-name');
-    if (nameEl) nameEl.style.transform = 'translate(-50%, -50%) rotate(0deg) scale(var(--inv-scene-scale, 1))';
-
     return item;
 }
 
