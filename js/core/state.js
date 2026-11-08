@@ -33,8 +33,6 @@ export const OPENING_DEPTH = 10;
 
 export const OPENING_MIN = metro / 10;
 
-export const MARGEN_ESQUINA = metro / 10;
-
 export const OPENING_DEFAULT = {
     window: 0.96 * metro,
     door: 0.76 * metro,

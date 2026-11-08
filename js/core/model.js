@@ -2,7 +2,7 @@
 import { scene } from './dom.js';
 import { getGridStep } from '../features/snapping.js';
 import { getLShapeMetrics, isLShape } from '../features/l-shape.js';
-import { MARGEN_ESQUINA, OPENING_MIN, state } from './state.js';
+import { OPENING_MIN, state } from './state.js';
 import { getRotation, normalizeDeg } from './units.js';
 import { syncItemNameLabel } from './name-labels.js';
 
@@ -313,8 +313,8 @@ export function getOpeningWallLength(item) {
 }
 
 export function clampOpeningOffset(item, offset, width = getOpeningWidth(item)) {
-    const maxOffset = Math.max(MARGEN_ESQUINA, getOpeningWallLength(item) - width - MARGEN_ESQUINA);
-    return Math.min(Math.max(offset, MARGEN_ESQUINA), maxOffset);
+    const maxOffset = Math.max(0, getOpeningWallLength(item) - width);
+    return Math.min(Math.max(offset, 0), maxOffset);
 }
 
 export function snapOpeningOffset(offset, wallLength) {

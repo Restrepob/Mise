@@ -9,7 +9,7 @@ import { placeOpening } from './openings.js';
 import { guardarCambios } from './persistence.js';
 import { syncRoomSwitcher } from './rooms.js';
 import { applyRotation, syncRotationHandle } from './rotation.js';
-import { MARGEN_ESQUINA, OPENING_DEPTH, OPENING_MIN, viewState } from '../core/state.js';
+import { OPENING_DEPTH, OPENING_MIN, viewState } from '../core/state.js';
 import { getRotation, smFromPx, smToPx } from '../core/units.js';
 import { syncItemNameLabel } from '../core/name-labels.js';
 import { applySceneScale, clampScale, getParentRotation, updateMinScaleForRoom, updateSceneSize } from './view.js';
@@ -487,7 +487,7 @@ export function applySizeDimension(input, unit, dimension) {
     if (isOpening(item) && dimension !== 'width') return false;
 
     if (isOpening(item)) {
-        const maxWidth = Math.max(OPENING_MIN, getOpeningWallLength(item) - MARGEN_ESQUINA * 2);
+        const maxWidth = Math.max(OPENING_MIN, getOpeningWallLength(item));
         item.dataset.openingWidth = String(Math.min(Math.max(OPENING_MIN, smToPx(value, unit)), maxWidth));
         placeOpening(item);
         syncOpeningOverlay(item);

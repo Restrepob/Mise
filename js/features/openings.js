@@ -1,7 +1,7 @@
 // Colocacion de puertas y ventanas
 import { drawDoorArc } from './door.js';
 import { clampOpeningOffset, getOpeningWallLength, getOpeningWidth, getParentInnerSize, snapOpeningOffset } from '../core/model.js';
-import { MARGEN_ESQUINA, OPENING_DEPTH, OPENING_MIN, SNAP_SENS } from '../core/state.js';
+import { OPENING_DEPTH, OPENING_MIN, SNAP_SENS } from '../core/state.js';
 
 export function placeOpening(item) {
     const room = item.parentElement;
@@ -9,7 +9,7 @@ export function placeOpening(item) {
     const roomSize = getParentInnerSize(room);
     const roomWidth = roomSize.width;
     const roomHeight = roomSize.height;
-    const maxWidth = Math.max(OPENING_MIN, getOpeningWallLength(item) - MARGEN_ESQUINA * 2);
+    const maxWidth = Math.max(OPENING_MIN, getOpeningWallLength(item));
     const width = Math.min(getOpeningWidth(item), maxWidth);
     const offset = clampOpeningOffset(item, Number(item.dataset.offset) || 0, width);
     const edge = item.dataset.edge || 'top';
