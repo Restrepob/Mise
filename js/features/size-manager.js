@@ -281,6 +281,11 @@ function clearDimensionHighlightOnBlur() {
     }, 50);
 }
 
+function confirmDraftDimensionOnBlur(dimension) {
+    if (isDrafting()) confirmDraftDimension(dimension);
+    clearDimensionHighlightOnBlur();
+}
+
 function isArmDimension(dimension) {
     return dimension === 'armX' || dimension === 'armY';
 }
@@ -546,6 +551,10 @@ smNombre.addEventListener('change', () => applySizeName());
 // esperar al blur del campo anterior.
 smNombre.addEventListener('focus', () => setDimensionHighlight(null));
 
+smNombre.addEventListener('blur', () => {
+    if (isDrafting() && smNombre.value.trim()) confirmDraftName();
+});
+
 smNombre.addEventListener('keydown', (event) => {
     if (event.key === 'Tab' && event.shiftKey) {
         event.preventDefault();
@@ -562,6 +571,14 @@ smNombre.addEventListener('keydown', (event) => {
         const result = confirmDraftName();
         if (result === 'invalid') {
             if (document.activeElement === smNombre) shakeDraftInput(smNombre);
+            return;
+        }
+        if (result === 'pending') {
+            const next = getNextDraftInput();
+            if (next) {
+                next.focus();
+                next.select();
+            }
             return;
         }
         // Al fijar el borrador con Enter el foco no debe quedarse en el campo
@@ -584,7 +601,7 @@ smAlto.addEventListener('focus', () => {
     setDimensionHighlight('height');
 });
 
-smAlto.addEventListener('blur', clearDimensionHighlightOnBlur);
+smAlto.addEventListener('blur', () => confirmDraftDimensionOnBlur('height'));
 
 smAlto.addEventListener('keydown', (event) => {
     if (event.key === 'Tab') {
@@ -597,10 +614,21 @@ smAlto.addEventListener('keydown', (event) => {
                 shakeDraftInput(smAlto);
                 return;
             }
-            if (confirmDraftDimension('height') === 'invalid') {
+            const result = confirmDraftDimension('height');
+            if (result === 'invalid') {
                 shakeDraftInput(smAlto);
                 return;
             }
+            if (result === 'done') {
+                smAlto.blur();
+                return;
+            }
+            const next = getNextDraftInput();
+            if (next) {
+                next.focus();
+                next.select();
+            }
+            return;
         }
 
         smAncho.focus();
@@ -621,9 +649,15 @@ smAlto.addEventListener('keydown', (event) => {
             shakeDraftInput(smAlto);
             return;
         }
-        // Enter fija la medida y pasa a Ancho, tanto al crear como al editar.
-        smAncho.focus();
-        smAncho.select();
+        if (result === 'pending') {
+            const next = getNextDraftInput();
+            if (next && next !== smAlto) {
+                next.focus();
+                next.select();
+            }
+        } else {
+            smAlto.blur();
+        }
         return;
     }
 
@@ -648,7 +682,7 @@ smAncho.addEventListener('focus', () => {
     setDimensionHighlight('width');
 });
 
-smAncho.addEventListener('blur', clearDimensionHighlightOnBlur);
+smAncho.addEventListener('blur', () => confirmDraftDimensionOnBlur('width'));
 
 smAncho.addEventListener('keydown', (event) => {
     if (event.key === 'Tab') {
@@ -763,7 +797,7 @@ smLArmX.addEventListener('change', () => refreshLArmField(smLArmX, smLArmXMetric
 
 smLArmX.addEventListener('focus', () => setDimensionHighlight('armX'));
 
-smLArmX.addEventListener('blur', clearDimensionHighlightOnBlur);
+smLArmX.addEventListener('blur', () => confirmDraftDimensionOnBlur('armX'));
 
 smLArmX.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
@@ -797,7 +831,7 @@ smLArmY.addEventListener('change', () => refreshLArmField(smLArmY, smLArmYMetric
 
 smLArmY.addEventListener('focus', () => setDimensionHighlight('armY'));
 
-smLArmY.addEventListener('blur', clearDimensionHighlightOnBlur);
+smLArmY.addEventListener('blur', () => confirmDraftDimensionOnBlur('armY'));
 
 smLArmY.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {

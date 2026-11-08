@@ -173,9 +173,19 @@ export function confirmDraftName() {
     if (!smNombre.value.trim()) return 'invalid';
 
     draftState.confirmed.name = true;
-    // Aunque el nombre se confirme al final, las medidas tambien deben ser
-    // validas: si alguna quedo en 0, se vuelve a ese campo.
-    return tryFinalizeDraft() ? 'done' : 'invalid';
+    const dimensions = draftDimensions();
+    const invalid = dimensions.find((dimension) => !isDimensionValid(dimension));
+    if (invalid) {
+        focusInput(dimensionInput(invalid));
+        return 'invalid';
+    }
+
+    if (dimensions.some((dimension) => !draftState.confirmed[dimension])) {
+        emit('dimension');
+        return 'pending';
+    }
+
+    return finalizeDraft() ? 'done' : 'invalid';
 }
 
 // Fija la figura con las medidas que tenga en ese momento. Devuelve false si
