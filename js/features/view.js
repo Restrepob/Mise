@@ -1,32 +1,43 @@
 // Zoom, scroll y transformacion del scene
 import { canvas, scene } from '../core/dom.js';
 import { syncOpeningOverlay } from './door.js';
-import { getActiveRoom, getSelectedObject } from '../core/model.js';
+import { getActiveRoom, getItemBoxSize, getSelectedObject } from '../core/model.js';
 import { flushActiveView } from './persistence.js';
 import { SCENE_PADDING, viewState } from '../core/state.js';
 import { getRotation, normalizeDeg } from '../core/units.js';
 import { syncItemNameLabel } from '../core/name-labels.js';
 import { syncLShape } from './l-shape.js';
 
+const ROOM_PADDING_RATIO = 0.2;
+const MAX_ROOM_PADDING = 100_000;
+const MIN_VIEW_SCALE = 0.001;
+
+function getRoomScenePadding(width, height) {
+    return Math.min(MAX_ROOM_PADDING, Math.max(SCENE_PADDING, Math.max(width, height) * ROOM_PADDING_RATIO));
+}
+
 export function updateSceneSize(item) {
     if (!item.classList.contains('room')) return;
 
-    const height = parseFloat(item.style.height) || item.offsetHeight;
-    const width = parseFloat(item.style.width) || item.offsetWidth;
-    scene.style.width = `${width + SCENE_PADDING}px`;
-    scene.style.height = `${height + SCENE_PADDING}px`;
+    const { width, height } = getItemBoxSize(item);
+    const padding = getRoomScenePadding(width, height);
+    scene.style.width = `${width + padding}px`;
+    scene.style.height = `${height + padding}px`;
 }
 
 export function updateMinScaleForRoom(room) {
     if (!room || !room.classList.contains('room')) return;
 
-    const width = parseFloat(room.style.width) || room.offsetWidth;
-    const height = parseFloat(room.style.height) || room.offsetHeight;
+    const { width, height } = getItemBoxSize(room);
+    const padding = getRoomScenePadding(width, height);
     const fit = Math.min(
-        canvas.clientWidth / (width + SCENE_PADDING),
-        canvas.clientHeight / (height + SCENE_PADDING),
+        canvas.clientWidth / (width + padding),
+        canvas.clientHeight / (height + padding),
     );
-    viewState.minScale = Math.min(viewState.baseMinScale, Math.max(0.05, fit));
+    // En rooms grandes, el límite baja con su tamaño para poder alejarse y
+    // ver el plano junto con un margen finito. El 75 % del zoom de encaje deja
+    // un poco más de espacio de navegación sin permitir un zoom ilimitado.
+    viewState.minScale = Math.min(viewState.baseMinScale, Math.max(MIN_VIEW_SCALE, fit * 0.75));
 }
 
 export function clampScale(scale) {

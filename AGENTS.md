@@ -99,6 +99,10 @@ consulta por id/clase o mediante `core/dom.js`.
 - **Rotación del padre:** los desplazamientos de pantalla se convierten a
   coordenadas locales con `sceneDeltaToLocal()` para que el arrastre siga
   funcionando con rooms rotadas.
+- **Zoom y espacio virtual:** el margen del `scene` parte de `SCENE_PADDING`
+  y crece hasta un 20 % del lado mayor de la room (con tope finito). El zoom
+  mínimo se calcula para cada room y permite alejarse un 25 % más allá del
+  encuadre de todo el espacio, con un límite inferior de escala de `0.001`.
 - **Sidebar:** tres paneles redimensionables (Rooms, Propiedades, Objetos).
   Las alturas se guardan como proporciones en `localStorage`. Los paneles se
   pueden colapsar y el estado se recuerda.
