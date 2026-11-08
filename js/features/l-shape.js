@@ -2,7 +2,7 @@
 // El alto y ancho siguen siendo la caja total; los brazos solo recortan el
 // relleno interior, por eso la seleccion, el handle de rotacion y las cotas
 // siguen viviendo en el elemento exterior.
-import { metro } from '../core/state.js';
+import { metro, viewState } from '../core/state.js';
 
 const MIN_ARM = 1;
 
@@ -65,7 +65,7 @@ export function syncLShape(item) {
 
     // Contorno interior para la seleccion: el relleno se recorta unos pixeles
     // hacia dentro y deja ver el borde azul que pinta el pseudo-elemento.
-    const border = Math.max(0, Math.min(3, armX / 2, armY / 2));
+    const border = Math.max(0, Math.min(3 / (viewState.scale || 1), armX / 2, armY / 2));
     const left = (border / width) * 100;
     const top = (border / height) * 100;
     const right = ((width - border) / width) * 100;

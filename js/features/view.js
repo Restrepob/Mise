@@ -6,6 +6,7 @@ import { flushActiveView } from './persistence.js';
 import { SCENE_PADDING, viewState } from '../core/state.js';
 import { getRotation, normalizeDeg } from '../core/units.js';
 import { syncItemNameLabel } from '../core/name-labels.js';
+import { syncLShape } from './l-shape.js';
 
 export function updateSceneSize(item) {
     if (!item.classList.contains('room')) return;
@@ -57,6 +58,7 @@ export function applySceneScale() {
     // fijo al objeto.
     scene.style.setProperty('--ui-inv-scale', String(Math.min(1, 1 / viewState.scale)));
     if (nameLayoutScale !== viewState.scale) {
+        scene.querySelectorAll('.l-shape').forEach((item) => syncLShape(item));
         scene.querySelectorAll('.balance-name').forEach((label) => {
             syncItemNameLabel(label.parentElement);
         });

@@ -10,7 +10,7 @@
 .rotate-handle {
     position:absolute;
     left:50%;
-    top:-18px;
+    top:calc(-18px * var(--inv-scene-scale, 1));
     width:26px;
     height:26px;
     display:flex;
@@ -22,7 +22,7 @@
     background:var(--color-elevated);
     color:var(--color-text);
     pointer-events:auto;
-    transform:translate(-50%, -50%) scale(var(--ui-inv-scale, 1));
+    transform:translate(-50%, -50%) scale(var(--inv-scene-scale, 1));
     transform-origin:center;
     z-index:20;
     cursor:grab;
@@ -92,7 +92,7 @@
 
 .furniture.semicircle.selected .semicircle-fill,
 .furniture.semicircle.layer-hover-preview .semicircle-fill {
-    inset:calc(2px * var(--ui-inv-scale, 1));
+    inset:calc(2px * var(--inv-scene-scale, 1));
 }
 
 .furniture.semicircle.draft {
@@ -105,7 +105,7 @@
 }
 
 .furniture.semicircle.draft .semicircle-fill {
-    inset:calc(2px * var(--ui-inv-scale, 1));
+    inset:calc(2px * var(--inv-scene-scale, 1));
 }
 
 /* La seleccion ocupa el propio borde y crece hacia dentro, sin sobresalir del
@@ -117,7 +117,7 @@
 .room.layer-hover-preview,
 .furniture.layer-hover-preview {
     border-color:#48a1ff !important;
-    box-shadow:inset 0 0 0 calc(2px * var(--ui-inv-scale, 1)) #48a1ff;
+    box-shadow:inset 0 0 0 calc(2px * var(--inv-scene-scale, 1)) #48a1ff;
     filter:none;
     z-index:10;
 }
@@ -430,7 +430,7 @@
 
 .opening.selected,
 .opening.layer-hover-preview {
-    box-shadow:0 0 0 calc(2px * var(--ui-inv-scale, 1)) #48a1ff;
+    box-shadow:0 0 0 calc(2px * var(--inv-scene-scale, 1)) #48a1ff;
 }
 
 .opening-measure {
