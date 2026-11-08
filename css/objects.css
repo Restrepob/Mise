@@ -141,14 +141,30 @@
 .furniture.l-shape {
     background:transparent;
     border:0;
+    /* La caja exterior incluye el entrante vacío: solo el relleno recortado
+       debe capturar el puntero para dejar seleccionar lo que haya debajo. */
+    pointer-events:none;
 }
 
 .l-shape-fill {
     position:absolute;
     inset:0;
-    pointer-events:none;
+    pointer-events:auto;
     background:var(--l-fill, #62DBFF);
     clip-path:var(--l-clip);
+}
+
+.furniture.l-shape > .rotate-handle {
+    pointer-events:auto;
+}
+
+.furniture.l-shape::after {
+    content:"";
+    position:absolute;
+    inset:0;
+    background:transparent;
+    clip-path:var(--l-clip);
+    pointer-events:auto;
 }
 
 /* Contorno de seleccion por debajo del relleno. El relleno se recorta hacia
