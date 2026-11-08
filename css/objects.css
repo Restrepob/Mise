@@ -166,15 +166,14 @@
 
 .furniture > .balance-name,
 .room > .balance-name {
-    /* Tamaño de letra constante respecto al viewport (contra-zoom completo):
-       se encoge al acercar para no quedar grande; al alejar no crece más allá
-       del objeto (tope por desborde), con margen interior para legibilidad. */
-    font-size: var(--fs-small);
+    position:absolute;
+    left:50%;
+    top:50%;
+    font-size:14px;
     line-height: 1.2;
     min-width: 0;
-    max-width: max(0px, calc(100% * var(--scene-scale, 1) - 12px));
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width:none;
+    overflow:visible;
     white-space: nowrap;
     text-align: center;
     transform-origin:center;
@@ -185,8 +184,6 @@
 .furniture > .balance-name .balance-text,
 .room > .balance-name .balance-text {
     display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
     white-space: nowrap;
 }
 

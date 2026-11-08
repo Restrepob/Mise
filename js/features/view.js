@@ -5,6 +5,7 @@ import { getActiveRoom, getSelectedObject } from '../core/model.js';
 import { flushActiveView } from './persistence.js';
 import { SCENE_PADDING, viewState } from '../core/state.js';
 import { getRotation, normalizeDeg } from '../core/units.js';
+import { syncItemNameLabel } from '../core/name-labels.js';
 
 export function updateSceneSize(item) {
     if (!item.classList.contains('room')) return;
@@ -31,6 +32,8 @@ export function clampScale(scale) {
     return Math.min(Math.max(scale, viewState.minScale), viewState.maxScale);
 }
 
+let nameLayoutScale = null;
+
 export function getCenteredViewScroll() {
     const sceneWidth = scene.offsetWidth || 0;
     const sceneHeight = scene.offsetHeight || 0;
@@ -53,6 +56,12 @@ export function applySceneScale() {
     // alejar no crece por encima de su tamaño máximo permisible y se mantiene
     // fijo al objeto.
     scene.style.setProperty('--ui-inv-scale', String(Math.min(1, 1 / viewState.scale)));
+    if (nameLayoutScale !== viewState.scale) {
+        scene.querySelectorAll('.balance-name').forEach((label) => {
+            syncItemNameLabel(label.parentElement);
+        });
+        nameLayoutScale = viewState.scale;
+    }
 }
 
 export let viewPersistTimer = null;

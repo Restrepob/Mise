@@ -11,6 +11,7 @@ import { syncRoomSwitcher } from './rooms.js';
 import { applyRotation, syncRotationHandle } from './rotation.js';
 import { MARGEN_ESQUINA, OPENING_DEPTH, OPENING_MIN, viewState } from '../core/state.js';
 import { getRotation, smFromPx, smToPx } from '../core/units.js';
+import { syncItemNameLabel } from '../core/name-labels.js';
 import { applySceneScale, clampScale, getParentRotation, updateMinScaleForRoom, updateSceneSize } from './view.js';
 
 export let smAlMetric = 'm';
@@ -507,6 +508,7 @@ export function applySizeDimension(input, unit, dimension) {
         viewState.scale = clampScale(viewState.scale);
         applySceneScale();
     }
+    syncItemNameLabel(item);
     // En un borrador el tamano se aplica en vivo pero no se guarda: la medida
     // vuelve a quedar pendiente hasta que se confirme con Enter o Tab.
     // El campo de medida del objeto se actualiza al mismo tiempo que el input
@@ -718,6 +720,7 @@ function applyLArmDimension(input, unit, axis) {
     if (!Number.isFinite(value) || value <= 0) return false;
 
     setLShapeArm(item, axis, smToPx(value, unit));
+    syncItemNameLabel(item);
     syncShapePreviews(item);
     if (!isDrafting()) guardarCambios(item);
     return true;

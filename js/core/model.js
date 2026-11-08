@@ -4,17 +4,10 @@ import { getGridStep } from '../features/snapping.js';
 import { getLShapeMetrics, isLShape } from '../features/l-shape.js';
 import { MARGEN_ESQUINA, OPENING_MIN, state } from './state.js';
 import { getRotation, normalizeDeg } from './units.js';
+import { syncItemNameLabel } from './name-labels.js';
 
 export function syncItemNameRotation(item) {
-    const nameEl = item?.querySelector(':scope > .balance-name');
-    if (!nameEl) return;
-
-    const parentRotation = item.parentElement?.classList.contains('room')
-        ? getRotation(item.parentElement)
-        : 0;
-    const totalRotation = getRotation(item) + parentRotation;
-    const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
-    nameEl.style.transform = `${translate}rotate(${-totalRotation}deg) scale(var(--inv-scene-scale, 1))`;
+    syncItemNameLabel(item);
 }
 
 export function getSelectedObject() {
@@ -43,6 +36,7 @@ export function setItemName(item, value) {
         nameEl.replaceChildren(textEl);
     }
     textEl.textContent = value;
+    syncItemNameLabel(item);
 }
 
 export function getRooms() {
