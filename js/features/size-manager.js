@@ -332,7 +332,11 @@ function buildDimensionHighlight(item, dimension, active) {
 
     const badge = document.createElement('div');
     badge.className = 'dim-i-badge';
-    badge.style.transform = `rotate(${snapNameRotation(getRotation(item))}deg)`;
+    // El badge es hijo de un objeto ya rotado. Compensamos esa rotación para
+    // dejar el texto legible (0/180° en pantalla), en vez de sumar otra vez
+    // la orientación del objeto. También conservamos la escala inversa del UI.
+    const rotation = getRotation(item);
+    badge.style.transform = `rotate(${snapNameRotation(rotation) - rotation}deg) scale(var(--ui-inv-scale, 1))`;
 
     if (valueText) {
         const valueSpan = document.createElement('span');
