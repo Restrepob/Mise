@@ -56,7 +56,20 @@ export function syncGroupSelectionOverlay() {
         handle.setAttribute('aria-label', 'Girar el grupo: arrastra para rotar o haz clic para girar 90 grados');
         handle.innerHTML = ROTATE_HANDLE_SVG_FREE;
         handle.addEventListener('pointerdown', startGroupRotation);
-        handle.addEventListener('contextmenu', (event) => event.preventDefault());
+        handle.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+        handle.addEventListener('keydown', (event) => {
+            if (event.key !== 'Enter' && event.key !== ' ') return;
+            event.preventDefault();
+            event.stopPropagation();
+            rotateSelectionGroupBy(-90);
+        });
+        handle.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
         overlay.appendChild(handle);
         parent.appendChild(overlay);
     }

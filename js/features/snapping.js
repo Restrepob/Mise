@@ -1,6 +1,6 @@
 // Snap a grid, paredes y objetos (X e Y independientes)
 import { canvas, guidesLayer } from '../core/dom.js';
-import { getItemHitboxEdges, getParentInnerSize, isOpening } from '../core/model.js';
+import { getItemBoxSize, getItemHitboxEdges, getParentInnerSize, isOpening } from '../core/model.js';
 import { GRID_STEP, SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX, SNAP_SENS, SNAP_WORLD_MAX, viewState } from '../core/state.js';
 import { getParentRotation, localToCanvas } from './view.js';
 
@@ -44,7 +44,8 @@ export function getSnapThreshold(screenSens = SNAP_SENS, worldMax = SNAP_WORLD_M
     return Math.min(screenSens / viewState.scale, worldMax);
 }
 
-export function collectSnapTargets(parent, item) {
+export function collectSnapTargets(parent, item, ignoredItems = []) {
+    const ignored = new Set(ignoredItems);
     const parentSize = getParentInnerSize(parent);
     // Las paredes son los bordes del área interior de la room y abarcan todo
     // el alto/ancho interior.
@@ -60,7 +61,7 @@ export function collectSnapTargets(parent, item) {
     parent.querySelectorAll(':scope > .object').forEach((sibling) => {
         // Las puertas/ventanas viven sobre la pared: no deben competir como
         // objetivo de snap. El objeto debe alinearse con la pared real.
-        if (sibling === item || isOpening(sibling) || sibling.getClientRects().length === 0) return;
+        if (sibling === item || ignored.has(sibling) || isOpening(sibling) || sibling.getClientRects().length === 0) return;
 
         // Cada hermano aporta los lados de su silueta real (no solo la caja
         // cuadrada). El tramo de cada lado evita que el snap enganche contra
@@ -204,4 +205,38 @@ export function snapObject(item, left, top, parent) {
         left: left + (xSnap?.delta || 0),
         top: top + (ySnap?.delta || 0),
     };
+}
+
+export function snapGroup(items, parent) {
+    if (!items?.length || !parent) return { deltaX: 0, deltaY: 0 };
+
+    const bounds = items.map((item) => {
+        const x = Number.parseFloat(item.style.left) || 0;
+        const y = Number.parseFloat(item.style.top) || 0;
+        const { width, height } = getItemBoxSize(item);
+        return { left: x - width / 2, right: x + width / 2, top: y - height / 2, bottom: y + height / 2 };
+    });
+    const left = Math.min(...bounds.map((box) => box.left));
+    const right = Math.max(...bounds.map((box) => box.right));
+    const top = Math.min(...bounds.map((box) => box.top));
+    const bottom = Math.max(...bounds.map((box) => box.bottom));
+    const xAnchors = [
+        { axis: 'x', pos: left, min: top, max: bottom },
+        { axis: 'x', pos: right, min: top, max: bottom },
+    ];
+    const yAnchors = [
+        { axis: 'y', pos: top, min: left, max: right },
+        { axis: 'y', pos: bottom, min: left, max: right },
+    ];
+    const targets = collectSnapTargets(parent, null, items);
+    const alignThreshold = getSnapThreshold();
+    const gridThreshold = getSnapThreshold(SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX);
+    const xSnap = pickSnap(xAnchors, targets.x, alignThreshold, gridThreshold);
+    const ySnap = pickSnap(yAnchors, targets.y, alignThreshold, gridThreshold);
+
+    clearSnapGuides();
+    if (xSnap) drawSnapGuide('x', xSnap.pos, parent);
+    if (ySnap) drawSnapGuide('y', ySnap.pos, parent);
+
+    return { deltaX: xSnap?.delta || 0, deltaY: ySnap?.delta || 0 };
 }

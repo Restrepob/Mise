@@ -156,6 +156,8 @@ Implementado y estable:
 - Rooms: switcher, duplicado, contenido clonado, capas y visibilidad.
 - Muebles: arrastre con snap, rotación libre/90°, medidas, radio, nombre,
   edges, tolerancia y duplicado.
+- Selección múltiple temporal con `Ctrl/Cmd`: arrastre con snap a grid, paredes
+  y muebles; rotación del conjunto desde el contorno virtual o con `Shift+R`.
 - Forma L: brazos editables (grosor izq./inf.), unidades, persistencia,
   duplicado, rotación y exportación.
 - Puertas/ventanas: colocación en paredes, dirección, eje y ancho.
@@ -167,8 +169,6 @@ Implementado y estable:
 
 Pendiente / backlog (no implementado todavía):
 
-- Selección múltiple con `Ctrl/Cmd` en escena y capas, y objeto de grupo
-  imaginario con rotación propia.
 - Ajuste editable de distancias de un mueble a las cuatro paredes desde el
   sidebar (más allá de la tolerancia visual actual).
 - Panel/overlay de atajos estilo Linear y flujo 100 % teclado.

@@ -9,7 +9,7 @@ import { dragOpeningAlongWall } from './openings.js';
 import { flushActiveView, guardarCambios } from './persistence.js';
 import { ROTATE_DRAG_THRESHOLD, applyRotation, rotateByClick, syncRotationHandle } from './rotation.js';
 import { syncSizeManager } from './size-manager.js';
-import { clearSnapGuides, snapObject } from './snapping.js';
+import { clearSnapGuides, snapGroup, snapObject } from './snapping.js';
 import { AUTO_SCROLL_EDGE, AUTO_SCROLL_IDLE, AUTO_SCROLL_SPEED, state, toolState, viewState } from '../core/state.js';
 import { getRotation, snapRotation } from '../core/units.js';
 import { pointerToScene, sceneDeltaToLocal, sceneToLocal, setViewScroll, zoomAtPoint, zoomAtScreenPoint } from './view.js';
@@ -35,6 +35,17 @@ export function positionDraggedObject(clientX, clientY) {
             groupItem.style.left = `${groupStartPositions[index].x + localDelta.x}px`;
             groupItem.style.top = `${groupStartPositions[index].y + localDelta.y}px`;
         });
+        if (shiftKey) {
+            clearSnapGuides();
+        } else {
+            const snapped = snapGroup(groupItems, parent);
+            if (snapped.deltaX || snapped.deltaY) {
+                groupItems.forEach((groupItem) => {
+                    groupItem.style.left = `${(Number.parseFloat(groupItem.style.left) || 0) + snapped.deltaX}px`;
+                    groupItem.style.top = `${(Number.parseFloat(groupItem.style.top) || 0) + snapped.deltaY}px`;
+                });
+            }
+        }
         syncGroupSelectionOverlay();
         return;
     }
@@ -360,7 +371,12 @@ export function setDragShift(shiftKey) {
         // coordenadas locales del padre) y desde ahí sigue al puntero.
         const { item, parent } = drag;
         drag.startPointer = pointerToScene({ clientX: drag.lastX, clientY: drag.lastY });
-        if (isOpening(item)) {
+        if (drag.groupItems?.length > 1) {
+            drag.groupStartPositions = drag.groupItems.map((groupItem) => ({
+                x: Number.parseFloat(groupItem.style.left) || 0,
+                y: Number.parseFloat(groupItem.style.top) || 0,
+            }));
+        } else if (isOpening(item)) {
             drag.startLocal = sceneToLocal(parent, drag.startPointer);
         } else {
             const rect = item.getBoundingClientRect();
