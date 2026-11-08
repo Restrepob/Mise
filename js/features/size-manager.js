@@ -3,6 +3,7 @@ import { smAlto, smAncho, smLArmX, smLArmY, smNombre, smRadius, smRotate90, smRo
 import { syncDoorPanel, syncEdgePanel, syncOpeningOverlay, syncTolerancePanel } from './door.js';
 import { getLShapeMetrics, isLShape, setLShapeArm, syncLShape } from './l-shape.js';
 import { syncShapePreviews } from './shape-preview.js';
+import { syncGestureHint } from './gesture-hint.js';
 import { getActiveRoom, getOpeningWallLength, getSelectedObject, isOpening, setItemName } from '../core/model.js';
 import { confirmDraftDimension, confirmDraftName, draftState, getNextDraftInput, isDrafting, markDimensionEdited, markDraftNameEdited, shakeDraftInput } from './draft.js';
 import { placeOpening } from './openings.js';
@@ -397,6 +398,7 @@ export function syncSizeManager() {
     const panel = document.querySelector('.size-manager');
     panel.classList.toggle('empty', !item);
     panel.classList.toggle('is-multi-selection', (state.selectedObjectIds || []).length > 1);
+    syncGestureHint(item, (state.selectedObjectIds || []).length > 1);
     setSizeManagerDisabled(!item, item);
     setOpeningPanelFields(item);
     syncDoorPanel(item);

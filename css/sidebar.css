@@ -132,6 +132,34 @@
     display:none;
 }
 
+.sidebar-gesture-hint {
+    position:sticky;
+    bottom:0;
+    z-index:5;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    height:24px;
+    margin:0 8px 4px;
+    padding:0 6px;
+    border:1px solid rgba(255, 255, 255, 0.07);
+    border-radius:6px;
+    background:var(--color-card);
+    color:var(--color-caption);
+    font-size:9px;
+    line-height:1;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+}
+
+.sidebar-gesture-hint > span {
+    min-width:0;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
 /* Sin seleccion el panel de propiedades queda vacio, sin texto de ayuda. */
 .size-manager.empty .panel-body > * {
     display:none;

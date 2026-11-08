@@ -44,6 +44,7 @@ js/
     nudge.js        Movimiento fino del objeto seleccionado con flechas.
     sidebar-layout.js Resizers, alturas persistidas y paneles colapsables.
     tooltips.js     Tooltips flotantes basados en `data-tooltip`.
+    gesture-hint.js Consejo fijo de gestos en la sidebar con carrusel al hover.
     export-plan.js  Exportación del plano a JSON/texto.
 ```
 

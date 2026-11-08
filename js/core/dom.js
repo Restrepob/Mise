@@ -3,6 +3,10 @@ export const main = document.querySelector('.main');
 
 export const objectLayers = document.getElementById('object-layer-box');
 
+export const selectionGestureHint = document.getElementById('selection-gesture-hint');
+
+export const selectionGestureHintText = document.getElementById('selection-gesture-hint-text');
+
 export const roomLayers = document.getElementById('room-layer-box');
 
 export const popup =document.getElementById('popupGetSize');
