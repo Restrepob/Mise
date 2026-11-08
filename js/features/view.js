@@ -49,6 +49,10 @@ export function applySceneScale() {
     // contrarrestar el zoom y mantener un tamaño visual constante en pantalla.
     scene.style.setProperty('--scene-scale', String(viewState.scale));
     scene.style.setProperty('--inv-scene-scale', String(1 / viewState.scale));
+    // Tope para UI del lienzo: al acercar se compensa el zoom (legible), al
+    // alejar no crece por encima de su tamaño máximo permisible y se mantiene
+    // fijo al objeto.
+    scene.style.setProperty('--ui-inv-scale', String(Math.min(1, 1 / viewState.scale)));
 }
 
 export let viewPersistTimer = null;

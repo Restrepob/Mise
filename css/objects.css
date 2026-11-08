@@ -10,7 +10,7 @@
 .rotate-handle {
     position:absolute;
     left:50%;
-    top:calc(-18px / var(--scene-scale, 1));
+    top:-18px;
     width:26px;
     height:26px;
     display:flex;
@@ -22,7 +22,7 @@
     background:var(--color-elevated);
     color:var(--color-text);
     pointer-events:auto;
-    transform:translate(-50%, -50%) scale(var(--inv-scene-scale, 1));
+    transform:translate(-50%, -50%) scale(var(--ui-inv-scale, 1));
     transform-origin:center;
     z-index:20;
     cursor:grab;
@@ -78,7 +78,7 @@
 
 .furniture.semicircle.selected .semicircle-fill,
 .furniture.semicircle.layer-hover-preview .semicircle-fill {
-    inset:calc(2px / var(--scene-scale, 1));
+    inset:calc(2px * var(--ui-inv-scale, 1));
 }
 
 .furniture.semicircle.draft {
@@ -91,19 +91,19 @@
 }
 
 .furniture.semicircle.draft .semicircle-fill {
-    inset:calc(2px / var(--scene-scale, 1));
+    inset:calc(2px * var(--ui-inv-scale, 1));
 }
 
 /* La seleccion ocupa el propio borde y crece hacia dentro, sin sobresalir del
    objeto. El border tambien se pinta de azul para que no quede el color del
-   objeto entre la linea de seleccion y el exterior. El grosor se compensa con
-   el zoom para que el selector mantenga un tamaño visual constante. */
+   objeto entre la linea de seleccion y el exterior. El grosor se compensa al acercar; al alejar mantiene un tope fijo al
+   objeto (tamaño máximo permisible). */
 .room.selected,
 .furniture.selected,
 .room.layer-hover-preview,
 .furniture.layer-hover-preview {
     border-color:#48a1ff !important;
-    box-shadow:inset 0 0 0 calc(2px / var(--scene-scale, 1)) #48a1ff;
+    box-shadow:inset 0 0 0 calc(2px * var(--ui-inv-scale, 1)) #48a1ff;
     filter:none;
     z-index:10;
 }
@@ -166,9 +166,28 @@
 
 .furniture > .balance-name,
 .room > .balance-name {
+    /* Tamaño de letra constante respecto al viewport (contra-zoom completo):
+       se encoge al acercar para no quedar grande; al alejar no crece más allá
+       del objeto (tope por desborde), con margen interior para legibilidad. */
+    font-size: var(--fs-small);
+    line-height: 1.2;
+    min-width: 0;
+    max-width: max(0px, calc(100% * var(--scene-scale, 1) - 12px));
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: center;
     transform-origin:center;
     pointer-events:none;
     user-select:none;
+}
+
+.furniture > .balance-name .balance-text,
+.room > .balance-name .balance-text {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .furniture.l-shape > .balance-name {
@@ -322,7 +341,7 @@
 
 .opening.selected,
 .opening.layer-hover-preview {
-    box-shadow:0 0 0 calc(2px / var(--scene-scale, 1)) #48a1ff;
+    box-shadow:0 0 0 calc(2px * var(--ui-inv-scale, 1)) #48a1ff;
 }
 
 .opening-measure {
@@ -391,7 +410,7 @@
 .dim-i-highlight--v {
     top: 0;
     bottom: 0;
-    right: calc(-18px / var(--scene-scale, 1));
+    right: calc(-18px * var(--ui-inv-scale, 1));
     width: 14px;
     display: flex;
     flex-direction: column;
@@ -403,7 +422,7 @@
 .dim-i-highlight--h {
     left: 0;
     right: 0;
-    bottom: calc(-18px / var(--scene-scale, 1));
+    bottom: calc(-18px * var(--ui-inv-scale, 1));
     height: 14px;
     display: flex;
     flex-direction: row;
@@ -413,7 +432,7 @@
 
 /* Grosor del brazo vertical (armX): I horizontal sobre el brazo izquierdo. */
 .dim-i-highlight--arm-x {
-    top: calc(-18px / var(--scene-scale, 1));
+    top: calc(-18px * var(--ui-inv-scale, 1));
     bottom: auto;
     left: 0;
     right: auto;
@@ -425,13 +444,13 @@
     top: auto;
     bottom: 0;
     left: auto;
-    right: calc(-18px / var(--scene-scale, 1));
+    right: calc(-18px * var(--ui-inv-scale, 1));
 }
 
 /* En la L, la cota del tramo corto va al lado derecho y la altura total al
    izquierdo para que cada etiqueta quede junto a la sección que representa. */
-.dim-i-highlight--l-arm-y { right:calc(-18px / var(--scene-scale, 1)); left:auto; }
-.dim-i-highlight--l-height { left:calc(-18px / var(--scene-scale, 1)); right:auto; }
+.dim-i-highlight--l-arm-y { right:calc(-18px * var(--ui-inv-scale, 1)); left:auto; }
+.dim-i-highlight--l-height { left:calc(-18px * var(--ui-inv-scale, 1)); right:auto; }
 
 /* Ticks perpendiculares en los extremos (los topes de la I) */
 .dim-i-highlight--v .dim-i-cap {
@@ -490,7 +509,7 @@
     align-items: center;
     justify-content: center;
     white-space: nowrap;
-    transform: scale(var(--inv-scene-scale, 1));
+    transform: scale(var(--ui-inv-scale, 1));
     transform-origin: center;
 }
 

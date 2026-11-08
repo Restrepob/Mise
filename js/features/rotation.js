@@ -12,7 +12,7 @@ export function applyRotation(item, deg) {
     item.dataset.rotation = String(rotation);
     item.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
     item.querySelectorAll(':scope > .rotate-handle').forEach((handle) => {
-        handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg) scale(var(--inv-scene-scale, 1))`;
+        handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg) scale(var(--ui-inv-scale, 1))`;
     });
     const nameEl = item.querySelector(':scope > .balance-name');
     if (nameEl) {
@@ -71,7 +71,7 @@ export function syncRotationHandle(item) {
         item.appendChild(handle);
     }
 
-    handle.style.transform = `translate(-50%, -50%) rotate(${-getRotation(item)}deg) scale(var(--inv-scene-scale, 1))`;
+    handle.style.transform = `translate(-50%, -50%) rotate(${-getRotation(item)}deg) scale(var(--ui-inv-scale, 1))`;
 }
 
 export function startRotationDrag(event) {
