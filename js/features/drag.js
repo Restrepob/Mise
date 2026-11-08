@@ -1,7 +1,8 @@
 // Arrastre de objetos y autoscroll
 import { canvas, scene } from '../core/dom.js';
 import { clearOpeningOverlay, syncOpeningOverlay } from './door.js';
-import { openLayerMenuForItem, selectVisibleObject } from './layers.js';
+import { openLayerMenuForItem, selectVisibleObject, toggleMultiSelection } from './layers.js';
+import { getGroupSelection, syncGroupSelectionOverlay } from './group-selection.js';
 import { handleMeasurePointerDown, stopMeasureDrag, updateMeasureCursor, updateMeasureDrag } from './measure.js';
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { dragOpeningAlongWall } from './openings.js';
@@ -17,7 +18,7 @@ export let autoscrollRaf = null;
 let lastModifierRotateTime = 0;
 
 export function positionDraggedObject(clientX, clientY) {
-    const { item, parent, startPointer, startLocal, shiftKey } = toolState.dragObject;
+    const { item, parent, startPointer, startLocal, shiftKey, groupItems, groupStartPositions } = toolState.dragObject;
     const pointer = pointerToScene({ clientX, clientY });
 
     // El arrastre se calcula en coordenadas locales del padre: el
@@ -29,6 +30,14 @@ export function positionDraggedObject(clientX, clientY) {
         pointer.x - startPointer.x,
         pointer.y - startPointer.y,
     );
+    if (groupItems?.length > 1) {
+        groupItems.forEach((groupItem, index) => {
+            groupItem.style.left = `${groupStartPositions[index].x + localDelta.x}px`;
+            groupItem.style.top = `${groupStartPositions[index].y + localDelta.y}px`;
+        });
+        syncGroupSelectionOverlay();
+        return;
+    }
     const localX = startLocal.x + localDelta.x;
     const localY = startLocal.y + localDelta.y;
 
@@ -154,6 +163,11 @@ canvas.addEventListener('pointerdown', (event) => {
         return;
     }
 
+    if (event.button === 0 && (event.ctrlKey || event.metaKey) && targetItem && toggleMultiSelection(targetItem)) {
+        event.preventDefault();
+        return;
+    }
+
     if (toolState.active === 'move') {
         toolState.pan = {
             x: event.clientX,
@@ -171,6 +185,7 @@ canvas.addEventListener('pointerdown', (event) => {
         document.querySelectorAll('.object').forEach((item) => item.classList.remove('selected'));
         document.querySelectorAll('.layer-div').forEach((item) => item.classList.remove('selected-layer'));
         state.selectedLayerId = null;
+        state.selectedObjectIds = [];
         clearSnapGuides();
         clearOpeningOverlay();
         syncSizeManager();
@@ -179,7 +194,9 @@ canvas.addEventListener('pointerdown', (event) => {
     }
 
     clearSnapGuides();
-    selectVisibleObject(targetItem);
+    const selectedGroup = getGroupSelection();
+    const groupItems = selectedGroup.length > 1 && selectedGroup.includes(targetItem) ? selectedGroup : null;
+    if (!groupItems) selectVisibleObject(targetItem);
 
     const parent = targetItem.offsetParent || scene;
     const rect = targetItem.getBoundingClientRect();
@@ -207,6 +224,13 @@ canvas.addEventListener('pointerdown', (event) => {
         lastY: event.clientY,
         lastMoveAt: 0,
         shiftKey: event.shiftKey,
+        ...(groupItems ? {
+            groupItems,
+            groupStartPositions: groupItems.map((groupItem) => ({
+                x: Number.parseFloat(groupItem.style.left) || 0,
+                y: Number.parseFloat(groupItem.style.top) || 0,
+            })),
+        } : {}),
     };
 
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -286,7 +310,7 @@ canvas.addEventListener('pointerup', (event) => {
         viewState.pinchDistance = null;
     }
     if (toolState.active === 'measure') stopMeasureDrag();
-    const item = toolState.dragObject?.item;
+    const draggedItems = toolState.dragObject?.groupItems || (toolState.dragObject?.item ? [toolState.dragObject.item] : []);
     const rotatedItem = toolState.rotateDrag?.item;
     toolState.pan = null;
     toolState.dragObject = null;
@@ -295,7 +319,7 @@ canvas.addEventListener('pointerup', (event) => {
         cancelAnimationFrame(autoscrollRaf);
         autoscrollRaf = null;
     }
-    if (item) guardarCambios(item);
+    draggedItems.forEach(guardarCambios);
     if (rotatedItem) {
         guardarCambios(rotatedItem);
         syncOpeningOverlay(getSelectedObject());
@@ -310,7 +334,7 @@ canvas.addEventListener('pointercancel', (event) => {
         viewState.pinchDistance = null;
     }
     if (toolState.active === 'measure') stopMeasureDrag();
-    const item = toolState.dragObject?.item;
+    const draggedItems = toolState.dragObject?.groupItems || (toolState.dragObject?.item ? [toolState.dragObject.item] : []);
     const rotatedItem = toolState.rotateDrag?.item;
     toolState.pan = null;
     toolState.dragObject = null;
@@ -319,7 +343,7 @@ canvas.addEventListener('pointercancel', (event) => {
         cancelAnimationFrame(autoscrollRaf);
         autoscrollRaf = null;
     }
-    if (item) guardarCambios(item);
+    draggedItems.forEach(guardarCambios);
     if (rotatedItem) guardarCambios(rotatedItem);
     clearSnapGuides();
 });

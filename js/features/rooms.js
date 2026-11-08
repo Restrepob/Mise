@@ -11,6 +11,7 @@ import { clampOpeningOffset, getActiveRoom, getItemBoxSize, getOpeningWidth, get
 import { placeOpening } from './openings.js';
 import { flushActiveView, getItemState, guardar, guardarCambios } from './persistence.js';
 import { applyRotation, syncRotationHandle } from './rotation.js';
+import { clearGroupSelectionOverlay } from './group-selection.js';
 import { syncSizeManager } from './size-manager.js';
 import { clearSnapGuides } from './snapping.js';
 import { GRID_STEP, OPENING_DEPTH, metro, objectMenuOptions, roomViews, state, viewState } from '../core/state.js';
@@ -57,6 +58,8 @@ export function setActiveRoom(room, options = {}) {
     clearSnapGuides();
     endMeasurement();
     state.selectedLayerId = null;
+    state.selectedObjectIds = [];
+    clearGroupSelectionOverlay();
     syncRotationHandle(null);
 
     const prev = getActiveRoom();

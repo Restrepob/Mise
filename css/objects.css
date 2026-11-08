@@ -631,3 +631,39 @@
 .furniture.draft.is-dragging {
     cursor: grabbing;
 }
+
+.selection-group-box {
+    position: absolute;
+    z-index: 19;
+    box-sizing: border-box;
+    border: 1px dashed rgba(72, 161, 255, 0.9);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+}
+
+.selection-group-rotate {
+    position: absolute;
+    left: 50%;
+    top: calc(-20px * var(--inv-scene-scale, 1));
+    display: grid;
+    place-items: center;
+    width: calc(26px * var(--inv-scene-scale, 1));
+    height: calc(26px * var(--inv-scene-scale, 1));
+    padding: 0;
+    border: 1px solid #48a1ff;
+    border-radius: 50%;
+    background: #fff;
+    color: #287fd0;
+    cursor: grab;
+    pointer-events: auto;
+    transform: translate(-50%, -50%);
+}
+
+.selection-group-rotate:active {
+    cursor: grabbing;
+}
+
+.selection-group-rotate svg {
+    width: calc(16px * var(--inv-scene-scale, 1));
+    height: calc(16px * var(--inv-scene-scale, 1));
+}

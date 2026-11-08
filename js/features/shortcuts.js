@@ -10,6 +10,7 @@ import { guardarCambios } from './persistence.js';
 import { alertapopup } from './popups.js';
 import { switchActiveRoom } from './rooms.js';
 import { applyRotation } from './rotation.js';
+import { isGroupSelectionActive, rotateSelectionGroupBy } from './group-selection.js';
 import { toolState } from '../core/state.js';
 import { getRotation } from '../core/units.js';
 
@@ -137,6 +138,12 @@ document.addEventListener('keydown', (event) => {
     // libres: Ctrl + R recarga el navegador y se pulsaba por accidente. Sin
     // modificador R es la herramienta de medicion.
     if (!event.shiftKey || event.ctrlKey || event.metaKey) return;
+
+    if (isGroupSelectionActive()) {
+        event.preventDefault();
+        rotateSelectionGroupBy(event.altKey ? 90 : -90);
+        return;
+    }
 
     const item = getSelectedObject();
     if (!item || isOpening(item)) return;

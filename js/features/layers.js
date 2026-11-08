@@ -7,11 +7,49 @@ import { eliminarGuardado, guardarCambios } from './persistence.js';
 import { popupMenu } from './popups.js';
 import { duplicateLayer, setActiveRoom, syncRoomLayerActive, syncRoomSwitcher } from './rooms.js';
 import { syncRotationHandle } from './rotation.js';
+import { clearGroupSelectionOverlay, syncGroupSelectionOverlay } from './group-selection.js';
 import { syncSizeManager } from './size-manager.js';
 import { objectMenuOptions, roomMenuOptions, roomViews, state } from '../core/state.js';
 
 export function getLayerElementForItem(item) {
     return document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+}
+
+export function toggleMultiSelection(targetItem) {
+    if (!targetItem?.classList.contains('furniture') || targetItem.dataset.draft === 'true') return false;
+
+    let items = (state.selectedObjectIds || [])
+        .map((id) => document.getElementById(id))
+        .filter((item) => item?.isConnected && item.classList.contains('furniture'));
+    if (!items.length && state.selectedLayerId) {
+        const current = document.getElementById(state.selectedLayerId);
+        if (current?.classList.contains('furniture')) items = [current];
+    }
+    if (items.some((item) => item.parentElement !== targetItem.parentElement)) items = [];
+
+    const selected = new Set(items.map((item) => item.id));
+    if (selected.has(targetItem.id)) selected.delete(targetItem.id);
+    else selected.add(targetItem.id);
+    const nextItems = [...selected].map((id) => document.getElementById(id)).filter(Boolean);
+
+    state.selectedObjectIds = nextItems.map((item) => item.id);
+    const primary = nextItems.includes(targetItem) ? targetItem : nextItems.at(-1) || null;
+    state.selectedLayerId = primary?.id || null;
+    document.querySelectorAll('.object').forEach((item) => item.classList.toggle('selected', selected.has(item.id)));
+    document.querySelectorAll('.layer-div').forEach((layer) => {
+        layer.classList.toggle('selected-layer', selected.has(layer.dataset.targetId));
+    });
+    clearOpeningOverlay();
+
+    if (nextItems.length > 1) {
+        syncRotationHandle(null);
+        syncGroupSelectionOverlay();
+    } else {
+        clearGroupSelectionOverlay();
+        syncRotationHandle(primary);
+    }
+    syncSizeManager();
+    return true;
 }
 
 export function setLayerHoverPreview(layerElement, active) {
@@ -104,6 +142,11 @@ export function deleteLayer(targetElement) {
         relatedLayers.forEach((item) => item.remove());
 
         eliminarGuardado(deletedIds);
+        state.selectedObjectIds = (state.selectedObjectIds || []).filter((id) => !deletedIds.includes(id));
+        if (!state.selectedObjectIds.includes(state.selectedLayerId)) {
+            state.selectedLayerId = state.selectedObjectIds.at(-1) || null;
+        }
+        syncGroupSelectionOverlay();
         delete roomViews[sceneTarget.id];
         if (state.selectedLayerId === sceneTarget.id) state.selectedLayerId = null;
 
@@ -128,7 +171,9 @@ export function deleteLayer(targetElement) {
     sceneTarget?.remove();
     context.layerDiv.remove();
     eliminarGuardado([sceneTarget.id]);
-    if (state.selectedLayerId === sceneTarget.id) state.selectedLayerId = null;
+    state.selectedObjectIds = (state.selectedObjectIds || []).filter((id) => id !== sceneTarget.id);
+    if (state.selectedLayerId === sceneTarget.id) state.selectedLayerId = state.selectedObjectIds.at(-1) || null;
+    syncGroupSelectionOverlay();
     clearOpeningOverlay();
     syncSizeManager();
     syncRotationHandle(getSelectedObject());
@@ -141,6 +186,9 @@ export function selectVisibleObject(targetItem) {
         selectLayer(matchingLayer);
         return;
     }
+
+    state.selectedObjectIds = [targetItem.id];
+    clearGroupSelectionOverlay();
 
     document.querySelectorAll('.object').forEach((item) => {
         item.classList.toggle('selected', item === targetItem);
@@ -162,6 +210,9 @@ export function selectLayer(layerElement) {
     const targetItem = document.getElementById(targetId);
 
     if (!targetItem) return;
+
+    state.selectedObjectIds = [targetItem.id];
+    clearGroupSelectionOverlay();
 
     document.querySelectorAll('.object').forEach((item) => {
         item.classList.remove('selected');

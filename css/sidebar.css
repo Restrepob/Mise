@@ -128,6 +128,10 @@
     overflow-x:hidden;
 }
 
+.size-manager.is-multi-selection #sm-rotation-field {
+    display:none;
+}
+
 /* Sin seleccion el panel de propiedades queda vacio, sin texto de ayuda. */
 .size-manager.empty .panel-body > * {
     display:none;

@@ -125,5 +125,6 @@ export const state = {
     openingCounter: 0,
     activeRoomId: '',
     selectedLayerId: null,
+    selectedObjectIds: [],
     historySuspended: false,
 };

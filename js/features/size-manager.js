@@ -9,7 +9,7 @@ import { placeOpening } from './openings.js';
 import { guardarCambios } from './persistence.js';
 import { syncRoomSwitcher } from './rooms.js';
 import { applyRotation, syncRotationHandle } from './rotation.js';
-import { OPENING_DEPTH, OPENING_MIN, viewState } from '../core/state.js';
+import { OPENING_DEPTH, OPENING_MIN, state, viewState } from '../core/state.js';
 import { getRotation, smFromPx, smToPx } from '../core/units.js';
 import { syncItemNameLabel } from '../core/name-labels.js';
 import { applySceneScale, clampScale, getParentRotation, updateMinScaleForRoom, updateSceneSize } from './view.js';
@@ -394,7 +394,9 @@ export function focusSizeInputForEditing() {
 
 export function syncSizeManager() {
     const item = getSelectedObject();
-    document.querySelector('.size-manager').classList.toggle('empty', !item);
+    const panel = document.querySelector('.size-manager');
+    panel.classList.toggle('empty', !item);
+    panel.classList.toggle('is-multi-selection', (state.selectedObjectIds || []).length > 1);
     setSizeManagerDisabled(!item, item);
     setOpeningPanelFields(item);
     syncDoorPanel(item);

@@ -5,6 +5,7 @@ import { endMeasurement } from './measure.js';
 import { getActiveRoom, getRooms } from '../core/model.js';
 import { getItemState, guardar, rebuildScene } from './persistence.js';
 import { syncRotationHandle } from './rotation.js';
+import { clearGroupSelectionOverlay } from './group-selection.js';
 import { clearSnapGuides } from './snapping.js';
 import { HISTORY_COMMIT_DELAY, HISTORY_LIMIT, roomViews, state, viewState } from '../core/state.js';
 import { clampScale, setViewScroll, updateMinScaleForRoom } from './view.js';
@@ -100,6 +101,8 @@ export function applySnapshot(snapshot) {
         clearSnapGuides();
         syncRotationHandle(null);
         state.selectedLayerId = null;
+        state.selectedObjectIds = [];
+        clearGroupSelectionOverlay();
         rebuildScene(snapshot.states, activeRoomIndex);
     } finally {
         state.historySuspended = false;
