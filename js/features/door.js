@@ -194,12 +194,13 @@ export function setToleranceSide(item, side, metros) {
 }
 
 export function renderTolerance(item) {
-    item.querySelector('.tolerance-layer')?.remove();
     if (!item || !item.classList.contains('furniture')) return;
+    item.querySelector('.tolerance-layer')?.remove();
 
     const layer = document.createElement('div');
     layer.className = 'tolerance-layer';
-    const fill = getComputedStyle(item).backgroundColor;
+    const shapeFill = item.querySelector(':scope > .l-shape-fill, :scope > .semicircle-fill') || item;
+    const fill = getComputedStyle(shapeFill).backgroundColor;
     if (/^rgb|^hsl|^#/.test(fill) && fill !== 'rgba(0, 0, 0, 0)') {
         layer.style.setProperty('--color-el', fill);
     }
