@@ -45,6 +45,10 @@ export function applySceneScale() {
     // incluso fuera de los límites del canvas. Ese es el espacio virtual.
     scene.style.transform =
         `translate(${-viewState.scrollX}px, ${-viewState.scrollY}px) scale(${viewState.scale})`;
+    // Variables para UI del lienzo (selector, handle de giro, nombres): permiten
+    // contrarrestar el zoom y mantener un tamaño visual constante en pantalla.
+    scene.style.setProperty('--scene-scale', String(viewState.scale));
+    scene.style.setProperty('--inv-scene-scale', String(1 / viewState.scale));
 }
 
 export let viewPersistTimer = null;

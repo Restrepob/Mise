@@ -12,12 +12,12 @@ export function applyRotation(item, deg) {
     item.dataset.rotation = String(rotation);
     item.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
     item.querySelectorAll(':scope > .rotate-handle').forEach((handle) => {
-        handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg)`;
+        handle.style.transform = `translate(-50%, -50%) rotate(${-rotation}deg) scale(var(--inv-scene-scale, 1))`;
     });
     const nameEl = item.querySelector(':scope > .balance-name');
     if (nameEl) {
         const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
-        nameEl.style.transform = `${translate}rotate(${snapNameRotation(rotation)}deg)`;
+        nameEl.style.transform = `${translate}rotate(${snapNameRotation(rotation)}deg) scale(var(--inv-scene-scale, 1))`;
     }
     syncLayerShapeIcon(item);
     if (item.dataset.type === 'room') {
@@ -71,7 +71,7 @@ export function syncRotationHandle(item) {
         item.appendChild(handle);
     }
 
-    handle.style.transform = `translate(-50%, -50%) rotate(${-getRotation(item)}deg)`;
+    handle.style.transform = `translate(-50%, -50%) rotate(${-getRotation(item)}deg) scale(var(--inv-scene-scale, 1))`;
 }
 
 export function startRotationDrag(event) {

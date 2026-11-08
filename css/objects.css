@@ -10,7 +10,7 @@
 .rotate-handle {
     position:absolute;
     left:50%;
-    top:-18px;
+    top:calc(-18px / var(--scene-scale, 1));
     width:26px;
     height:26px;
     display:flex;
@@ -22,7 +22,8 @@
     background:var(--color-elevated);
     color:var(--color-text);
     pointer-events:auto;
-    transform:translate(-50%, -50%);
+    transform:translate(-50%, -50%) scale(var(--inv-scene-scale, 1));
+    transform-origin:center;
     z-index:20;
     cursor:grab;
 }
@@ -77,7 +78,7 @@
 
 .furniture.semicircle.selected .semicircle-fill,
 .furniture.semicircle.layer-hover-preview .semicircle-fill {
-    inset:2px;
+    inset:calc(2px / var(--scene-scale, 1));
 }
 
 .furniture.semicircle.draft {
@@ -90,18 +91,19 @@
 }
 
 .furniture.semicircle.draft .semicircle-fill {
-    inset:2px;
+    inset:calc(2px / var(--scene-scale, 1));
 }
 
 /* La seleccion ocupa el propio borde y crece hacia dentro, sin sobresalir del
    objeto. El border tambien se pinta de azul para que no quede el color del
-   objeto entre la linea de seleccion y el exterior. */
+   objeto entre la linea de seleccion y el exterior. El grosor se compensa con
+   el zoom para que el selector mantenga un tamaño visual constante. */
 .room.selected,
 .furniture.selected,
 .room.layer-hover-preview,
 .furniture.layer-hover-preview {
     border-color:#48a1ff !important;
-    box-shadow:inset 0 0 0 2px #48a1ff;
+    box-shadow:inset 0 0 0 calc(2px / var(--scene-scale, 1)) #48a1ff;
     filter:none;
     z-index:10;
 }
@@ -162,11 +164,18 @@
     opacity:0;
 }
 
+.furniture > .balance-name,
+.room > .balance-name {
+    transform-origin:center;
+    pointer-events:none;
+    user-select:none;
+}
+
 .furniture.l-shape > .balance-name {
     position:absolute;
     left:50%;
     top:var(--l-name-y, 50%);
-    transform:translate(-50%, -50%);
+    transform:translate(-50%, -50%) scale(var(--inv-scene-scale, 1));
 }
 
 .furniture.l-shape.selected,
@@ -313,7 +322,7 @@
 
 .opening.selected,
 .opening.layer-hover-preview {
-    box-shadow:0 0 0 2px #48a1ff;
+    box-shadow:0 0 0 calc(2px / var(--scene-scale, 1)) #48a1ff;
 }
 
 .opening-measure {
@@ -382,7 +391,7 @@
 .dim-i-highlight--v {
     top: 0;
     bottom: 0;
-    right: -18px;
+    right: calc(-18px / var(--scene-scale, 1));
     width: 14px;
     display: flex;
     flex-direction: column;
@@ -394,7 +403,7 @@
 .dim-i-highlight--h {
     left: 0;
     right: 0;
-    bottom: -18px;
+    bottom: calc(-18px / var(--scene-scale, 1));
     height: 14px;
     display: flex;
     flex-direction: row;
@@ -404,7 +413,7 @@
 
 /* Grosor del brazo vertical (armX): I horizontal sobre el brazo izquierdo. */
 .dim-i-highlight--arm-x {
-    top: -18px;
+    top: calc(-18px / var(--scene-scale, 1));
     bottom: auto;
     left: 0;
     right: auto;
@@ -416,13 +425,13 @@
     top: auto;
     bottom: 0;
     left: auto;
-    right: -18px;
+    right: calc(-18px / var(--scene-scale, 1));
 }
 
 /* En la L, la cota del tramo corto va al lado derecho y la altura total al
    izquierdo para que cada etiqueta quede junto a la sección que representa. */
-.dim-i-highlight--l-arm-y { right:-18px; left:auto; }
-.dim-i-highlight--l-height { left:-18px; right:auto; }
+.dim-i-highlight--l-arm-y { right:calc(-18px / var(--scene-scale, 1)); left:auto; }
+.dim-i-highlight--l-height { left:calc(-18px / var(--scene-scale, 1)); right:auto; }
 
 /* Ticks perpendiculares en los extremos (los topes de la I) */
 .dim-i-highlight--v .dim-i-cap {
@@ -481,6 +490,8 @@
     align-items: center;
     justify-content: center;
     white-space: nowrap;
+    transform: scale(var(--inv-scene-scale, 1));
+    transform-origin: center;
 }
 
 .dim-i-highlight--v .dim-i-badge {

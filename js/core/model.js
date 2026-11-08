@@ -23,7 +23,7 @@ export function setItemName(item, value) {
         });
         item.appendChild(nameEl);
         const translate = isLShape(item) ? 'translate(-50%, -50%) ' : '';
-        nameEl.style.transform = `${translate}rotate(${snapNameRotation(getRotation(item))}deg)`;
+        nameEl.style.transform = `${translate}rotate(${snapNameRotation(getRotation(item))}deg) scale(var(--inv-scene-scale, 1))`;
     }
     let textEl = nameEl.querySelector('.balance-text');
     if (!textEl) {
