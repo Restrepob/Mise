@@ -61,6 +61,8 @@ export function syncRotationHandle(item) {
         handle.type = 'button';
         handle.className = 'rotate-handle';
         handle.setAttribute('aria-label', 'Girar objeto: arrastra para rotar libre o haz clic para girar 90 grados');
+        handle.dataset.tooltip = 'Clic izquierdo/derecho: girar 90°';
+        handle.dataset.tooltipDelay = '450';
         handle.innerHTML = ROTATE_HANDLE_SVG_FREE;
         handle.addEventListener('pointerdown', startRotationDrag);
         handle.addEventListener('pointerup', finishRotationClick);

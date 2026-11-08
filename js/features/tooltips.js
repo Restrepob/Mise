@@ -8,6 +8,8 @@ tooltip.setAttribute('aria-hidden', 'true');
 document.body.appendChild(tooltip);
 
 let currentTarget = null;
+let pendingTarget = null;
+let showTimer = null;
 
 function positionTooltip(target) {
     const rect = target.getBoundingClientRect();
@@ -36,7 +38,27 @@ function showTooltip(target) {
     positionTooltip(target);
 }
 
+function scheduleTooltip(target) {
+    if (showTimer) clearTimeout(showTimer);
+    pendingTarget = target;
+    const delay = Math.max(0, Number(target.dataset.tooltipDelay) || 0);
+    if (!delay) {
+        pendingTarget = null;
+        showTooltip(target);
+        return;
+    }
+    showTimer = setTimeout(() => {
+        showTimer = null;
+        if (pendingTarget !== target) return;
+        pendingTarget = null;
+        showTooltip(target);
+    }, delay);
+}
+
 function hideTooltip() {
+    if (showTimer) clearTimeout(showTimer);
+    showTimer = null;
+    pendingTarget = null;
     currentTarget = null;
     tooltip.classList.remove('is-visible');
     tooltip.setAttribute('aria-hidden', 'true');
@@ -44,8 +66,8 @@ function hideTooltip() {
 
 document.addEventListener('pointerover', (event) => {
     const target = event.target.closest?.('[data-tooltip]');
-    if (!target || target === currentTarget) return;
-    showTooltip(target);
+    if (!target || target === currentTarget || target === pendingTarget) return;
+    scheduleTooltip(target);
 });
 
 document.addEventListener('pointerout', (event) => {
@@ -57,7 +79,10 @@ document.addEventListener('pointerout', (event) => {
 
 document.addEventListener('focusin', (event) => {
     const target = event.target.closest?.('[data-tooltip]');
-    if (target) showTooltip(target);
+    if (target) {
+        hideTooltip();
+        showTooltip(target);
+    }
 });
 
 document.addEventListener('focusout', () => hideTooltip());

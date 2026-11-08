@@ -69,6 +69,8 @@ export function syncGroupSelectionOverlay() {
         handle.type = 'button';
         handle.className = 'selection-group-rotate';
         handle.setAttribute('aria-label', 'Girar el grupo: arrastra para rotar o haz clic para girar 90 grados');
+        handle.dataset.tooltip = 'Clic izquierdo/derecho: girar 90°';
+        handle.dataset.tooltipDelay = '450';
         handle.innerHTML = ROTATE_HANDLE_SVG_FREE;
         handle.addEventListener('pointerdown', startGroupRotation);
         handle.addEventListener('click', (event) => {
