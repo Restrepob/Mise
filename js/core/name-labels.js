@@ -50,10 +50,6 @@ export function syncItemNameLabel(item) {
 
     const fullName = String(item.dataset.name ?? text.textContent ?? '');
     const characters = Array.from(fullName);
-    const displayName = characters.length > 13
-        ? `${characters.slice(0, 12).join('')}…`
-        : fullName;
-    if (text.textContent !== displayName) text.textContent = displayName;
     label.title = fullName;
 
     const scale = viewState.scale || 1;
@@ -66,9 +62,8 @@ export function syncItemNameLabel(item) {
     const sin = Math.abs(Math.sin(radians));
     const style = getComputedStyle(label);
     const family = style.fontFamily || 'sans-serif';
-    const content = displayName;
 
-    function fits(fontSize) {
+    function fits(content, fontSize) {
         measureContext.font = `${FONT_WEIGHT} ${fontSize}px ${family}`;
         const textWidth = measureContext.measureText(content).width;
         const textHeight = fontSize * 1.2;
@@ -76,17 +71,41 @@ export function syncItemNameLabel(item) {
             && sin * textWidth + cos * textHeight <= availableHeight;
     }
 
+    // Muestra el nombre completo cuando cabe. Si no, busca el prefijo más
+    // largo que quepa a tamaño base y añade la elipsis solo al texto restante.
+    let displayName = fullName;
+    if (!fits(fullName, BASE_FONT_SIZE) && fullName) {
+        if (fits('…', BASE_FONT_SIZE)) {
+            let low = 0;
+            let high = characters.length - 1;
+            let best = '…';
+            while (low <= high) {
+                const count = Math.floor((low + high) / 2);
+                const candidate = `${characters.slice(0, count).join('')}…`;
+                if (fits(candidate, BASE_FONT_SIZE)) {
+                    best = candidate;
+                    low = count + 1;
+                } else {
+                    high = count - 1;
+                }
+            }
+            displayName = best;
+        }
+    }
+    if (text.textContent !== displayName) text.textContent = displayName;
+    const content = displayName;
+
     let low = MIN_FONT_SIZE;
     let high = BASE_FONT_SIZE;
     for (let attempt = 0; attempt < 18; attempt += 1) {
         const candidate = (low + high) / 2;
-        if (fits(candidate)) low = candidate;
+        if (fits(content, candidate)) low = candidate;
         else high = candidate;
     }
 
     // La fuente tiene un tope legible en pantalla y se reduce solo cuando el
     // nombre o la forma no dejan suficiente espacio.
-    let fontSize = fits(BASE_FONT_SIZE) ? BASE_FONT_SIZE : low;
+    let fontSize = fits(content, BASE_FONT_SIZE) ? BASE_FONT_SIZE : low;
     const geometryKey = [
         itemWidth, itemHeight, regionWidth, regionHeight, centerX, centerY,
         labelAngle, displayName, item.dataset.shape, item.dataset.armX, item.dataset.armY,
