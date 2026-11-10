@@ -105,11 +105,12 @@ export const objectMenuOptions=[
     {label:'Renombrar', action:'rename'},
     {label:'Duplicar', action:'duplicate'},
     {label:'Ocultar', action:'hide'},
+    {label:'Bloquear', action:'lock'},
     {label:'Eliminar', action:'delete'}
 ];
 
 export const roomMenuOptions=[
-    ...objectMenuOptions,
+    ...objectMenuOptions.filter((option) => option.action !== 'lock'),
     {label:'Añadir ventana', action:'add-window'},
     {label:'Añadir puerta', action:'add-door'},
 ];

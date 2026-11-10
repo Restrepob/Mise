@@ -250,7 +250,19 @@ export function setLayerHoverPreview(layerElement, active) {
 export function openLayerMenuForItem(item, point) {
     const layerDiv = getLayerElementForItem(item);
     if (!layerDiv) return;
-    const menuOptions = layerDiv.dataset.type === 'room' ? roomMenuOptions : objectMenuOptions;
+    const isRoom = layerDiv.dataset.type === 'room';
+    const menuOptions = (isRoom ? roomMenuOptions : objectMenuOptions).map((option) => {
+        if (option.action === 'hide') {
+            return {
+                ...option,
+                label: layerDiv.dataset.visible === 'false' ? 'Mostrar' : 'Ocultar',
+            };
+        }
+        if (option.action === 'lock') {
+            return { ...option, label: isItemLocked(item) ? 'Desbloquear' : 'Bloquear' };
+        }
+        return option;
+    });
     popupMenu(menuOptions, layerDiv, point);
 }
 
@@ -456,6 +468,10 @@ export function handleMenuAction(action, targetElement) {
 
     if (action === 'hide') {
         toggleLayerVisibility(targetElement);
+    }
+
+    if (action === 'lock') {
+        toggleLayerLock(targetElement);
     }
 
     if (action === 'delete') {

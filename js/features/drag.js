@@ -112,8 +112,8 @@ export function tickAutoScroll() {
 
     const { lastX, lastY, lastMoveAt } = toolState.dragObject;
     const pointerMoving = performance.now() - (lastMoveAt || 0) < AUTO_SCROLL_IDLE;
-    if (Number.isFinite(lastX) && Number.isFinite(lastY)) {
-        if (pointerMoving) scrollForEdges(lastX, lastY);
+    if (pointerMoving && Number.isFinite(lastX) && Number.isFinite(lastY)) {
+        scrollForEdges(lastX, lastY);
         positionDraggedObject(lastX, lastY);
     }
     autoscrollRaf = requestAnimationFrame(tickAutoScroll);
@@ -244,13 +244,10 @@ canvas.addEventListener('pointerdown', (event) => {
         y: ((rect.top - sceneRect.top) + rect.height / 2) / viewState.scale,
     };
 
-    // El ancla vive en coordenadas locales del padre. Para los objetos es su
-    // centro; para las aperturas es el propio puntero, porque se deslizan
-    // sobre la pared. Convertirlo al sistema local permite seguir al puntero
-    // aunque la room este rotada.
-    const startLocal = isOpening(targetItem)
-        ? sceneToLocal(parent, startPointer)
-        : sceneToLocal(parent, startCenter);
+    // El ancla siempre es el centro del elemento. En aperturas usar el punto
+    // del clic las reposicionaba en el primer frame del arrastre, incluso al
+    // seleccionarlas sin mover el puntero.
+    const startLocal = sceneToLocal(parent, startCenter);
 
     toolState.dragObject = {
         item: targetItem,
