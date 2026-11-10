@@ -1,6 +1,6 @@
 // Creacion de rooms, objetos y capas
 import { alto, ancho, canvas, nombre, objectLayers, popup, roomLayers, scene } from '../core/dom.js';
-import { enableLayerReordering, getLayerContext, selectLayer, setLayerHoverPreview, syncCreatedLayerPriority, toggleLayerVisibility } from './layers.js';
+import { enableLayerReordering, getLayerContext, selectLayer, setLayerHoverPreview, syncCreatedLayerPriority, toggleLayerVisibility, toggleMultiSelection } from './layers.js';
 import { clampOpeningOffset, getActiveRoom, getParentInnerSize, getRooms, setItemName, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
 import { applyBorderRadius, guardarCambios } from './persistence.js';
@@ -565,7 +565,16 @@ export function createLayer(
     div.addEventListener('pointerenter', () => setLayerHoverPreview(div, true));
     div.addEventListener('pointerleave', () => setLayerHoverPreview(div, false));
 
-    div.addEventListener('click', () => {
+    div.addEventListener('click', (event) => {
+        if ((event.ctrlKey || event.metaKey) && div.dataset.type === 'furniture') {
+            const item = document.getElementById(div.dataset.targetId);
+            if (item && toggleMultiSelection(item)) {
+                event.preventDefault();
+                event.stopPropagation();
+                return;
+            }
+        }
+
         if (div.dataset.type === 'room') {
             const room = document.getElementById(div.dataset.targetId);
             if (room && room.id !== state.activeRoomId) {
