@@ -6,7 +6,7 @@ import { getRooms, getSelectedObject, isItemLocked, isOpening } from '../core/mo
 import { eliminarGuardado, guardarCambios } from './persistence.js';
 import { popupMenu } from './popups.js';
 import { duplicateLayer, setActiveRoom, syncRoomLayerActive, syncRoomSwitcher } from './rooms.js';
-import { syncRotationHandle } from './rotation.js';
+import { rotateByClick, syncRotationHandle } from './rotation.js';
 import { clearGroupSelectionOverlay, syncGroupSelectionOverlay } from './group-selection.js';
 import { syncSizeManager } from './size-manager.js';
 import { objectMenuOptions, roomMenuOptions, roomViews, state } from '../core/state.js';
@@ -251,18 +251,20 @@ export function openLayerMenuForItem(item, point) {
     const layerDiv = getLayerElementForItem(item);
     if (!layerDiv) return;
     const isRoom = layerDiv.dataset.type === 'room';
-    const menuOptions = (isRoom ? roomMenuOptions : objectMenuOptions).map((option) => {
-        if (option.action === 'hide') {
-            return {
-                ...option,
-                label: layerDiv.dataset.visible === 'false' ? 'Mostrar' : 'Ocultar',
-            };
-        }
-        if (option.action === 'lock') {
-            return { ...option, label: isItemLocked(item) ? 'Desbloquear' : 'Bloquear' };
-        }
-        return option;
-    });
+    const menuOptions = (isRoom ? roomMenuOptions : objectMenuOptions)
+        .filter((option) => !isOpening(item) || !['rotate-right', 'rotate-left'].includes(option.action))
+        .map((option) => {
+            if (option.action === 'hide') {
+                return {
+                    ...option,
+                    label: layerDiv.dataset.visible === 'false' ? 'Mostrar' : 'Ocultar',
+                };
+            }
+            if (option.action === 'lock') {
+                return { ...option, label: isItemLocked(item) ? 'Desbloquear' : 'Bloquear' };
+            }
+            return option;
+        });
     popupMenu(menuOptions, layerDiv, point);
 }
 
@@ -472,6 +474,14 @@ export function handleMenuAction(action, targetElement) {
 
     if (action === 'lock') {
         toggleLayerLock(targetElement);
+    }
+
+    if (action === 'rotate-right' || action === 'rotate-left') {
+        const { sceneTarget } = getLayerContext(targetElement) || {};
+        if (sceneTarget?.classList.contains('furniture') && !isItemLocked(sceneTarget)) {
+            rotateByClick(sceneTarget, action === 'rotate-right' ? 2 : 0);
+            guardarCambios(sceneTarget);
+        }
     }
 
     if (action === 'delete') {

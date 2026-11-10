@@ -34,7 +34,16 @@ export function popupMenu(array, targetElement, point = null) {
         array.forEach((option, index) => {
         const op = document.createElement('button');
         op.classList.add('menu-popup-option-box');
-        op.textContent=option.label;
+        const label = document.createElement('span');
+        label.className = 'menu-popup-label';
+        label.textContent = option.label;
+        op.appendChild(label);
+        if (option.shortcut) {
+            const shortcut = document.createElement('span');
+            shortcut.className = 'menu-popup-shortcut';
+            shortcut.textContent = option.shortcut;
+            op.appendChild(shortcut);
+        }
         op.id=(`menu-popup-${index}`);
         op.dataset.action=option.action;
 

@@ -97,15 +97,19 @@ export function getNextColor() {
 }
 
 export const objectMenuOptions=[
-    {label:'Renombrar', action:'rename'},
-    {label:'Duplicar', action:'duplicate'},
-    {label:'Ocultar', action:'hide'},
-    {label:'Bloquear', action:'lock'},
-    {label:'Eliminar', action:'delete'}
+    {label:'Renombrar', action:'rename', shortcut:'F2'},
+    {label:'Duplicar', action:'duplicate', shortcut:'Ctrl/⌘ + D'},
+    {label:'Girar a la derecha', action:'rotate-right', shortcut:'Alt + clic der.'},
+    {label:'Girar a la izquierda', action:'rotate-left', shortcut:'Alt + clic izq.'},
+    {label:'Ocultar', action:'hide', shortcut:'Ctrl/⌘ + Shift + H'},
+    {label:'Bloquear', action:'lock', shortcut:'Ctrl/⌘ + Shift + L'},
+    {label:'Eliminar', action:'delete', shortcut:'Del'}
 ];
 
 export const roomMenuOptions=[
-    ...objectMenuOptions.filter((option) => option.action !== 'lock'),
+    ...objectMenuOptions
+        .filter((option) => !['lock', 'rotate-right', 'rotate-left'].includes(option.action))
+        .map(({ shortcut, ...option }) => option),
     {label:'Añadir ventana', action:'add-window'},
     {label:'Añadir puerta', action:'add-door'},
 ];

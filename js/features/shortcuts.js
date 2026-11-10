@@ -3,7 +3,7 @@ import { canvas, popup } from '../core/dom.js';
 import { cancelDraft, isDrafting } from './draft.js';
 import { setDragShift } from './drag.js';
 import { redo, undo } from './history.js';
-import { deleteLayer } from './layers.js';
+import { deleteLayer, handleMenuAction } from './layers.js';
 import { endMeasurement } from './measure.js';
 import { getSelectedObject, isOpening } from '../core/model.js';
 import { guardarCambios } from './persistence.js';
@@ -91,6 +91,37 @@ document.addEventListener('keydown', (evento) => {
     if (evento.key === 'Escape') {
         document.querySelector('.tol-input-popup')?.remove();
     }
+});
+
+document.addEventListener('keydown', (event) => {
+    if (event.defaultPrevented) return;
+    const editingField = event.target.closest?.('input, textarea, select, [contenteditable="true"]');
+    if (editingField) return;
+
+    const item = getSelectedObject();
+    if (!item || item.dataset.type === 'room') return;
+    const layer = document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+    if (!layer) return;
+
+    const key = event.key.toLowerCase();
+    const command = event.ctrlKey || event.metaKey;
+    let action = null;
+
+    if (event.key === 'F2' && !command && !event.altKey && !event.shiftKey) {
+        action = 'rename';
+    } else if (command && !event.altKey && !event.shiftKey && key === 'd') {
+        action = 'duplicate';
+    } else if (command && event.shiftKey && !event.altKey && key === 'h') {
+        action = 'hide';
+    } else if (command && event.shiftKey && !event.altKey && key === 'l') {
+        action = 'lock';
+    } else if (event.key === 'Delete' && !command && !event.altKey && !event.shiftKey) {
+        action = 'delete';
+    }
+
+    if (!action) return;
+    event.preventDefault();
+    handleMenuAction(action, layer);
 });
 
 export const toolButtons = document.querySelectorAll('.tool-btn');

@@ -599,7 +599,11 @@ export function createLayer(
 
     options.addEventListener('click', (event) => {
         event.stopPropagation();
-        popupMenu(menuOptions, options);
+        const isOpeningLayer = layerType === 'door' || layerType === 'window';
+        const popupOptions = isOpeningLayer
+            ? menuOptions.filter((option) => !['rotate-right', 'rotate-left'].includes(option.action))
+            : menuOptions;
+        popupMenu(popupOptions, options);
     });
 
     if (isRoomLayer) {
