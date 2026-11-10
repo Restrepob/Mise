@@ -1,6 +1,6 @@
 // Creacion de rooms, objetos y capas
 import { alto, ancho, canvas, nombre, objectLayers, popup, roomLayers, scene } from '../core/dom.js';
-import { enableLayerReordering, getLayerContext, selectLayer, setLayerHoverPreview, syncCreatedLayerPriority, toggleLayerVisibility, toggleMultiSelection } from './layers.js';
+import { enableLayerReordering, getLayerContext, selectLayer, setLayerHoverPreview, syncCreatedLayerPriority, syncLayerLockControl, toggleLayerLock, toggleLayerVisibility, toggleMultiSelection } from './layers.js';
 import { clampOpeningOffset, getActiveRoom, getParentInnerSize, getRooms, setItemName, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
 import { applyBorderRadius, guardarCambios } from './persistence.js';
@@ -517,6 +517,7 @@ export function createLayer(
 
     const div =document.createElement('div');
     const eyeDiv =document.createElement('div');
+    const lockDiv =document.createElement('button');
     const layerDiv =document.createElement('div');
     const shapeIcon = createLayerShapeIcon(document.getElementById(targetId));
     const options =document.createElement('div');
@@ -531,6 +532,11 @@ export function createLayer(
         div.classList.add('layer-opening');
     }
     eyeDiv.classList.add('eye-div');
+    lockDiv.type = 'button';
+    lockDiv.classList.add('lock-div');
+    lockDiv.setAttribute('aria-pressed', 'false');
+    lockDiv.setAttribute('aria-label', 'Bloquear objeto');
+    lockDiv.dataset.tooltip = 'Bloquear objeto';
     layerDiv.classList.add('layer-content');
     options.classList.add('options-layer');
 
@@ -562,6 +568,12 @@ export function createLayer(
         toggleLayerVisibility(div);
     });
 
+    lockDiv.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggleLayerLock(div);
+    });
+
     div.addEventListener('pointerenter', () => setLayerHoverPreview(div, true));
     div.addEventListener('pointerleave', () => setLayerHoverPreview(div, false));
 
@@ -591,10 +603,10 @@ export function createLayer(
     });
 
     if (isRoomLayer) {
-        // Las rooms no tienen ojo: solo los objetos se pueden ocultar.
+        // Las rooms no tienen controles de visibilidad ni de bloqueo.
         div.append(layerDiv, options);
     } else {
-        div.append(eyeDiv, layerDiv, options);
+        div.append(eyeDiv, lockDiv, layerDiv, options);
     }
 
     if (currentBtnId ==='create-room-btn') {
@@ -603,6 +615,7 @@ export function createLayer(
     } else if (currentBtnId ==='add-object-btn') {
         objectLayers.prepend(div);
         syncCreatedLayerPriority(objectLayers, div);
+        syncLayerLockControl(document.getElementById(targetId));
     }
 
     syncObjectLayers();

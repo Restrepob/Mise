@@ -4,7 +4,7 @@ import { clearOpeningOverlay, syncOpeningOverlay } from './door.js';
 import { openLayerMenuForItem, selectVisibleObject, toggleMultiSelection } from './layers.js';
 import { getGroupSelection, isPointInsideGroupSelection, rotateSelectionGroupBy, syncGroupSelectionOverlay } from './group-selection.js';
 import { handleMeasurePointerDown, stopMeasureDrag, updateMeasureCursor, updateMeasureDrag } from './measure.js';
-import { getSelectedObject, isOpening } from '../core/model.js';
+import { getSelectedObject, isItemLocked, isOpening } from '../core/model.js';
 import { dragOpeningAlongWall } from './openings.js';
 import { flushActiveView, guardarCambios } from './persistence.js';
 import { ROTATE_DRAG_THRESHOLD, applyRotation, rotateByClick, syncRotationHandle } from './rotation.js';
@@ -162,6 +162,12 @@ canvas.addEventListener('pointerdown', (event) => {
     // Se usa Alt y no Shift porque Firefox/Zen reservan Shift + clic derecho
     // para abrir su propio menu y no permiten cancelarlo desde la web.
     if (event.altKey && (event.button === 0 || event.button === 2)) {
+        if (targetItem && isItemLocked(targetItem)) {
+            event.preventDefault();
+            lastModifierRotateTime = Date.now();
+            selectVisibleObject(targetItem);
+            return;
+        }
         const selectedGroup = getGroupSelection();
         const rotatesGroup = selectedGroup.length > 1
             && isPointInsideGroupSelection(event.clientX, event.clientY);
@@ -214,6 +220,13 @@ canvas.addEventListener('pointerdown', (event) => {
         clearOpeningOverlay();
         syncSizeManager();
         syncRotationHandle(null);
+        return;
+    }
+
+    if (isItemLocked(targetItem)) {
+        clearSnapGuides();
+        selectVisibleObject(targetItem);
+        event.preventDefault();
         return;
     }
 

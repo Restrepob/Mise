@@ -1,12 +1,12 @@
 // Handle de rotacion
 import { syncLayerShapeIcon, syncShapePreviews } from './shape-preview.js';
-import { getSelectedObject, isOpening, syncItemNameRotation } from '../core/model.js';
+import { getSelectedObject, isItemLocked, isOpening, syncItemNameRotation } from '../core/model.js';
 import { currentDimHighlight, setDimensionHighlight, syncSizeManagerReadout } from './size-manager.js';
 import { toolState } from '../core/state.js';
 import { getRotation, normalizeDeg } from '../core/units.js';
 
 export function applyRotation(item, deg) {
-    if (!item || isOpening(item)) return;
+    if (!item || isOpening(item) || isItemLocked(item)) return;
     const rotation = normalizeDeg(deg);
     item.dataset.rotation = String(rotation);
     item.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
@@ -34,7 +34,7 @@ export function applyRotation(item, deg) {
 // - Clic derecho (button === 2): sentido horario (+90)
 // - Clic izquierdo (button === 0): sentido antihorario (-90)
 export function rotateByClick(item, button) {
-    if (!item || isOpening(item)) return;
+    if (!item || isOpening(item) || isItemLocked(item)) return;
     const clockwise = button === 2 || button === true;
     const turn = clockwise ? 90 : -90;
     applyRotation(item, getRotation(item) + turn);
@@ -82,9 +82,14 @@ export function startRotationDrag(event) {
     // guardar el cambio.
     if (event.altKey) return;
 
+    const item = event.currentTarget.parentElement;
+    if (isItemLocked(item)) {
+        event.preventDefault();
+        return;
+    }
+
     event.stopPropagation();
     event.preventDefault();
-    const item = event.currentTarget.parentElement;
     const rect = item.getBoundingClientRect();
     const center = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     toolState.rotateDrag = {

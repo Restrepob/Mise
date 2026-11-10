@@ -14,6 +14,10 @@ export function getSelectedObject() {
     return state.selectedLayerId ? document.getElementById(state.selectedLayerId) : null;
 }
 
+export function isItemLocked(item) {
+    return item?.dataset.locked === 'true';
+}
+
 export function setItemName(item, value) {
     if (!item) return;
     item.dataset.name = value;

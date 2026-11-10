@@ -1,6 +1,6 @@
 // Puertas, edges, tolerancias y overlay de aperturas
 import { openingLayer } from '../core/dom.js';
-import { clampOpeningOffset, getOpeningWallLength, getOpeningWidth, getParentInnerSize, getSelectedObject, isOpening, snapOpeningOffset } from '../core/model.js';
+import { clampOpeningOffset, getOpeningWallLength, getOpeningWidth, getParentInnerSize, getSelectedObject, isItemLocked, isOpening, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
 import { guardarCambios } from './persistence.js';
 import { syncSizeManager } from './size-manager.js';
@@ -406,6 +406,7 @@ export function createOpeningMeasureInput(item, side) {
     input.type = 'number';
     input.min = '0.1';
     input.step = '0.1';
+    input.disabled = isItemLocked(item);
     input.dataset.side = side;
     input.addEventListener('click', (event) => event.stopPropagation());
     input.addEventListener('pointerdown', (event) => event.stopPropagation());
@@ -421,7 +422,7 @@ export function createOpeningMeasureInput(item, side) {
 
 export function commitOpeningMargin(item, side, rawValue) {
     const value = Number(rawValue);
-    if (!item.isConnected || !Number.isFinite(value) || value <= 0) return;
+    if (!item.isConnected || isItemLocked(item) || !Number.isFinite(value) || value <= 0) return;
 
     const marginPx = value * metro;
     const wallLength = getOpeningWallLength(item);

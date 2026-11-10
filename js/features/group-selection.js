@@ -11,7 +11,7 @@ let rotatePointer = null;
 export function getGroupSelection() {
     return (state.selectedObjectIds || [])
         .map((id) => document.getElementById(id))
-        .filter((item) => item?.isConnected && item.dataset.type === 'furniture');
+        .filter((item) => item?.isConnected && item.dataset.type === 'furniture' && item.dataset.locked !== 'true');
 }
 
 export function isGroupSelectionActive() {

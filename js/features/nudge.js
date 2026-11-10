@@ -2,7 +2,7 @@
 // Un paso base de 1 px de escena (unos 6.7 mm) permite ajustar sin pelear con
 // el snap. Shift multiplica el paso x10 para desplazamientos mas grandes.
 import { scene } from '../core/dom.js';
-import { clampOpeningOffset, getOpeningWidth, getSelectedObject, isOpening } from '../core/model.js';
+import { clampOpeningOffset, getOpeningWidth, getSelectedObject, isItemLocked, isOpening } from '../core/model.js';
 import { syncOpeningOverlay } from './door.js';
 import { isDrafting } from './draft.js';
 import { placeOpening } from './openings.js';
@@ -50,6 +50,7 @@ function nudgeSelected(event) {
     const dx = event.key === 'ArrowLeft' ? -step : event.key === 'ArrowRight' ? step : 0;
     const dy = event.key === 'ArrowUp' ? -step : event.key === 'ArrowDown' ? step : 0;
     if (!dx && !dy) return false;
+    if (isItemLocked(item)) return true;
 
     clearSnapGuides();
     if (isOpening(item)) nudgeOpening(item, dx, dy);

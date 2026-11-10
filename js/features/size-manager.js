@@ -233,6 +233,12 @@ export function setSizeManagerDisabled(disabled, item = null) {
         });
         smRadius.disabled = true;
     }
+
+    if (!disabled && item?.dataset.locked === 'true') {
+        document.querySelectorAll('#sm-rotation-field input, #sm-rotation-field button').forEach((control) => {
+            control.disabled = true;
+        });
+    }
 }
 
 export function setOpeningPanelFields(item) {

@@ -2,7 +2,7 @@
 import { createRoom, rebuildOpening } from './creation.js';
 import { renderEdges, renderTolerance } from './door.js';
 import { resetHistory, scheduleHistoryCommit } from './history.js';
-import { restoreLayerPriorities, setItemVisibility } from './layers.js';
+import { restoreLayerPriorities, setItemVisibility, syncLayerLockControl } from './layers.js';
 import { syncLayerShapeIcon } from './shape-preview.js';
 import { getActiveRoom, getOpeningWidth, isOpening } from '../core/model.js';
 import { ensureLShapeFill, getLShapeArmsInMeters, getLShapeFillColor, isLShape, setupLShape } from './l-shape.js';
@@ -91,6 +91,8 @@ export function applyBorderRadius(element, value) {
 
 export function applyItemStateDetails(rebuilt, elemento) {
     if (!rebuilt) return;
+    rebuilt.dataset.locked = String(elemento.locked === true);
+    syncLayerLockControl(rebuilt);
     if (Number.isFinite(elemento.layerPriority)) {
         rebuilt.dataset.layerPriority = String(elemento.layerPriority);
     }
@@ -298,6 +300,7 @@ export function getItemState(item) {
         layerPriority: Number.isFinite(Number(item.dataset.layerPriority))
             ? Number(item.dataset.layerPriority)
             : undefined,
+        locked: item.dataset.locked === 'true',
     };
 }
 

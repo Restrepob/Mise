@@ -1107,6 +1107,7 @@
 }
 
 .layer-div.layer-draft .eye-div,
+.layer-div.layer-draft .lock-div,
 .layer-div.layer-draft .options-layer {
     display:none;
 }
@@ -1131,10 +1132,43 @@
     transition:opacity 120ms ease, background-color 120ms ease;
 }
 
+.lock-div {
+    flex:none;
+    width:24px;
+    align-self:stretch;
+    display:grid;
+    place-items:center;
+    order:2;
+    padding:0;
+    border:none;
+    border-radius:5px;
+    background:transparent;
+    color:var(--color-caption);
+    cursor:pointer;
+    opacity:0;
+    transition:opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+.lock-div svg {
+    width:14px;
+    height:14px;
+}
+
 .layer-div:hover .eye-div,
 .layer-div:focus-within .eye-div,
-.eye-div.is-hidden {
+.eye-div.is-hidden,
+.layer-div:hover .lock-div,
+.layer-div:focus-within .lock-div,
+.lock-div.is-locked {
     opacity:1;
+}
+
+.layer-div.is-locked .layer-content {
+    color:var(--color-caption);
+}
+
+.lock-div.is-locked {
+    color:#48a1ff;
 }
 
 .eye-div.is-hidden {
@@ -1188,7 +1222,8 @@
 }
 
 .options-layer:hover,
-.eye-div:hover {
+.eye-div:hover,
+.lock-div:hover {
     background:rgba(255, 255, 255, 0.06);
 }
 

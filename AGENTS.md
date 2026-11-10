@@ -36,7 +36,7 @@ js/
     openings.js     Colocación de puertas/ventanas sobre paredes.
     door.js         Propiedades de puertas, edges, tolerancias y overlay.
     rooms.js        Switcher de rooms, duplicado y clonado de contenido.
-    layers.js       Selección, reordenamiento, prioridad, visibilidad,
+    layers.js       Selección, reordenamiento, prioridad, visibilidad, bloqueo,
                     renombrado y eliminación de capas.
     popups.js       Alertas y menús contextuales.
     persistence.js  localStorage, snapshots de items y rebuild de escena.
@@ -148,7 +148,7 @@ consulta por id/clase o mediante `core/dom.js`.
 - Preferir exports con nombre; evitar estado global nuevo si puede vivir en el
   módulo.
 - Los ids del sidebar usan prefijo `sm-`; los de creación/popup usan `popup-`.
-- Los atributos de dominio van en `dataset` (`type`, `roomId`, `rotation`,
+- Los atributos de dominio van en `dataset` (`type`, `roomId`, `rotation`, `locked`,
   `edge`, `offset`, `openingWidth`, `edges`, `tolerance`, `draft`, `shape`,
   `armX`, `armY`).
 - Toda modificación persistente termina en `guardarCambios(item)`.
@@ -164,12 +164,12 @@ Implementado y estable:
 - Creación de rooms y objetos (cuadrado/círculo/forma L), borrador con medidas.
 - Rooms: switcher, duplicado, contenido clonado, capas y visibilidad.
 - Muebles: arrastre con snap, rotación libre/90°, medidas, radio, nombre,
-  edges, tolerancia y duplicado.
+  edges, tolerancia, bloqueo y duplicado.
 - Selección múltiple temporal con `Ctrl/Cmd`: arrastre con snap a grid, paredes
   y muebles; rotación del conjunto desde el contorno virtual o con `Shift+R`.
 - Forma L: brazos editables (grosor izq./inf.), unidades, persistencia,
   duplicado, rotación y exportación.
-- Puertas/ventanas: colocación en paredes, dirección, eje y ancho.
+- Puertas/ventanas: colocación en paredes, dirección, eje, ancho y bloqueo.
 - Medición de distancia/área, zoom, pan, pinch y espacio virtual infinito.
 - Undo/redo, persistencia y rebuild de escena.
 - Sidebar redimensionable, colapsable, con sliders, unidades m/cm/in/ft,

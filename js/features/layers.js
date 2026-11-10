@@ -2,7 +2,7 @@
 import { objectLayers, roomLayers, smNombre } from '../core/dom.js';
 import { addOpeningFromRoom } from './creation.js';
 import { clearOpeningOverlay, syncOpeningOverlay } from './door.js';
-import { getRooms, getSelectedObject, isOpening } from '../core/model.js';
+import { getRooms, getSelectedObject, isItemLocked, isOpening } from '../core/model.js';
 import { eliminarGuardado, guardarCambios } from './persistence.js';
 import { popupMenu } from './popups.js';
 import { duplicateLayer, setActiveRoom, syncRoomLayerActive, syncRoomSwitcher } from './rooms.js';
@@ -11,8 +11,61 @@ import { clearGroupSelectionOverlay, syncGroupSelectionOverlay } from './group-s
 import { syncSizeManager } from './size-manager.js';
 import { objectMenuOptions, roomMenuOptions, roomViews, state } from '../core/state.js';
 
+const LOCKED_LAYER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M240-160q-33 0-56.5-23.5T160-240v-320q0-33 23.5-56.5T240-640h40v-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v320q0 33-23.5 56.5T720-160H240Zm0-80h480v-320H240v320Zm240-80q33 0 56.5-23.5T560-400q0-33-23.5-56.5T480-480q-33 0-56.5 23.5T400-400q0 33 23.5 56.5T480-320ZM360-640h240v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85v80Zm-120 400v-320 320Z"/></svg>';
+const UNLOCKED_LAYER_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor" aria-hidden="true"><path d="M240-160q-33 0-56.5-23.5T160-240v-320q0-33 23.5-56.5T240-640h360v-80q0-50-35-85t-85-35q-50 0-85 35t-35 85h-80q0-83 58.5-141.5T480-920q83 0 141.5 58.5T680-720v80h40q33 0 56.5 23.5T800-560v320q0 33-23.5 56.5T720-160H240Zm0-80h480v-320H240v320Zm240-80q33 0 56.5-23.5T560-400q0-33-23.5-56.5T480-480q-33 0-56.5 23.5T400-400q0 33 23.5 56.5T480-320ZM240-240v-320 320Z"/></svg>';
+
 export function getLayerElementForItem(item) {
     return document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+}
+
+export function syncLayerLockControl(item) {
+    const layer = item && getLayerElementForItem(item);
+    const button = layer?.querySelector('.lock-div');
+    if (!layer || !button) return;
+
+    const locked = isItemLocked(item);
+    layer.classList.toggle('is-locked', locked);
+    button.classList.toggle('is-locked', locked);
+    button.setAttribute('aria-pressed', String(locked));
+    button.setAttribute('aria-label', locked ? 'Desbloquear objeto' : 'Bloquear objeto');
+    button.dataset.tooltip = locked ? 'Desbloquear objeto' : 'Bloquear objeto';
+    button.innerHTML = locked ? LOCKED_LAYER_SVG : UNLOCKED_LAYER_SVG;
+}
+
+export function toggleLayerLock(layerElement) {
+    const item = document.getElementById(layerElement?.dataset.targetId);
+    if (!item || item.dataset.type === 'room') return false;
+
+    const locked = !isItemLocked(item);
+    item.dataset.locked = String(locked);
+    syncLayerLockControl(item);
+
+    if (locked && state.selectedObjectIds?.length > 1 && state.selectedObjectIds.includes(item.id)) {
+        state.selectedObjectIds = state.selectedObjectIds.filter((id) => id !== item.id);
+        if (state.selectedLayerId === item.id) {
+            state.selectedLayerId = state.selectedObjectIds.at(-1) || null;
+        }
+    }
+
+    const selectedIds = new Set(state.selectedObjectIds || []);
+    document.querySelectorAll('.object').forEach((object) => {
+        object.classList.toggle('selected', selectedIds.has(object.id));
+    });
+    document.querySelectorAll('.layer-div').forEach((layer) => {
+        layer.classList.toggle('selected-layer', selectedIds.has(layer.dataset.targetId));
+    });
+
+    if ((state.selectedObjectIds || []).length > 1) {
+        syncRotationHandle(null);
+        syncGroupSelectionOverlay();
+    } else {
+        clearGroupSelectionOverlay();
+        syncRotationHandle(getSelectedObject());
+    }
+    syncSizeManager();
+    syncOpeningOverlay(getSelectedObject());
+    guardarCambios(item);
+    return true;
 }
 
 function layerItemsForParent(layerBox, parent) {
@@ -81,7 +134,7 @@ function clearLayerDropState() {
 export function enableLayerReordering(layer) {
     layer.draggable = true;
     layer.addEventListener('dragstart', (event) => {
-        if (event.target.closest('.eye-div, .options-layer') || layer.classList.contains('layer-draft')) {
+        if (event.target.closest('.eye-div, .lock-div, .options-layer') || layer.classList.contains('layer-draft')) {
             event.preventDefault();
             return;
         }
@@ -152,7 +205,7 @@ export function restoreLayerPriorities() {
 }
 
 export function toggleMultiSelection(targetItem) {
-    if (!targetItem?.classList.contains('furniture') || targetItem.dataset.draft === 'true') return false;
+    if (!targetItem?.classList.contains('furniture') || targetItem.dataset.draft === 'true' || isItemLocked(targetItem)) return false;
 
     let items = (state.selectedObjectIds || [])
         .map((id) => document.getElementById(id))
