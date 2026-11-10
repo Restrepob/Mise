@@ -1,5 +1,5 @@
 // Acciones sobre las filas de capas
-import { smNombre } from '../core/dom.js';
+import { objectLayers, roomLayers, smNombre } from '../core/dom.js';
 import { addOpeningFromRoom } from './creation.js';
 import { clearOpeningOverlay, syncOpeningOverlay } from './door.js';
 import { getRooms, getSelectedObject, isOpening } from '../core/model.js';
@@ -13,6 +13,142 @@ import { objectMenuOptions, roomMenuOptions, roomViews, state } from '../core/st
 
 export function getLayerElementForItem(item) {
     return document.querySelector(`.layer-div[data-target-id="${item.id}"]`);
+}
+
+function layerItemsForParent(layerBox, parent) {
+    return [...layerBox.children]
+        .filter((row) => document.getElementById(row.dataset.targetId)?.parentElement === parent)
+        .map((row) => document.getElementById(row.dataset.targetId))
+        .filter(Boolean);
+}
+
+export function syncLayerPriorities(layerBox, persist = false) {
+    if (!layerBox) return;
+    const groups = new Map();
+    [...layerBox.children].forEach((row) => {
+        const item = document.getElementById(row.dataset.targetId);
+        if (!item?.parentElement) return;
+        if (!groups.has(item.parentElement)) groups.set(item.parentElement, []);
+        groups.get(item.parentElement).push(item);
+    });
+
+    groups.forEach((items) => {
+        items.forEach((item, index) => {
+            const priority = items.length - index;
+            item.dataset.layerPriority = String(priority);
+            item.style.zIndex = String(priority);
+            if (persist && !state.historySuspended && item.dataset.draft !== 'true') guardarCambios(item);
+        });
+    });
+}
+
+export function syncCreatedLayerPriority(layerBox, newRow) {
+    const item = document.getElementById(newRow.dataset.targetId);
+    if (!item?.parentElement) return;
+    const siblings = layerItemsForParent(layerBox, item.parentElement);
+    const otherSiblings = siblings.filter((sibling) => sibling !== item);
+    const existing = otherSiblings.map((sibling) => Number(sibling.dataset.layerPriority));
+    if (existing.every(Number.isFinite)) {
+        const priority = Math.max(0, ...existing) + 1;
+        item.dataset.layerPriority = String(priority);
+        item.style.zIndex = String(priority);
+        siblings.forEach((sibling) => {
+            sibling.style.zIndex = sibling.dataset.layerPriority;
+        });
+        return;
+    }
+
+    // Datos previos a la prioridad persistida: la fila superior establece el
+    // orden inicial y la siguiente escritura lo conserva en el snapshot.
+    syncLayerPriorities(layerBox);
+}
+
+function canDropLayer(source, target) {
+    if (!source || !target || source === target || source.parentElement !== target.parentElement) return false;
+    if (source.classList.contains('layer-draft') || target.classList.contains('layer-draft')) return false;
+    const sourceIsRoom = source.dataset.type === 'room';
+    if (sourceIsRoom !== (target.dataset.type === 'room')) return false;
+    return sourceIsRoom || source.dataset.roomId === target.dataset.roomId;
+}
+
+let draggedLayer = null;
+
+function clearLayerDropState() {
+    document.querySelectorAll('.layer-div.is-layer-dragging, .layer-div.layer-drop-before, .layer-div.layer-drop-after')
+        .forEach((row) => row.classList.remove('is-layer-dragging', 'layer-drop-before', 'layer-drop-after'));
+}
+
+export function enableLayerReordering(layer) {
+    layer.draggable = true;
+    layer.addEventListener('dragstart', (event) => {
+        if (event.target.closest('.eye-div, .options-layer') || layer.classList.contains('layer-draft')) {
+            event.preventDefault();
+            return;
+        }
+        draggedLayer = layer;
+        event.dataTransfer.effectAllowed = 'move';
+        event.dataTransfer.setData('text/plain', layer.dataset.targetId);
+        requestAnimationFrame(() => layer.classList.add('is-layer-dragging'));
+    });
+    layer.addEventListener('dragover', (event) => {
+        if (!canDropLayer(draggedLayer, layer)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+        const before = event.clientY < layer.getBoundingClientRect().top + layer.offsetHeight / 2;
+        layer.classList.toggle('layer-drop-before', before);
+        layer.classList.toggle('layer-drop-after', !before);
+    });
+    layer.addEventListener('dragleave', (event) => {
+        if (event.relatedTarget instanceof Node && layer.contains(event.relatedTarget)) return;
+        layer.classList.remove('layer-drop-before', 'layer-drop-after');
+    });
+    layer.addEventListener('drop', (event) => {
+        if (!canDropLayer(draggedLayer, layer)) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const before = event.clientY < layer.getBoundingClientRect().top + layer.offsetHeight / 2;
+        const container = layer.parentElement;
+        container.insertBefore(draggedLayer, before ? layer : layer.nextSibling);
+        clearLayerDropState();
+        draggedLayer = null;
+        syncLayerPriorities(container, true);
+    });
+    layer.addEventListener('dragend', () => {
+        clearLayerDropState();
+        draggedLayer = null;
+    });
+}
+
+function sortLayerBoxByPriority(layerBox) {
+    const rows = [...layerBox.children];
+    const groups = new Map();
+    rows.forEach((row, index) => {
+        const item = document.getElementById(row.dataset.targetId);
+        const parent = item?.parentElement;
+        if (!parent) return;
+        if (!groups.has(parent)) groups.set(parent, []);
+        groups.get(parent).push({ row, index, priority: Number(item.dataset.layerPriority) });
+    });
+
+    const ordered = [];
+    groups.forEach((entries) => {
+        entries.sort((a, b) => {
+            const aValid = Number.isFinite(a.priority);
+            const bValid = Number.isFinite(b.priority);
+            if (aValid && bValid && a.priority !== b.priority) return b.priority - a.priority;
+            if (aValid !== bValid) return aValid ? -1 : 1;
+            return a.index - b.index;
+        });
+        ordered.push(...entries.map((entry) => entry.row));
+    });
+    layerBox.replaceChildren(...ordered);
+}
+
+export function restoreLayerPriorities() {
+    [roomLayers, objectLayers].forEach((layerBox) => {
+        sortLayerBoxByPriority(layerBox);
+        syncLayerPriorities(layerBox);
+    });
 }
 
 export function toggleMultiSelection(targetItem) {
@@ -142,6 +278,8 @@ export function deleteLayer(targetElement) {
         relatedLayers.forEach((item) => item.remove());
 
         eliminarGuardado(deletedIds);
+        syncLayerPriorities(roomLayers, true);
+        syncLayerPriorities(objectLayers, true);
         state.selectedObjectIds = (state.selectedObjectIds || []).filter((id) => !deletedIds.includes(id));
         if (!state.selectedObjectIds.includes(state.selectedLayerId)) {
             state.selectedLayerId = state.selectedObjectIds.at(-1) || null;
@@ -171,6 +309,7 @@ export function deleteLayer(targetElement) {
     sceneTarget?.remove();
     context.layerDiv.remove();
     eliminarGuardado([sceneTarget.id]);
+    syncLayerPriorities(objectLayers, true);
     state.selectedObjectIds = (state.selectedObjectIds || []).filter((id) => id !== sceneTarget.id);
     if (state.selectedLayerId === sceneTarget.id) state.selectedLayerId = state.selectedObjectIds.at(-1) || null;
     syncGroupSelectionOverlay();

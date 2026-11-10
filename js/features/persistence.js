@@ -2,7 +2,7 @@
 import { createRoom, rebuildOpening } from './creation.js';
 import { renderEdges, renderTolerance } from './door.js';
 import { resetHistory, scheduleHistoryCommit } from './history.js';
-import { setItemVisibility } from './layers.js';
+import { restoreLayerPriorities, setItemVisibility } from './layers.js';
 import { syncLayerShapeIcon } from './shape-preview.js';
 import { getActiveRoom, getOpeningWidth, isOpening } from '../core/model.js';
 import { ensureLShapeFill, getLShapeArmsInMeters, getLShapeFillColor, isLShape, setupLShape } from './l-shape.js';
@@ -91,6 +91,9 @@ export function applyBorderRadius(element, value) {
 
 export function applyItemStateDetails(rebuilt, elemento) {
     if (!rebuilt) return;
+    if (Number.isFinite(elemento.layerPriority)) {
+        rebuilt.dataset.layerPriority = String(elemento.layerPriority);
+    }
     applyBorderRadius(rebuilt, elemento.borderRadius);
     if (elemento.shape === 'l') {
         setupLShape(rebuilt, {
@@ -194,6 +197,8 @@ export function rebuildScene(validos, activeRoomIndex = -1) {
             applyItemStateDetails(rebuilt, elemento);
         });
 
+    restoreLayerPriorities();
+
     rebuiltRooms.forEach((room) => {
         const st = validos.find((elemento) => roomIdMap[elemento.id] === room.id);
         if (st && Number.isFinite(st.viewScale)) {
@@ -290,6 +295,9 @@ export function getItemState(item) {
         viewScrollX: isRoom && roomViews[item.id] ? roomViews[item.id].scrollX : undefined,
         viewScrollY: isRoom && roomViews[item.id] ? roomViews[item.id].scrollY : undefined,
         currentBtnId: item.dataset.type === 'room' ? 'create-room-btn' : 'add-object-btn',
+        layerPriority: Number.isFinite(Number(item.dataset.layerPriority))
+            ? Number(item.dataset.layerPriority)
+            : undefined,
     };
 }
 

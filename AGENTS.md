@@ -36,7 +36,8 @@ js/
     openings.js     Colocación de puertas/ventanas sobre paredes.
     door.js         Propiedades de puertas, edges, tolerancias y overlay.
     rooms.js        Switcher de rooms, duplicado y clonado de contenido.
-    layers.js       Selección, visibilidad, renombrar y eliminar capas.
+    layers.js       Selección, reordenamiento, prioridad, visibilidad,
+                    renombrado y eliminación de capas.
     popups.js       Alertas y menús contextuales.
     persistence.js  localStorage, snapshots de items y rebuild de escena.
     history.js      Undo/redo por snapshots con debounce.
@@ -100,6 +101,9 @@ consulta por id/clase o mediante `core/dom.js`.
 - **Rotación del padre:** los desplazamientos de pantalla se convierten a
   coordenadas locales con `sceneDeltaToLocal()` para que el arrastre siga
   funcionando con rooms rotadas.
+- **Prioridad de capas:** la primera fila de cada room se dibuja por encima de
+  las demás del mismo padre; `layerPriority` se guarda en snapshots
+  para conservar el orden al hidratar y al deshacer/rehacer.
 - **Zoom y espacio virtual:** el margen del `scene` parte de `SCENE_PADDING`
   y crece hasta un 20 % del lado mayor de la room (con tope finito). El zoom
   mínimo se calcula para cada room y permite alejarse un 25 % más allá del

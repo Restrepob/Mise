@@ -1,6 +1,6 @@
 // Creacion de rooms, objetos y capas
 import { alto, ancho, canvas, nombre, objectLayers, popup, roomLayers, scene } from '../core/dom.js';
-import { getLayerContext, selectLayer, setLayerHoverPreview, toggleLayerVisibility } from './layers.js';
+import { enableLayerReordering, getLayerContext, selectLayer, setLayerHoverPreview, syncCreatedLayerPriority, toggleLayerVisibility } from './layers.js';
 import { clampOpeningOffset, getActiveRoom, getParentInnerSize, getRooms, setItemName, snapOpeningOffset } from '../core/model.js';
 import { placeOpening } from './openings.js';
 import { applyBorderRadius, guardarCambios } from './persistence.js';
@@ -522,6 +522,7 @@ export function createLayer(
     const options =document.createElement('div');
 
     div.classList.add('layer-div');
+    enableLayerReordering(div);
     div.dataset.targetId = targetId;
     div.dataset.roomId = roomOwnerId;
     div.dataset.type = layerType;
@@ -588,20 +589,11 @@ export function createLayer(
     }
 
     if (currentBtnId ==='create-room-btn') {
-        roomLayers.appendChild(div);
+        roomLayers.prepend(div);
+        syncCreatedLayerPriority(roomLayers, div);
     } else if (currentBtnId ==='add-object-btn') {
-        const firstOpening = [...objectLayers.querySelectorAll('.layer-div')]
-            .findIndex((layer) => layer.classList.contains('layer-opening'));
-
-        if (div.classList.contains('layer-opening')) {
-            objectLayers.appendChild(div);
-        } else {
-            if (firstOpening === -1) {
-                objectLayers.appendChild(div);
-            } else {
-                objectLayers.insertBefore(div, objectLayers.children[firstOpening]);
-            }
-        }
+        objectLayers.prepend(div);
+        syncCreatedLayerPriority(objectLayers, div);
     }
 
     syncObjectLayers();

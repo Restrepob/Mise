@@ -1054,6 +1054,22 @@
     transition:background-color 120ms ease, border-color 120ms ease;
 }
 
+.layer-div[draggable="true"] {
+    cursor:grab;
+}
+
+.layer-div.is-layer-dragging {
+    opacity:0.35;
+}
+
+.layer-div.layer-drop-before {
+    box-shadow:inset 0 2px #48a1ff;
+}
+
+.layer-div.layer-drop-after {
+    box-shadow:inset 0 -2px #48a1ff;
+}
+
 .layer-div:hover {
     background:rgba(255, 255, 255, 0.045);
     border-color:transparent;
