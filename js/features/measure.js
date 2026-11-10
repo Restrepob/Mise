@@ -1,7 +1,8 @@
 // Regla: distancias y areas
 import { canvas, measureAreaValue, measureDistanceValue, measureNotch, scene } from '../core/dom.js';
-import { MEASURE_CLOSE_RADIUS, MEASURE_MIN_STEP, MEASURE_NS, MEASURE_POINT_HIT_RADIUS, measureState, metro, viewState } from '../core/state.js';
-import { pointerToScene } from './view.js';
+import { getItemHitboxEdges } from '../core/model.js';
+import { MEASURE_CLOSE_RADIUS, MEASURE_MIN_STEP, MEASURE_NS, MEASURE_POINT_HIT_RADIUS, SNAP_SENS, measureState, metro, viewState } from '../core/state.js';
+import { localToCanvas, pointerToScene } from './view.js';
 
 export function getMeasureSvg() {
     let svg = scene.querySelector(':scope > .measure-layer');
@@ -37,11 +38,68 @@ export function getMeasurementArea(points) {
     return Math.abs(doubleArea) / 2;
 }
 
+function projectPointToSegment(point, start, end) {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const lengthSquared = dx * dx + dy * dy;
+    const t = lengthSquared
+        ? Math.max(0, Math.min(1, ((point.x - start.x) * dx + (point.y - start.y) * dy) / lengthSquared))
+        : 0;
+    return { x: start.x + t * dx, y: start.y + t * dy };
+}
+
+function snapMeasurementPoint(point, event) {
+    const canvasRect = canvas.getBoundingClientRect();
+    const pointer = { x: event.clientX - canvasRect.left, y: event.clientY - canvasRect.top };
+    let nearest = null;
+    let nearestDistance = SNAP_SENS;
+
+    scene.querySelectorAll(':scope > .room > .object').forEach((item) => {
+        if (item.getClientRects().length === 0) return;
+        const room = item.parentElement;
+        getItemHitboxEdges(item).forEach((edge) => {
+            const start = edge.axis === 'x'
+                ? localToCanvas(room, edge.pos, edge.min)
+                : localToCanvas(room, edge.min, edge.pos);
+            const end = edge.axis === 'x'
+                ? localToCanvas(room, edge.pos, edge.max)
+                : localToCanvas(room, edge.max, edge.pos);
+            const candidate = projectPointToSegment(pointer, start, end);
+            const distance = Math.hypot(candidate.x - pointer.x, candidate.y - pointer.y);
+            if (distance < nearestDistance) {
+                nearest = candidate;
+                nearestDistance = distance;
+            }
+        });
+    });
+
+    if (!nearest) return point;
+    const sceneRect = scene.getBoundingClientRect();
+    return {
+        x: (canvasRect.left + nearest.x - sceneRect.left) / viewState.scale,
+        y: (canvasRect.top + nearest.y - sceneRect.top) / viewState.scale,
+    };
+}
+
 export function formatMeasureNumber(value, digits) {
     return new Intl.NumberFormat('es-CO', {
         minimumFractionDigits: digits,
         maximumFractionDigits: digits,
     }).format(value);
+}
+
+function syncMeasureVisualScale() {
+    const inverseScale = 1 / Math.max(viewState.scale, 0.001);
+    scene.querySelectorAll('.measure-shape').forEach((shape) => {
+        shape.style.strokeWidth = `${2 * inverseScale}px`;
+    });
+    scene.querySelectorAll('.measure-point').forEach((dot) => {
+        const firstPoint = dot.classList.contains('measure-point--first');
+        const radius = firstPoint ? 6 : 4.5;
+        const stroke = dot.classList.contains('measure-point--active') ? 3 : 2;
+        dot.setAttribute('r', String(radius * inverseScale));
+        dot.style.strokeWidth = `${stroke * inverseScale}px`;
+    });
 }
 
 export function updateMeasureNotch() {
@@ -88,7 +146,12 @@ export function renderMeasurement() {
         ].filter(Boolean).join(' '));
         svg.appendChild(dot);
     });
+    syncMeasureVisualScale();
 }
+
+scene.addEventListener('mise:scene-scale-change', () => {
+    syncMeasureVisualScale();
+});
 
 export function resetMeasurement() {
     measureState.points = [];
@@ -131,7 +194,7 @@ export function addMeasurePoint(point) {
 export function updateMeasureDrag(event) {
     const { drag } = measureState;
     if (!drag) return false;
-    measureState.points[drag.index] = pointerToScene(event);
+    measureState.points[drag.index] = snapMeasurementPoint(pointerToScene(event), event);
     renderMeasurement();
     updateMeasureNotch();
     return true;
@@ -156,11 +219,12 @@ export function handleMeasurePointerDown(event) {
     event.preventDefault();
 
     const point = pointerToScene(event);
+    const snappedPoint = snapMeasurementPoint(point, event);
     const { points, closed } = measureState;
 
     if (!closed && points.length >= 3) {
         const first = points[0];
-        if (Math.hypot(point.x - first.x, point.y - first.y) <= MEASURE_CLOSE_RADIUS / viewState.scale) {
+        if (Math.hypot(snappedPoint.x - first.x, snappedPoint.y - first.y) <= MEASURE_CLOSE_RADIUS / viewState.scale) {
             measureState.closed = true;
             measureState.drag = null;
             renderMeasurement();
@@ -177,5 +241,5 @@ export function handleMeasurePointerDown(event) {
         return;
     }
 
-    addMeasurePoint(point);
+    addMeasurePoint(snappedPoint);
 }

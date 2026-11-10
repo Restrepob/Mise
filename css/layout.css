@@ -432,7 +432,6 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
     stroke-width:2;
     stroke-linecap:round;
     stroke-linejoin:round;
-    vector-effect:non-scaling-stroke;
 }
 
 .measure-shape--area {
@@ -443,7 +442,6 @@ h4 { font-size: var(--fs-h4);      line-height: var(--lh-tight); font-weight: va
     fill:var(--color-bg);
     stroke:#ffb74d;
     stroke-width:2;
-    vector-effect:non-scaling-stroke;
 }
 
 .measure-point--first {

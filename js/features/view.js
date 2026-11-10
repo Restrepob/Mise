@@ -68,6 +68,7 @@ export function applySceneScale() {
     // alejar no crece por encima de su tamaño máximo permisible y se mantiene
     // fijo al objeto.
     scene.style.setProperty('--ui-inv-scale', String(Math.min(1, 1 / viewState.scale)));
+    scene.dispatchEvent(new Event('mise:scene-scale-change'));
     if (nameLayoutScale !== viewState.scale) {
         scene.querySelectorAll('.l-shape').forEach((item) => syncLShape(item));
         scene.querySelectorAll('.balance-name').forEach((label) => {
