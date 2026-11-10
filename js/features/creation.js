@@ -377,6 +377,7 @@ export function createRoom(ancho, alto, almedida, anmedida, name, currentBtnId, 
         room.classList.add('room', 'object');
         room.style.backgroundColor = 'var(--color-room)';
         room.style.borderColor = nextColor;
+        room.style.setProperty('--room-edge', nextColor);
         scene.appendChild(room);
 
         if (inheritContents && baseRoom) {

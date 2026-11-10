@@ -137,6 +137,11 @@
         transparent 2px,
         transparent 17px
     );
+    /* El compositor redondea la posicion de los objetos con transform y puede
+       dejar una franja de 1px de fondo de room junto a una pared. Se absorbe
+       pintando el color del borde hacia dentro; el grosor se compensa con el
+       zoom para que la franja mida 1px en pantalla a cualquier escala. */
+    box-shadow:inset 0 0 0 calc(1px * var(--inv-scene-scale, 1)) var(--room-edge, rgba(133, 132, 132, 0.381));
 }
 
 .furniture {

@@ -59,6 +59,7 @@ function applyItemColor(rebuilt, elemento) {
     if (!elemento.color) return;
     if (rebuilt.dataset.type === 'room') {
         rebuilt.style.borderColor = elemento.color;
+        rebuilt.style.setProperty('--room-edge', elemento.color);
     } else if (rebuilt.classList.contains('furniture')) {
         rebuilt.style.backgroundColor = elemento.color;
     }
