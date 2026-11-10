@@ -335,51 +335,57 @@
 
 .edge-strip {
     position:absolute;
-    background-color:color-mix(in srgb, var(--color-edge) 50%, transparent);
-    background-image:repeating-linear-gradient(45deg, var(--color-edge) 0 2px, transparent 2px 17px);
+    box-sizing:border-box;
+    background-color:color-mix(in srgb, #111820 10%, transparent);
+    background-image:repeating-linear-gradient(
+        135deg,
+        color-mix(in srgb, #111820 30%, transparent) 0 1px,
+        transparent 1px 8px
+    );
+    border-radius:1px;
 }
 
 .edge-strip--top {
-    left:4px;
-    right:4px;
-    top:4px;
-    height:14px;
-    border-top:2px solid var(--color-edge);
+    left:2px;
+    right:2px;
+    top:2px;
+    height:4px;
+    border-top:1px solid color-mix(in srgb, #111820 72%, transparent);
 }
 
 .edge-strip--right {
-    top:4px;
-    bottom:4px;
-    right:4px;
-    width:14px;
-    border-right:2px solid var(--color-edge);
+    top:2px;
+    bottom:2px;
+    right:2px;
+    width:4px;
+    border-right:1px solid color-mix(in srgb, #111820 72%, transparent);
 }
 
 .edge-strip--bottom {
-    left:4px;
-    right:4px;
-    bottom:4px;
-    height:14px;
-    border-bottom:2px solid var(--color-edge);
+    left:2px;
+    right:2px;
+    bottom:2px;
+    height:4px;
+    border-bottom:1px solid color-mix(in srgb, #111820 72%, transparent);
 }
 
 .edge-strip--left {
-    top:4px;
-    bottom:4px;
-    left:4px;
-    width:14px;
-    border-left:2px solid var(--color-edge);
+    top:2px;
+    bottom:2px;
+    left:2px;
+    width:4px;
+    border-left:1px solid color-mix(in srgb, #111820 72%, transparent);
 }
 
 .furniture.l-shape .edge-strip--top {
     right:auto;
-    width:calc(var(--l-arm-x) - 4px);
+    width:calc(var(--l-arm-x) - 2px);
 }
 
 .furniture.l-shape .edge-strip--right {
     top:auto;
-    bottom:4px;
-    height:calc(var(--l-arm-y) - 4px);
+    bottom:2px;
+    height:calc(var(--l-arm-y) - 2px);
 }
 
 .furniture.l-shape .tol-tab--top {
@@ -395,19 +401,19 @@
 }
 
 .furniture.l-shape .edge-strip--inner-vertical {
-    left:calc(var(--l-arm-x) - 14px);
-    top:4px;
-    bottom:calc(var(--l-arm-y) + 4px);
-    width:14px;
-    border-right:2px solid var(--color-edge);
+    left:calc(var(--l-arm-x) - 4px);
+    top:2px;
+    bottom:calc(var(--l-arm-y) + 2px);
+    width:4px;
+    border-right:1px solid color-mix(in srgb, #111820 72%, transparent);
 }
 
 .furniture.l-shape .edge-strip--inner-horizontal {
-    left:calc(var(--l-arm-x) + 4px);
-    right:4px;
+    left:calc(var(--l-arm-x) + 2px);
+    right:2px;
     top:calc(100% - var(--l-arm-y));
-    height:14px;
-    border-top:2px solid var(--color-edge);
+    height:4px;
+    border-top:1px solid color-mix(in srgb, #111820 72%, transparent);
 }
 
 .furniture.l-shape .tol-tab--inner-vertical {
