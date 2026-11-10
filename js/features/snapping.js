@@ -1,7 +1,7 @@
 // Snap a grid, paredes y objetos (X e Y independientes)
 import { canvas, guidesLayer } from '../core/dom.js';
 import { getItemBoxSize, getItemHitboxEdges, getParentInnerSize, isOpening } from '../core/model.js';
-import { GRID_STEP, SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX, SNAP_SENS, SNAP_WORLD_MAX, viewState } from '../core/state.js';
+import { GRID_STEP, SNAP_GRID_SENS, SNAP_SENS, viewState } from '../core/state.js';
 import { getParentRotation, localToCanvas } from './view.js';
 
 function edgeKey(edge) {
@@ -40,8 +40,8 @@ export function buildGridTargets(length) {
     return targets;
 }
 
-export function getSnapThreshold(screenSens = SNAP_SENS, worldMax = SNAP_WORLD_MAX) {
-    return Math.min(screenSens / viewState.scale, worldMax);
+export function getSnapThreshold(screenSens = SNAP_SENS) {
+    return screenSens / Math.max(viewState.scale, 0.001);
 }
 
 export function collectSnapTargets(parent, item, ignoredItems = []) {
@@ -185,7 +185,7 @@ export function clearSnapGuides() {
 
 export function snapObject(item, left, top, parent) {
     const alignThreshold = getSnapThreshold();
-    const gridThreshold = getSnapThreshold(SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX);
+    const gridThreshold = getSnapThreshold(SNAP_GRID_SENS);
     const targets = collectSnapTargets(parent, item);
     // El arrastrado usa su propio hitbox en la posición propuesta, no la caja
     // cuadrada: sus lados interiores también pueden engancharse.
@@ -230,7 +230,7 @@ export function snapGroup(items, parent) {
     ];
     const targets = collectSnapTargets(parent, null, items);
     const alignThreshold = getSnapThreshold();
-    const gridThreshold = getSnapThreshold(SNAP_GRID_SENS, SNAP_GRID_WORLD_MAX);
+    const gridThreshold = getSnapThreshold(SNAP_GRID_SENS);
     const xSnap = pickSnap(xAnchors, targets.x, alignThreshold, gridThreshold);
     const ySnap = pickSnap(yAnchors, targets.y, alignThreshold, gridThreshold);
 

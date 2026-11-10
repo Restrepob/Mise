@@ -1,7 +1,7 @@
 // Colocacion de puertas y ventanas
 import { drawDoorArc } from './door.js';
 import { clampOpeningOffset, getOpeningWallLength, getOpeningWidth, getParentInnerSize, isItemLocked, snapOpeningOffset } from '../core/model.js';
-import { OPENING_DEPTH, OPENING_MIN, SNAP_SENS } from '../core/state.js';
+import { OPENING_DEPTH, OPENING_MIN, SNAP_SENS, viewState } from '../core/state.js';
 
 export function placeOpening(item) {
     const room = item.parentElement;
@@ -47,7 +47,7 @@ export function dragOpeningAlongWall(item, localX, localY, disableSnap = false) 
     const roomWidth = roomSize.width;
     const roomHeight = roomSize.height;
     const width = getOpeningWidth(item);
-    const threshold = Math.max(SNAP_SENS * 2, OPENING_DEPTH);
+    const threshold = Math.max((SNAP_SENS * 2) / Math.max(viewState.scale, 0.001), OPENING_DEPTH);
 
     const walls = [
         { edge: 'top', distance: Math.abs(localY) },

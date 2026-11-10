@@ -7,19 +7,14 @@ export const SCENE_PADDING = 1000;
 // las líneas coincidan exactamente con sus dos paredes (ver getGridStep).
 export const GRID_STEP = metro / 10;
 
-// Tolerancia del imán para paredes, bordes y centros de otros objetos. Se mide
-// en píxeles de pantalla, pero nunca supera SNAP_WORLD_MAX píxeles de escena:
-// así al alejar el zoom el objeto no salta distancias enormes en el plano.
-export const SNAP_SENS = 6;
-
-export const SNAP_WORLD_MAX = 6;
+// Tolerancia del imán en píxeles de pantalla. Al convertirla a escena, el snap
+// conserva la misma distancia visual con cualquier zoom o tamaño de room.
+export const SNAP_SENS = 12;
 
 // La grid es más fina que las paredes/objetos: solo atrapa cuando el borde
 // está realmente cerca de una línea. Así una habitación grande no se siente
 // como si todo estuviera pegado a una cuadrícula invisible.
-export const SNAP_GRID_SENS = 3;
-
-export const SNAP_GRID_WORLD_MAX = 3;
+export const SNAP_GRID_SENS = 6;
 
 export const AUTO_SCROLL_EDGE = 48;
 
